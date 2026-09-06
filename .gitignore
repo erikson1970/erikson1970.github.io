@@ -1,1 +1,16 @@
-#foo
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor/tooling
+.vscode/
+.idea/
+
+# Python (build-time tooling only, never shipped)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Serena MCP tool metadata (local dev-tool state, not project content)
+.serena/
