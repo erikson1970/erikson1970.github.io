@@ -9,6 +9,11 @@ regenerate:
 python3 tools/build_data.py
 ```
 
-Current outputs: `boxes.json`, `seais.json`, `population.json`, `regions.json`.
-Later: `links.json`, `box-segments.json` once those tables exist in the
-workbook (see `docs/DATA_MODEL.md` #5–#6).
+Current outputs: `boxes.json`, `seais.json`, `population.json`, `regions.json`,
+`links.json`. Later: `box-segments.json` once that table exists in the
+workbook (see `docs/DATA_MODEL.md` #6).
+
+`links.json` (Phase 3, Milestone 4) is a small hand-authored subset — 7 rows
+covering the Roman/Byzantine/Frankish/French/Holy-Roman/Ottoman succession
+chain from `docs/IMPLEMENTATION_PLAN.md`'s "Mediterranean / Europe" Phase 3
+candidate list — not full coverage of every box in `boxes.json`.

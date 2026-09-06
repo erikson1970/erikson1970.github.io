@@ -23,13 +23,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import wh_data  # noqa: E402
 
-# Maps sheet name -> output filename. Links/BoxSegments aren't in the
-# workbook yet (see docs/DATA_MODEL.md #5, #6) so they aren't produced here.
+# Maps sheet name -> output filename. BoxSegments isn't in the workbook yet
+# (see docs/DATA_MODEL.md #6) so it isn't produced here.
 OUTPUTS = {
     "Boxes": "boxes.json",
     "SEAIs": "seais.json",
     "Population": "population.json",
     "Regions": "regions.json",
+    "Links": "links.json",
 }
 
 
