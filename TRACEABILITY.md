@@ -45,6 +45,32 @@ architecture/constraints PASS, process & documentation consistency
 PASS_WITH_MINOR_ISSUES (wording/process nits, no gatekeeper findings — see
 `ISSUES.md` § Milestone council reviews). Merged to `main`.
 
+## Milestone 1 — Data build pipeline
+
+Goal (`docs/IMPLEMENTATION_PLAN.md` Phase 1): convert the Excel workbook to
+validated JSON, failing the build on structural problems and warning on
+content-quality issues.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M1-1 | Build script reads `source/*.xlsx`, writes `data/*.json` | README.md § Data authority, IMPLEMENTATION_PLAN.md Phase 1 | Met | `tools/build_data.py`; run produces `data/{boxes,seais,population,regions}.json` |
+| M1-2 | Fails on duplicate IDs | IMPLEMENTATION_PLAN.md Phase 1 | Met | `wh_data.py` `validate_boxes`/`validate_seais`/`validate_population`; verified against an injected duplicate `box_id` (exit 1, no output written) |
+| M1-3 | Fails on broken foreign keys | IMPLEMENTATION_PLAN.md Phase 1 | Met | `SEAIs.box_id`/`Population.box_id` checked against `Boxes`; verified via injected corruption (cascading FK errors correctly detected) |
+| M1-4 | Fails on malformed years | IMPLEMENTATION_PLAN.md Phase 1 | Met | numeric-type check on all year fields |
+| M1-5 | Fails on invalid population ranges | IMPLEMENTATION_PLAN.md Phase 1 | Met | `population > 0`, `low <= population <= high` |
+| M1-6 | Fails on unknown relation types | IMPLEMENTATION_PLAN.md Phase 1 | Not started | No `Links` table exists yet (tracked as ISSUE-004); nothing to validate until Phase 3 |
+| M1-7 | Warns on TODO URLs, missing population, low-confidence records, suspicious dates | IMPLEMENTATION_PLAN.md Phase 1 | Met | Verified: real workbook run produces exactly 671 warnings (198 Box + 83 SEAI TODO URLs, 390 unfilled Population rows), 0 errors |
+| M1-8 | `data/*.json` reproducible from `source/*.xlsx`, never hand-edited | AGENTS.md § Source of truth | Met | `data/README.md` states the rule; build overwrites deterministically on every run |
+| M1-9 | No runtime Python — build-time only | AGENTS.md § Project intent | Met | `tools/` scripts run only at build time; no Python referenced from `index.html`/`js/` |
+
+### Milestone 1 council review
+
+Reviewed 2026-09-06 against commit `74459d7`: data integrity PASS, static-site
+architecture/constraints PASS, process & documentation consistency
+PASS_WITH_MINOR_ISSUES (a misfiled issue entry and two stale-docs nits, no
+gatekeeper findings — see `ISSUES.md` § Milestone council reviews). Merged to
+`main`.
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
