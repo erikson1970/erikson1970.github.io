@@ -88,7 +88,7 @@ _(none yet — see Tabled below)_
 - **Severity:** Minor
 - **Status:** Tabled
 - **Source:** Milestone 2 process/docs council review
-- **Description:** Parallel to ISSUE-006 but for the frontend: the Milestone 2 commit message documents real Node-based runtime verification (against a live local server and a minimal DOM stub), but none of it is a committed, repeatable test file — only prose in the commit message. ISSUE-006's title/scope is explicitly the Python pipeline (`tools/wh_data.py`) and does not cover this.
+- **Description:** Parallel to ISSUE-006 but for the frontend: the Milestone 2 commit message documents real Node-based runtime verification (against a live local server and a minimal DOM stub), but none of it is a committed, repeatable test file — only prose in the commit message. ISSUE-006's title/scope is explicitly the Python pipeline (`tools/wh_data.py`) and does not cover this. The same gap recurred in Milestone 3: a Node `loadAllData()` run verified the moved `data/*.json` still loads correctly post-move, again only as prose (see `TRACEABILITY.md` M3-4, downgraded to Partial for this reason).
 - **Deferred until:** whenever `js/` grows complex enough that manual/ad-hoc verification stops being sufficient, or alongside ISSUE-006 if/when a test runner is introduced for either side.
 
 ### ISSUE-010 — Milestone commits land as one (or two) large commits, not the "commit frequently" granularity AGENTS.md describes
@@ -146,3 +146,20 @@ No gatekeeper findings. Fixed inline (real code/docs changes, not just tabled):
 - **Stale `docs/STATUS.md`** (process finding): refreshed to mention the Phase 2 prototype and mark "Build first interactive prototype" done.
 
 New minor issues filed (tabled, not gatekeepers): ISSUE-009 (no automated test suite for the new `js/` modules, parallel to ISSUE-006), ISSUE-010 (milestones have landed as one or two large commits rather than the frequent-small-commits granularity AGENTS.md describes — a process/practice gap, not unique to this milestone). Milestone approved to merge to `main`.
+
+### Milestone 3 — Site restructure
+Reviewed 2026-09-06 against commit `ce8b234` (branch `feature/site-restructure`), three lenses:
+
+| Reviewer | Verdict |
+|---|---|
+| Path & link integrity | PASS |
+| Static-site architecture / constraints & accessibility | PASS_WITH_MINOR_ISSUES |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No gatekeeper findings. Fixed inline (real code/docs changes, not just tabled):
+- **Missing heading on project cards** (architecture/accessibility finding): `.project-card` links weren't wrapped in a heading, so screen-reader users navigating by heading list would miss per-project headings once more cards are added. Wrapped the link in an `<h3>` in `index.html` and updated `css/site.css` selectors accordingly.
+- **Missing `fonts.googleapis.com` preconnect** (architecture finding, trivial performance nit): added the second `<link rel="preconnect">` alongside the existing `fonts.gstatic.com` one.
+- **Stale `README.md` section citations in `TRACEABILITY.md`** (process finding): Milestones 0–2's requirement rows cite "README.md § ..." headings that moved wholesale to `projects/world-history/README.md` in Milestone 3; the existing "Path note" only covered directory paths, not this. Extended the note to explain the README content relocation too.
+- **M3-4 evidence overstated** (process finding): the requirement's "Met" status rested partly on a Node `loadAllData()` run that, like Milestone 2's equivalent checks (ISSUE-009), was never captured as a committed, repeatable test — only asserted in prose. Downgraded M3-4 to Partial in `TRACEABILITY.md` and extended ISSUE-009's description to note the recurrence.
+
+Noted, not newly filed: Milestone 3 again landed as two large commits (`121b4ff`, `ce8b234`), consistent with the already-tabled ISSUE-010 rather than a new or worsened gap. Milestone approved to merge to `main`.
