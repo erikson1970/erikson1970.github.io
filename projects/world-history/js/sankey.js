@@ -24,8 +24,12 @@ export function buildSankeyFigure(links, boxesById) {
   const boxes = boxIds.map((id) => boxesById.get(id)).filter(Boolean);
 
   const years = boxes.map((b) => b.start_year).filter((y) => typeof y === "number");
-  const minYear = Math.min(...years);
-  const maxYear = Math.max(...years);
+  // Guard against an empty subset (every referenced box has a null
+  // start_year, per ISSUE-005): Math.min/max of an empty array is
+  // +Infinity/-Infinity, and `-Infinity || 1` is still -Infinity (a truthy
+  // value in JS), which would silently produce NaN node x-positions below.
+  const minYear = years.length ? Math.min(...years) : 0;
+  const maxYear = years.length ? Math.max(...years) : 0;
   const yearSpan = maxYear - minYear || 1;
 
   // Plotly's fixed arrangement wants x strictly inside (0, 1); clamp away
@@ -88,14 +92,29 @@ export function buildSankeyFigure(links, boxesById) {
  * Plotly UMD build already loaded as `window.Plotly` (see index.html).
  * Clicking a node calls `onSelectBox(boxId)`; clicking a link calls
  * `onSelectLink(link)` with the matching row from data/links.json.
+ *
+ * Returns the promise from `Plotly.newPlot` (awaited by the caller) so an
+ * asynchronous Plotly failure -- not just a synchronous throw -- is caught
+ * by js/app.js's try/catch around this call, instead of becoming an
+ * unhandled promise rejection that bypasses the intended fallback message.
  */
-export function renderSankey(container, { links, boxesById }, { onSelectBox, onSelectLink }) {
+export async function renderSankey(container, { links, boxesById }, { onSelectBox, onSelectLink }) {
   if (typeof window === "undefined" || !window.Plotly) {
     throw new Error("Plotly is not loaded (expected window.Plotly on the page)");
   }
   const { data, layout, boxIds } = buildSankeyFigure(links, boxesById);
 
-  window.Plotly.newPlot(container, data, layout, { displayModeBar: false, responsive: true });
+  // Match the page's light/dark theme (css/history.css defines --bg/--fg on
+  // :root) instead of Plotly's opaque-white default, which would otherwise
+  // render as a stark white rectangle inside an otherwise dark-themed page.
+  const rootStyle = getComputedStyle(document.documentElement);
+  const bg = rootStyle.getPropertyValue("--bg").trim() || "#ffffff";
+  const fg = rootStyle.getPropertyValue("--fg").trim() || "#1a1a1a";
+  layout.paper_bgcolor = bg;
+  layout.plot_bgcolor = bg;
+  layout.font = { ...layout.font, color: fg };
+
+  await window.Plotly.newPlot(container, data, layout, { displayModeBar: false, responsive: true });
 
   container.on("plotly_click", (event) => {
     const point = event.points && event.points[0];

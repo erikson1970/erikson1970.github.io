@@ -287,7 +287,9 @@ def validate_links(links: list[dict], boxes_by_id: dict[str, dict], report: Repo
         # "invalid relation types" -- ERROR, unlike the WARN-level vocabulary
         # checks elsewhere in this file (see RELATION_TYPES comment above).
         relation_type = row.get("relation_type")
-        if relation_type not in RELATION_TYPES:
+        if not relation_type:
+            report.error(f"Links[{link_id}]: missing relation_type")
+        elif relation_type not in RELATION_TYPES:
             report.error(f"Links[{link_id}]: relation_type {relation_type!r} not in {sorted(RELATION_TYPES)}")
 
         # "Transition year sensible" (docs/DATA_MODEL.md #8) is a content-

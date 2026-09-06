@@ -3,18 +3,28 @@
 // see docs/IMPLEMENTATION_PLAN.md Phase 2 ("separate data loading, state
 // management, and rendering").
 
+// Boxes/SEAIs/population/regions are load-bearing for the whole page (box
+// list, inspector, region filter) -- a missing/broken file among these is a
+// real failure and should reject loadAllData(). links.json only feeds the
+// Phase 3 alluvial prototype (js/sankey.js), which already degrades
+// gracefully on its own (see js/app.js's try/catch around renderSankey), so
+// it's fetched separately below and defaults to [] on failure instead of
+// taking the whole page down with it.
 const FILES = {
   boxes: "boxes.json",
   seais: "seais.json",
   population: "population.json",
   regions: "regions.json",
+};
+const OPTIONAL_FILES = {
   links: "links.json",
 };
 
 /**
- * Load boxes/seais/population/regions/links from `baseUrl` (default
- * "data/") and return { boxes, seais, population, regions, links,
- * boxesById, seaisByBoxId, populationByBoxId, linksByBoxId }.
+ * Load boxes/seais/population/regions (required) and links (optional) from
+ * `baseUrl` (default "data/") and return { boxes, seais, population,
+ * regions, links, boxesById, seaisByBoxId, populationByBoxId, linksById,
+ * linksByBoxId }.
  */
 export async function loadAllData(baseUrl = "data/") {
   const entries = Object.entries(FILES);
@@ -30,6 +40,18 @@ export async function loadAllData(baseUrl = "data/") {
       throw new Error(`failed to load ${baseUrl}${filename}: ${res.status} ${res.statusText}`);
     }
     tables[key] = await res.json();
+  }
+
+  tables.links = [];
+  try {
+    const res = await fetch(baseUrl + OPTIONAL_FILES.links);
+    if (res.ok) {
+      tables.links = await res.json();
+    } else {
+      console.warn(`optional ${baseUrl}${OPTIONAL_FILES.links} failed to load: ${res.status} ${res.statusText}`);
+    }
+  } catch (err) {
+    console.warn(`optional ${baseUrl}${OPTIONAL_FILES.links} failed to load: ${err.message}`);
   }
 
   return { ...tables, ...buildIndices(tables) };

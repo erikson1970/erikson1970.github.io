@@ -17,6 +17,7 @@ const els = {
   boxList: document.getElementById("box-list"),
   inspector: document.getElementById("inspector-content"),
   alluvial: document.getElementById("alluvial"),
+  alluvialList: document.getElementById("alluvial-list"),
 };
 
 function setStatus(message, isError = false) {
@@ -101,6 +102,33 @@ function renderList(data, state) {
 
     li.appendChild(button);
     els.boxList.appendChild(li);
+  }
+}
+
+// Text/keyboard alternative to the Plotly Sankey diagram (visually hidden
+// by default, see css/history.css .visually-hidden's :focus-within
+// exception). Plotly's own SVG hit-targets are mouse-driven with no
+// tabindex, so this is the only way a keyboard/screen-reader user can
+// browse or select a link at all -- it's populated from data/links.json
+// directly, independent of whether Plotly itself loaded (see the
+// try/catch around renderSankey below).
+function renderAlluvialList(data) {
+  if (!els.alluvialList) return;
+  els.alluvialList.innerHTML = "";
+  for (const link of data.links) {
+    const source = data.boxesById.get(link.source_box_id);
+    const target = data.boxesById.get(link.target_box_id);
+    const li = document.createElement("li");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent =
+      `${source?.box_name ?? link.source_box_id} → ${target?.box_name ?? link.target_box_id} ` +
+      `(${link.year ?? "?"}, ${link.relation_type ?? "?"})`;
+    button.addEventListener("click", () => {
+      store.set({ selectedLinkId: link.link_id, selectedBoxId: null });
+    });
+    li.appendChild(button);
+    els.alluvialList.appendChild(li);
   }
 }
 
@@ -199,8 +227,13 @@ async function main() {
     store.set({ regionFilter: els.regionFilter.value, selectedBoxId: null, selectedLinkId: null });
   });
 
+  // Populated from the fetched data directly, independent of whether Plotly
+  // itself loads -- this is the accessible fallback, not just a mirror of
+  // the chart.
+  renderAlluvialList(data);
+
   try {
-    renderSankey(
+    await renderSankey(
       els.alluvial,
       { links: data.links, boxesById: data.boxesById },
       {
