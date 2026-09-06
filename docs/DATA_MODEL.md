@@ -234,6 +234,16 @@ The build process should validate all IDs and foreign keys.
 
 At minimum:
 
+Implemented in `tools/wh_data.py`. That implementation splits these rules into
+two severities: **ERROR** (structural — duplicate/missing ID, broken foreign
+key, malformed year, invalid numeric population, inconsistent low/high
+bounds; fails the build) and **WARNING** (content-quality — TODO URLs,
+missing population, off-vocabulary confidence/status/basis values, duplicate
+knot points; reported but does not block the build). Where a rule below
+doesn't say which, treat "unique"/"exists"/"malformed"/"invalid numeric" as
+ERROR and "controlled vocabulary" as WARNING, since the workbook is expected
+to be ahead of the documented vocabularies at this stage.
+
 ### Boxes
 
 - `box_id` unique;

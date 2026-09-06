@@ -47,6 +47,13 @@ _(none yet — see Tabled below)_
 - **Description:** No succession/relationship data and no per-country-lane segmentation exist yet. Alluvial/Sankey view and accurate multi-country boxes (Rome, Ottomans, etc.) are blocked on these.
 - **Deferred until:** Phase 3 (`Links`, minimal subset) and Phase 7 (`BoxSegments`).
 
+### ISSUE-006 — No automated test suite for `tools/wh_data.py`
+- **Severity:** Minor
+- **Status:** Tabled
+- **Source:** Milestone 1 implementation
+- **Description:** `build_data.py`/`validate_data.py` were exercised manually against the real workbook and against a deliberately corrupted copy (duplicate `box_id`, invalid `color_hex`, cascading FK break) to confirm the ERROR path genuinely blocks output. There's no repeatable test file for this yet.
+- **Deferred until:** whenever the validation logic grows complex enough that manual spot-checks stop being sufficient, or before a CI step is added.
+
 ## Resolved
 
 ### ISSUE-000 — Repo contained an unrelated portfolio template and stray files
