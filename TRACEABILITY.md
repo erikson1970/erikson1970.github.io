@@ -141,6 +141,60 @@ extending the Path note above, and M3-4 was downgraded to Partial to match
 its actual evidence — see `ISSUES.md` § Milestone council reviews. Merged to
 `main`.
 
+## Milestone 4 — Plotly alluvial prototype (Phase 3)
+
+Goal (`docs/IMPLEMENTATION_PLAN.md` Phase 3): create a minimal `Links` table
+for a small subset and a Sankey/alluvial view over it, with nodes ordered
+chronologically, clickable links, selected-node-updates-inspector, and the
+page remaining static.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M4-1 | Minimal `Links` table for a chosen subset | IMPLEMENTATION_PLAN.md Phase 3 | Met | 7-row Links sheet added to the workbook covering the Mediterranean/Europe candidate list (all 9 named boxes: Roman Empire, Western Roman Empire, Byzantine Empire, Frankish Kingdom, West Francia, Kingdom of France, East Francia, Holy Roman Empire, Ottoman Empire); China cluster deliberately left for a later pass (see ISSUE-004 note) |
+| M4-2 | `Links` fields match `DATA_MODEL.md` §5 | docs/DATA_MODEL.md | Met | `link_id`, `source_box_id`, `target_box_id`, `year`, `relation_type`, `weight_basis`, `confidence`, `source_url`, `notes` all present; `relation_type` drawn from the recommended vocabulary |
+| M4-3 | Build/validation extended to cover `Links` | docs/DATA_MODEL.md §8, IMPLEMENTATION_PLAN.md Phase 1 | Met | `validate_links()` in `tools/wh_data.py`: checks `link_id` uniqueness, source/target FK existence against `Boxes`, malformed year, `relation_type` membership (classified as ERROR, not the file's usual WARNING-for-vocabulary default, per Phase 1's explicit "fails on unknown relation types"); year-outside-combined-span is a WARNING. `build_data.py` writes `data/links.json`. Verified: clean run unchanged at 671 warnings/0 errors (Links adds none); a deliberately corrupted `relation_type` and a broken FK were each independently confirmed to block the build (ERROR, exit 1, no output written) |
+| M4-4 | M1-6 ("fails on unknown relation types"), previously Not started, now actually testable | IMPLEMENTATION_PLAN.md Phase 1 | Met | See M4-3; M1-6 above should be read as superseded by this row now that `Links` exists |
+| M4-5 | Nodes ordered chronologically | IMPLEMENTATION_PLAN.md Phase 3 acceptance criteria | Met | `buildSankeyFigure()` in `js/sankey.js` derives node `x` from `start_year` (clamped `[0.02, 0.98]`) and passes `arrangement: "fixed"` to Plotly, which strictly enforces the given coordinates instead of auto-laying-out nodes (AGENTS.md § Visualization semantics forbids auto-reordering); verified via a Node unit test against real generated data confirming monotonic x-ordering |
+| M4-6 | Links clickable | IMPLEMENTATION_PLAN.md Phase 3 acceptance criteria | Partial | `renderSankey()` wires a `plotly_click` handler that distinguishes link clicks (`point.source`/`point.target` present) from node clicks and calls `onSelectLink`/`onSelectBox` accordingly; the pure event-routing logic and `js/app.js` wiring were verified. A real, independently-verified click path also exists via the `#alluvial-list` keyboard/AT alternative (see M4-11), which calls the identical `onSelectLink`/store code and was confirmed end-to-end in the fake-DOM harness. Still Partial because the Plotly chart's own `plotly_click` firing on a real rendered SVG could not be exercised in this environment (no browser) — see M4-8 |
+| M4-7 | Selected node/link updates inspector | IMPLEMENTATION_PLAN.md Phase 3 acceptance criteria | Met | `js/app.js`: `onSelectBox`/`onSelectLink` callbacks set `selectedBoxId`/`selectedLinkId` (mutually exclusive) on the shared store; `renderInspector` branches to `renderLinkInspector` when a link is selected, showing source → target, year, relation type, confidence, notes, source URL. Verified end-to-end for both the box-click path and the link-click path (via `#alluvial-list`, see M4-11) in the fake-DOM harness — this row covers the store/render logic itself, which is fully exercised regardless of which UI element triggers it (chart vs. fallback list); the *chart's own* click-firing is M4-6's remaining caveat |
+| M4-8 | Page remains static (no backend, no build step at runtime) | IMPLEMENTATION_PLAN.md Phase 3 acceptance criteria, AGENTS.md § Project intent | Partial | Plotly loaded via a pinned-version CDN `<script>` (`cdn.plot.ly/plotly-2.35.2.min.js`, reachability verified with `curl -I`); `renderSankey()` call in `main()` is `await`ed inside a try/catch (covering both a synchronous throw and an async `Plotly.newPlot` rejection) so a CDN/offline failure degrades to a text fallback rather than breaking the rest of the page. `links.json` itself is now fetched separately from the required tables (see M4-12) so even a broken/missing Links file can't take down the box list/inspector/filter either. Verified via a Node fake-DOM harness (fetch redirected to a local static server, deliberately no `window.Plotly` to exercise the fallback path): data loads, summary renders, 198 boxes render, region filter (13 options) narrows the list, box click and `#alluvial-list` link click both populate the inspector correctly, filter change resets it, and the alluvial container shows the expected caught fallback message. Marked Partial because this environment has no real browser to confirm actual Plotly chart rendering or genuine `plotly_click` firing — the fallback path and all non-Plotly wiring are the parts that are Met |
+| M4-9 | Accessible alternative for a chart with no native text alternative | AGENTS.md § accessibility | Met | `<div id="alluvial" role="img" aria-label="...">` plus `aria-describedby` pointing at a visually-hidden, keyboard-focusable `#alluvial-list` of real `<button>`s (one per link: source → target, year, relation type) that call the same `onSelectLink` path as a chart click. Added during Milestone 4 council reconciliation after the architecture/accessibility reviewer noted the original `role="img"`/`aria-label`-only treatment gave AT/keyboard users no way to browse or select individual links, unlike the box list's real `<button>` pattern (M2-7). `.visually-hidden:focus-within` (`css/history.css`) makes a focused item visible rather than only technically present in the DOM. Verified via the fake-DOM harness: 7 items render, and simulating a click on the first one correctly populates the inspector. Ribbon-width caveat (equal-weight placeholder, not population-based) stated in visible text above the chart too, not just the aria-label |
+| M4-10 | No production backend/DB/auth/API keys introduced | AGENTS.md § Project intent | Met | Phase 3 added only a workbook sheet, Python validation code, generated JSON, and static JS/CSS/HTML; the Plotly CDN script is a static asset load, not a backend dependency |
+| M4-11 | Chart theme consistency and defensive-coding gaps closed during reconciliation | Milestone 4 architecture/accessibility council review | Met | Three findings fixed inline: (1) `renderSankey()` now reads `--bg`/`--fg` off `:root` via `getComputedStyle` and sets `paper_bgcolor`/`plot_bgcolor`/`font.color` so the chart matches the page's light/dark theme instead of always rendering an opaque white rectangle; (2) `buildSankeyFigure()` guards the case where no referenced box has a numeric `start_year` — an empty `years` array previously produced `Math.min()`/`Math.max()` of `+Infinity`/`-Infinity`, and `-Infinity || 1` still evaluates to `-Infinity` (truthy in JS), silently yielding `NaN` node x-positions; now falls back to `0`/`0` when the array is empty; (3) `renderSankey()` is now `async` and its caller `await`s it, so an asynchronous `Plotly.newPlot` rejection is caught by `js/app.js`'s try/catch instead of becoming an unhandled promise rejection |
+| M4-12 | `links.json` load failure isolated from the required-data load | Milestone 4 architecture/accessibility council review | Met | `js/data.js`'s `loadAllData()` previously fetched `links.json` in the same `Promise.all` as `boxes`/`seais`/`population`/`regions`, so a single broken/missing Links file would reject the whole call and show "Failed to load data," taking down the box list/inspector/filter too. Split into required (`FILES`, hard-fails) and optional (`OPTIONAL_FILES`, catches and defaults to `[]` with a `console.warn`) — matching the graceful-degradation principle already established for the Plotly-load failure itself (M4-8) |
+
+### Milestone 4 council review
+
+Reviewed 2026-09-06 against commit `65f38ab` (branch `feature/alluvial-prototype`),
+three lenses:
+
+| Reviewer | Verdict |
+|---|---|
+| Data integrity | PASS_WITH_MINOR_ISSUES |
+| Static-site architecture/constraints & accessibility | PASS_WITH_MINOR_ISSUES |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No gatekeeper findings. Fixed inline: a real accessibility gap (the Plotly
+widget alone gave AT/keyboard users no way to browse or select a link —
+added the `#alluvial-list` keyboard-focusable fallback, M4-9); a real
+theme-consistency bug (Plotly chart ignoring the page's dark mode, M4-11); a
+real robustness gap (a broken `links.json` could take down the whole page,
+not just the alluvial section, M4-12); a latent `NaN`-node-position edge
+case and an un-awaited `Plotly.newPlot` promise (both M4-11); a misleading
+alluvial-note sentence that read as one chained succession rather than 7
+discrete links (`index.html`); a JSDoc gap (`linksById` missing from
+`loadAllData`'s comment); and an opaque validation error message for a
+missing `relation_type` (now says "missing relation_type" instead of
+"relation_type None not in [...]"). Tabled as new minor issues rather than
+fixed: ISSUE-011 (the `DATA_MODEL.md` §8 "transition year sensible" check is
+a loose union-envelope heuristic, not a real sensibility check). Extended
+existing entries: ISSUE-009 (this is the third milestone where runtime JS
+verification was performed but not committed as a repeatable test file);
+ISSUE-010 (commit granularity improved to 3 commits this milestone, still
+not fully resolved). M4-6/M4-7/M4-8 wording reconciled so a Partial rating
+doesn't overclaim what's actually verified — see `ISSUES.md` § Milestone
+council reviews. Merged to `main`.
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
@@ -150,9 +204,9 @@ Tracked here so later milestones can check items off against `AGENTS.md`'s
 |---|---|---|
 | V1-1 | Runs as a static site | Met (Milestone 2) |
 | V1-2 | Loads generated JSON | Met (Milestone 2) |
-| V1-3 | Interactive chronological Sankey/alluvial subset | Not started |
+| V1-3 | Interactive chronological Sankey/alluvial subset | Partial (Milestone 4, small 7-link Mediterranean/Europe subset; see M4-6/M4-8 caveats) |
 | V1-4 | Simple timeline | Not started |
-| V1-5 | Select a historical box | Met (Milestone 2, box-list only; no timeline/alluvial marks yet) |
+| V1-5 | Select a historical box | Met (Milestone 2 box-list; Milestone 4 adds alluvial node/link selection for the Links subset, see M4-6) |
 | V1-6 | Updates an inspector | Met (Milestone 2) |
 | V1-7 | At least one region filter | Met (Milestone 2) |
 | V1-8 | Deployable to GitHub Pages | Met (live since Milestone 0; Milestone 2 content not yet merged to `main`) |

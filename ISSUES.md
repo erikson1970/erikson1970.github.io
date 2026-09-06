@@ -54,6 +54,7 @@ _(none yet — see Tabled below)_
 - **Source:** `docs/DATA_MODEL.md`, `docs/STATUS.md`
 - **Description:** No succession/relationship data and no per-country-lane segmentation exist yet. Alluvial/Sankey view and accurate multi-country boxes (Rome, Ottomans, etc.) are blocked on these.
 - **Deferred until:** Phase 3 (`Links`, minimal subset) and Phase 7 (`BoxSegments`).
+- **Note (Milestone 4):** The `Links` half is now partially resolved — a 7-row hand-authored subset covering the Mediterranean/Europe cluster (`docs/IMPLEMENTATION_PLAN.md` Phase 3) exists and drives a working Sankey/alluvial prototype (see `TRACEABILITY.md` § Milestone 4). The China cluster and the rest of the dataset remain unlinked, and `BoxSegments` remains fully open (still deferred to Phase 7). Left open rather than closed since the title's `Links` scope is only partially covered.
 
 ### ISSUE-006 — No automated test suite for `tools/wh_data.py`
 - **Severity:** Minor
@@ -88,7 +89,7 @@ _(none yet — see Tabled below)_
 - **Severity:** Minor
 - **Status:** Tabled
 - **Source:** Milestone 2 process/docs council review
-- **Description:** Parallel to ISSUE-006 but for the frontend: the Milestone 2 commit message documents real Node-based runtime verification (against a live local server and a minimal DOM stub), but none of it is a committed, repeatable test file — only prose in the commit message. ISSUE-006's title/scope is explicitly the Python pipeline (`tools/wh_data.py`) and does not cover this. The same gap recurred in Milestone 3: a Node `loadAllData()` run verified the moved `data/*.json` still loads correctly post-move, again only as prose (see `TRACEABILITY.md` M3-4, downgraded to Partial for this reason).
+- **Description:** Parallel to ISSUE-006 but for the frontend: the Milestone 2 commit message documents real Node-based runtime verification (against a live local server and a minimal DOM stub), but none of it is a committed, repeatable test file — only prose in the commit message. ISSUE-006's title/scope is explicitly the Python pipeline (`tools/wh_data.py`) and does not cover this. The same gap recurred in Milestone 3: a Node `loadAllData()` run verified the moved `data/*.json` still loads correctly post-move, again only as prose (see `TRACEABILITY.md` M3-4, downgraded to Partial for this reason). Recurred a third time in Milestone 4: a Node fake-DOM harness verified the Sankey/Links integration (data load, box-list render, region-filter narrowing, box- and link-click-to-inspector, the accessible fallback list, and the Plotly-unavailable degradation path), but again only as commit-message/`TRACEABILITY.md` prose, not a committed test file (see `TRACEABILITY.md` M4-6/M4-8).
 - **Deferred until:** whenever `js/` grows complex enough that manual/ad-hoc verification stops being sufficient, or alongside ISSUE-006 if/when a test runner is introduced for either side.
 
 ### ISSUE-010 — Milestone commits land as one (or two) large commits, not the "commit frequently" granularity AGENTS.md describes
@@ -97,6 +98,14 @@ _(none yet — see Tabled below)_
 - **Source:** Milestone 2 process/docs council review
 - **Description:** AGENTS.md § Source control workflow says "commit frequently on working branch — small, real commits, not one giant squash at the end." All three milestones so far (0, 1, 2) each landed as one primary commit (plus, for 1 and 2, one small follow-up docs commit) rather than incremental commits during the work. Not flagged by either of the first two council reviews; caught on the third pass. No functional impact — each commit message is detailed and the work was verified as a unit before committing — but it's a real gap between written process and actual practice.
 - **Deferred until:** a decision on whether to tighten actual practice (commit more granularly mid-milestone going forward) or relax AGENTS.md's wording to match reality; not worth rewriting history on already-merged milestones.
+- **Note (Milestone 4):** Improved, not resolved — Milestone 4 split cleanly into three commits (data pipeline, UI, docs/traceability) instead of one or two, closer to but still short of the "small, real commits" ideal. Left open since Milestones 0–3 are unaffected and the practice isn't yet consistent enough to call this closed.
+
+### ISSUE-011 — `Links` "transition year sensible" check is a loose union-envelope heuristic, not a real sensibility check
+- **Severity:** Minor
+- **Status:** Tabled
+- **Source:** Milestone 4 data-integrity council review
+- **Description:** `docs/DATA_MODEL.md` §8 lists "transition year sensible" as a `Links` validation rule. The actual implementation (`tools/wh_data.py` `validate_links`) checks only that the link's `year` falls within `[min(source.start_year, target.start_year), max(source.end_year, target.end_year)]` — the *union* of both boxes' lifespans, not their overlap or adjacency. A link between two boxes centuries apart could still pass this check if the chosen year happened to land inside the wider combined span. Not triggered by any of the current 7 rows (all pass cleanly and are historically accurate), and it's correctly scoped as a WARNING rather than a build-blocking ERROR, but the word "sensible" oversells what's actually verified.
+- **Deferred until:** whenever a real subset gets large/varied enough that this heuristic would plausibly miss a genuinely bad link, or general validation-logic cleanup.
 
 ## Resolved
 

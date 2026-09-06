@@ -1,0 +1,79 @@
+[
+  {
+    "link_id": "LINK-001",
+    "source_box_id": "ROMAN_EMPIRE",
+    "target_box_id": "WESTERN_ROMAN",
+    "year": 395,
+    "relation_type": "partition",
+    "weight_basis": "equal",
+    "confidence": "High",
+    "source_url": "https://en.wikipedia.org/wiki/Division_of_the_Roman_Empire",
+    "notes": "Death of Theodosius I; the empire was permanently divided between his sons, Honorius (West) and Arcadius (East)."
+  },
+  {
+    "link_id": "LINK-002",
+    "source_box_id": "ROMAN_EMPIRE",
+    "target_box_id": "BYZANTINE",
+    "year": 395,
+    "relation_type": "partition",
+    "weight_basis": "equal",
+    "confidence": "High",
+    "source_url": "https://en.wikipedia.org/wiki/Division_of_the_Roman_Empire",
+    "notes": "Same 395 division; the Eastern half is represented in this dataset by the Byzantine Empire box, whose start_year (395) matches."
+  },
+  {
+    "link_id": "LINK-003",
+    "source_box_id": "FR_FRANKISH",
+    "target_box_id": "FR_WEST_FRANCIA",
+    "year": 843,
+    "relation_type": "partition",
+    "weight_basis": "equal",
+    "confidence": "High",
+    "source_url": "https://en.wikipedia.org/wiki/Treaty_of_Verdun",
+    "notes": "Treaty of Verdun partitioned the Carolingian Frankish realm among Louis the Pious's three surviving sons."
+  },
+  {
+    "link_id": "LINK-004",
+    "source_box_id": "FR_FRANKISH",
+    "target_box_id": "EAST_FRANCIA",
+    "year": 843,
+    "relation_type": "partition",
+    "weight_basis": "equal",
+    "confidence": "High",
+    "source_url": "https://en.wikipedia.org/wiki/Treaty_of_Verdun",
+    "notes": "Same 843 partition; Louis the German's share became East Francia."
+  },
+  {
+    "link_id": "LINK-005",
+    "source_box_id": "FR_WEST_FRANCIA",
+    "target_box_id": "FR_KINGDOM",
+    "year": 987,
+    "relation_type": "dynastic_transition",
+    "weight_basis": "equal",
+    "confidence": "High",
+    "source_url": "https://en.wikipedia.org/wiki/Hugh_Capet",
+    "notes": "Election of Hugh Capet ends Carolingian rule in West Francia and begins Capetian-led France; same polity, new dynasty, not a conquest or partition."
+  },
+  {
+    "link_id": "LINK-006",
+    "source_box_id": "EAST_FRANCIA",
+    "target_box_id": "DE_HRE",
+    "year": 962,
+    "relation_type": "institutional_successor",
+    "weight_basis": "equal",
+    "confidence": "High",
+    "source_url": "https://en.wikipedia.org/wiki/Holy_Roman_Empire",
+    "notes": "Otto I crowned Holy Roman Emperor; East Francia's kingship becomes the institutional core of the Holy Roman Empire."
+  },
+  {
+    "link_id": "LINK-007",
+    "source_box_id": "BYZANTINE",
+    "target_box_id": "OTTOMAN",
+    "year": 1453,
+    "relation_type": "conquest",
+    "weight_basis": "equal",
+    "confidence": "High",
+    "source_url": "https://en.wikipedia.org/wiki/Fall_of_Constantinople",
+    "notes": "Ottoman conquest of Constantinople ends the Byzantine Empire. The Ottoman Empire box already starts in 1308 in this dataset (per the source poster); this link marks the decisive succession event in the Mediterranean/European sphere, not the Ottoman state's founding."
+  }
+]

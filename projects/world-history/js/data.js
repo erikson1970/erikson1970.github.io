@@ -3,17 +3,28 @@
 // see docs/IMPLEMENTATION_PLAN.md Phase 2 ("separate data loading, state
 // management, and rendering").
 
+// Boxes/SEAIs/population/regions are load-bearing for the whole page (box
+// list, inspector, region filter) -- a missing/broken file among these is a
+// real failure and should reject loadAllData(). links.json only feeds the
+// Phase 3 alluvial prototype (js/sankey.js), which already degrades
+// gracefully on its own (see js/app.js's try/catch around renderSankey), so
+// it's fetched separately below and defaults to [] on failure instead of
+// taking the whole page down with it.
 const FILES = {
   boxes: "boxes.json",
   seais: "seais.json",
   population: "population.json",
   regions: "regions.json",
 };
+const OPTIONAL_FILES = {
+  links: "links.json",
+};
 
 /**
- * Load boxes/seais/population/regions from `baseUrl` (default "data/") and
- * return { boxes, seais, population, regions, boxesById, seaisByBoxId,
- * populationByBoxId }.
+ * Load boxes/seais/population/regions (required) and links (optional) from
+ * `baseUrl` (default "data/") and return { boxes, seais, population,
+ * regions, links, boxesById, seaisByBoxId, populationByBoxId, linksById,
+ * linksByBoxId }.
  */
 export async function loadAllData(baseUrl = "data/") {
   const entries = Object.entries(FILES);
@@ -31,10 +42,22 @@ export async function loadAllData(baseUrl = "data/") {
     tables[key] = await res.json();
   }
 
+  tables.links = [];
+  try {
+    const res = await fetch(baseUrl + OPTIONAL_FILES.links);
+    if (res.ok) {
+      tables.links = await res.json();
+    } else {
+      console.warn(`optional ${baseUrl}${OPTIONAL_FILES.links} failed to load: ${res.status} ${res.statusText}`);
+    }
+  } catch (err) {
+    console.warn(`optional ${baseUrl}${OPTIONAL_FILES.links} failed to load: ${err.message}`);
+  }
+
   return { ...tables, ...buildIndices(tables) };
 }
 
-function buildIndices({ boxes, seais, population }) {
+function buildIndices({ boxes, seais, population, links }) {
   const boxesById = new Map(boxes.map((b) => [b.box_id, b]));
 
   const seaisByBoxId = new Map();
@@ -49,7 +72,19 @@ function buildIndices({ boxes, seais, population }) {
     populationByBoxId.get(p.box_id).push(p);
   }
 
-  return { boxesById, seaisByBoxId, populationByBoxId };
+  const linksById = new Map(links.map((l) => [l.link_id, l]));
+
+  // Every box_id that appears as either end of a link, so the alluvial view
+  // knows which boxes have link data at all (see js/sankey.js).
+  const linksByBoxId = new Map();
+  for (const l of links) {
+    for (const boxId of [l.source_box_id, l.target_box_id]) {
+      if (!linksByBoxId.has(boxId)) linksByBoxId.set(boxId, []);
+      linksByBoxId.get(boxId).push(l);
+    }
+  }
+
+  return { boxesById, seaisByBoxId, populationByBoxId, linksById, linksByBoxId };
 }
 
 /** Distinct `region_group` values from Boxes, sorted, for a filter control. */

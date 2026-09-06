@@ -2,13 +2,15 @@
 
 ## Status summary
 
-**Phase:** data transcription complete enough for visualization prototyping; a validated build pipeline (`tools/build_data.py`) now converts the workbook into the `data/*.json` the site actually loads.
+**Phase:** data transcription complete enough for visualization prototyping; a validated build pipeline (`tools/build_data.py`) now converts the workbook into the `data/*.json` the site actually loads. A minimal `Links` table now exists for a small Mediterranean/Europe subset, and a first Sankey/alluvial prototype renders it (Phase 3).
 
 The project currently has a usable first-pass dataset derived from the ChartOrigin *Timeline of World History* poster.
 
 `data/*.json` is generated, not authored, and must never be hand-edited — see `data/README.md`/`tools/README.md`. Re-run `python3 tools/build_data.py` after any workbook edit; it fails (writes nothing) on structural problems and warns on content-quality gaps (see `docs/DATA_MODEL.md` §8).
 
-A first interactive prototype now exists (`index.html` + `js/`): load the generated JSON, list all `Boxes` sorted chronologically with color swatches, click one to see an inspector panel, filter by `region_group`. This satisfies "Build first interactive prototype" below; it is a sanity-check slice, not yet the Sankey/alluvial or timeline views (Phases 3–4).
+A first interactive prototype now exists (`index.html` + `js/`): load the generated JSON, list all `Boxes` sorted chronologically with color swatches, click one to see an inspector panel, filter by `region_group`. This satisfies "Build first interactive prototype" below; it is a sanity-check slice, not yet the full timeline view (Phase 4).
+
+A Phase 3 alluvial prototype (`js/sankey.js`, Plotly loaded from CDN) now sits above the box list: a small hand-authored 7-row `Links` subset (Roman → Western Roman/Byzantine, Frankish → West/East Francia, West Francia → Kingdom of France, East Francia → Holy Roman Empire, Byzantine → Ottoman) renders as a Sankey diagram with nodes ordered chronologically by `start_year` (`arrangement: "fixed"`, no auto-layout reordering). Clicking a node or link updates the same inspector panel as the box list. Ribbon width is currently equal-weighted, not population-based (see ISSUE-003).
 
 Canonical poster/source page:
 
@@ -135,13 +137,9 @@ The `Population` table is a scaffold only.
 
 The next population work should prioritize historically significant entities and major breakpoints rather than attempting annual estimates.
 
-### 5. Historical succession is not modeled yet
+### 5. Historical succession is modeled only for a small subset
 
-A Sankey/alluvial visualization needs explicit relationships.
-
-The current tables know **what existed and when**, but not reliably **what became what**.
-
-A proposed `Links` table should store source box, target box, transition year, relationship type, confidence, and optional weight method.
+A `Links` table now exists (`docs/DATA_MODEL.md` §5: source box, target box, transition year, relationship type, confidence, source URL, notes), but it covers only 7 hand-authored rows in the Mediterranean/Europe cluster — the China cluster and the rest of the dataset still have no succession data. Most of the tables still know **what existed and when**, but not **what became what**.
 
 ### 6. Architectural item dates may differ from the poster
 
@@ -155,7 +153,7 @@ These should be reviewed before treating them as authoritative.
 
 Priority order:
 
-1. Add `Links`.
+1. ~~Add `Links`.~~ Done for a small Mediterranean/Europe subset — see Milestone 4 (Phase 3 alluvial prototype) above. The China cluster from `docs/IMPLEMENTATION_PLAN.md` Phase 3 and the rest of the dataset remain unlinked.
 2. Add `BoxSegments`.
 3. Populate a small, representative subset of `Population`.
 4. Add real Wikipedia URLs gradually.

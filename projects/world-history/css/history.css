@@ -27,7 +27,10 @@
 * { box-sizing: border-box; }
 
 /* Visible sections still get a real <h2> for screen readers / structure,
-   but the two-panel layout doesn't need it printed on screen. */
+   but the two-panel layout doesn't need it printed on screen. Also used
+   (Phase 3) for a hidden-but-focusable text/button alternative to the
+   Plotly Sankey diagram -- see #alluvial-list in index.html. */
+.visually-hidden,
 .visually-hidden-heading {
   position: absolute;
   width: 1px;
@@ -38,6 +41,19 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+/* ...but a focused child (e.g. a keyboard-focused button inside the hidden
+   #alluvial-list) must become visible, or keyboard users lose all focus
+   indication -- AGENTS.md accessibility: keyboard access must be real, not
+   just technically present in the DOM. */
+.visually-hidden:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
 }
 
 body {
@@ -70,6 +86,38 @@ header .summary { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 1rem
   border-radius: 4px;
   background: var(--bg);
   color: var(--fg);
+}
+
+.alluvial-section {
+  margin-bottom: 1.5rem;
+}
+.alluvial-section h2 {
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+.alluvial-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem;
+}
+#alluvial {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-height: 320px;
+}
+#alluvial-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+#alluvial-list button {
+  font: inherit;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
 }
 
 .panels {

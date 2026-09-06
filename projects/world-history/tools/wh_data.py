@@ -44,11 +44,30 @@ POPULATION_BASIS_RECOMMENDED = {
 # recommended vocabulary above -- treated like the TODO URL: expected for now.
 PLACEHOLDER_BASIS_METHOD = "TBD"
 
+# docs/DATA_MODEL.md #5 "Recommended relation types". Unlike the vocabularies
+# above, docs/IMPLEMENTATION_PLAN.md Phase 1 explicitly lists "invalid
+# relation types" among the build-failing checks, so this one is ERROR, not
+# WARNING -- see validate_links.
+RELATION_TYPES = {
+    "successor",
+    "partition",
+    "unification",
+    "conquest",
+    "colonization",
+    "decolonization",
+    "dynastic_transition",
+    "institutional_successor",
+    "cultural_continuity",
+    "migration",
+    "other",
+}
+
 SHEETS = {
     "Boxes": {"header_row": 1},
     "SEAIs": {"header_row": 1},
     "Population": {"header_row": 3},
     "Regions": {"header_row": 3},
+    "Links": {"header_row": 1},
 }
 
 
@@ -237,6 +256,64 @@ def validate_regions(regions: list[dict], report: Report) -> None:
         seen_pairs.add(pair)
 
 
+def validate_links(links: list[dict], boxes_by_id: dict[str, dict], report: Report) -> None:
+    seen_ids: set[str] = set()
+    for row in links:
+        link_id = row.get("link_id")
+        if not link_id:
+            report.error(f"Links: row missing link_id: {row!r}")
+            continue
+        if link_id in seen_ids:
+            report.error(f"Links: duplicate link_id '{link_id}'")
+        seen_ids.add(link_id)
+
+        source_id, target_id = row.get("source_box_id"), row.get("target_box_id")
+        source_box = boxes_by_id.get(source_id) if source_id else None
+        target_box = boxes_by_id.get(target_id) if target_id else None
+        if not source_id:
+            report.error(f"Links[{link_id}]: missing source_box_id")
+        elif source_box is None:
+            report.error(f"Links[{link_id}]: source_box_id '{source_id}' does not exist in Boxes")
+        if not target_id:
+            report.error(f"Links[{link_id}]: missing target_box_id")
+        elif target_box is None:
+            report.error(f"Links[{link_id}]: target_box_id '{target_id}' does not exist in Boxes")
+
+        year = row.get("year")
+        if year is not None and not _is_number(year):
+            report.error(f"Links[{link_id}]: malformed year = {year!r}")
+
+        # docs/IMPLEMENTATION_PLAN.md Phase 1 explicitly fails the build on
+        # "invalid relation types" -- ERROR, unlike the WARN-level vocabulary
+        # checks elsewhere in this file (see RELATION_TYPES comment above).
+        relation_type = row.get("relation_type")
+        if not relation_type:
+            report.error(f"Links[{link_id}]: missing relation_type")
+        elif relation_type not in RELATION_TYPES:
+            report.error(f"Links[{link_id}]: relation_type {relation_type!r} not in {sorted(RELATION_TYPES)}")
+
+        # "Transition year sensible" (docs/DATA_MODEL.md #8) is a content-
+        # quality check, not structural -- WARN rather than ERROR.
+        if _is_number(year) and source_box is not None and target_box is not None:
+            lo = min(v for v in (source_box.get("start_year"), target_box.get("start_year")) if _is_number(v))
+            hi = max(v for v in (source_box.get("end_year"), target_box.get("end_year")) if _is_number(v))
+            if not (lo <= year <= hi):
+                report.warn(
+                    f"Links[{link_id}]: year {year} falls outside the source/target boxes' "
+                    f"combined span [{lo}, {hi}]"
+                )
+
+        confidence = row.get("confidence")
+        if confidence not in CONFIDENCE_LEVELS:
+            report.warn(f"Links[{link_id}]: confidence {confidence!r} outside {sorted(CONFIDENCE_LEVELS)}")
+
+        url = row.get("source_url")
+        if not url:
+            report.warn(f"Links[{link_id}]: missing source_url")
+        elif url == TODO_URL:
+            report.warn(f"Links[{link_id}]: source_url is still the TODO placeholder")
+
+
 def compute_log10_population(pop: list[dict], report: Report) -> None:
     """Recompute log10_population from population at build time -- it's a
     derived field per docs/DATA_MODEL.md, not hand-authored."""
@@ -262,5 +339,6 @@ def validate_all(tables: dict[str, list[dict]]) -> Report:
     validate_seais(tables["SEAIs"], box_ids, report)
     validate_population(tables["Population"], box_ids, report)
     validate_regions(tables["Regions"], report)
+    validate_links(tables["Links"], boxes_by_id, report)
     compute_log10_population(tables["Population"], report)
     return report
