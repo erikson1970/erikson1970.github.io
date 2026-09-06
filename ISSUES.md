@@ -54,6 +54,7 @@ _(none yet — see Tabled below)_
 - **Source:** `docs/DATA_MODEL.md`, `docs/STATUS.md`
 - **Description:** No succession/relationship data and no per-country-lane segmentation exist yet. Alluvial/Sankey view and accurate multi-country boxes (Rome, Ottomans, etc.) are blocked on these.
 - **Deferred until:** Phase 3 (`Links`, minimal subset) and Phase 7 (`BoxSegments`).
+- **Note (Milestone 4):** The `Links` half is now partially resolved — a 7-row hand-authored subset covering the Mediterranean/Europe cluster (`docs/IMPLEMENTATION_PLAN.md` Phase 3) exists and drives a working Sankey/alluvial prototype (see `TRACEABILITY.md` § Milestone 4). The China cluster and the rest of the dataset remain unlinked, and `BoxSegments` remains fully open (still deferred to Phase 7). Left open rather than closed since the title's `Links` scope is only partially covered.
 
 ### ISSUE-006 — No automated test suite for `tools/wh_data.py`
 - **Severity:** Minor
