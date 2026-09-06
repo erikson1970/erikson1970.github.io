@@ -1,0 +1,164 @@
+// Wiring: load data, hold shared state, render. This is the "small subset"
+// slice from AGENTS.md's Scope control -- a sortable/filterable list of
+// Boxes with click-to-select and an inspector panel, not yet the
+// timeline/alluvial views (docs/IMPLEMENTATION_PLAN.md Phases 3-4).
+
+import { loadAllData, regionGroups } from "./data.js";
+import { createStore } from "./state.js";
+
+const TODO_URL = "https://en.wikipedia.org/wiki/Time_management#Implementation_of_goals";
+
+const els = {
+  status: document.getElementById("status"),
+  summary: document.getElementById("summary"),
+  regionFilter: document.getElementById("region-filter"),
+  boxList: document.getElementById("box-list"),
+  inspector: document.getElementById("inspector-content"),
+};
+
+function setStatus(message, isError = false) {
+  els.status.textContent = message;
+  els.status.classList.toggle("status-error", isError);
+}
+
+function renderSummary(data) {
+  els.summary.textContent =
+    `${data.boxes.length} boxes • ${data.seais.length} SEAIs • ` +
+    `${data.population.length} population rows • ${data.regions.length} region-country rows`;
+}
+
+function populateRegionFilter(boxes) {
+  const groups = regionGroups(boxes);
+  els.regionFilter.innerHTML = "";
+  const allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = "All regions";
+  els.regionFilter.appendChild(allOption);
+  for (const group of groups) {
+    const option = document.createElement("option");
+    option.value = group;
+    option.textContent = group;
+    els.regionFilter.appendChild(option);
+  }
+}
+
+function filteredBoxes(data, state) {
+  return data.boxes
+    .filter((b) => state.regionFilter === "all" || b.region_group === state.regionFilter)
+    .slice()
+    .sort((a, b) => {
+      const ay = a.start_year ?? a.end_year ?? 0;
+      const by = b.start_year ?? b.end_year ?? 0;
+      return ay - by;
+    });
+}
+
+function renderList(data, state) {
+  const boxes = filteredBoxes(data, state);
+  els.boxList.innerHTML = "";
+
+  if (boxes.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "box-empty";
+    empty.textContent = "No boxes match this filter.";
+    els.boxList.appendChild(empty);
+    return;
+  }
+
+  for (const box of boxes) {
+    const li = document.createElement("li");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "box-item";
+    button.setAttribute("aria-pressed", String(box.box_id === state.selectedBoxId));
+    if (box.box_id === state.selectedBoxId) button.classList.add("selected");
+
+    const swatch = document.createElement("span");
+    swatch.className = "swatch";
+    swatch.style.backgroundColor = box.color_hex || "transparent";
+    swatch.setAttribute("aria-hidden", "true");
+
+    const label = document.createElement("span");
+    label.className = "box-label";
+    label.textContent = `${box.box_name} (${box.start_label ?? "?"}–${box.end_label ?? "?"})`;
+
+    button.append(swatch, label);
+    button.addEventListener("click", () => {
+      store.set({ selectedBoxId: box.box_id === store.get().selectedBoxId ? null : box.box_id });
+    });
+
+    li.appendChild(button);
+    els.boxList.appendChild(li);
+  }
+}
+
+function renderInspector(data, state) {
+  const boxId = state.selectedBoxId;
+  if (!boxId) {
+    els.inspector.innerHTML = "<p>Select a box to see details.</p>";
+    return;
+  }
+
+  const box = data.boxesById.get(boxId);
+  if (!box) {
+    els.inspector.innerHTML = "<p>Selected box not found.</p>";
+    return;
+  }
+
+  const seais = data.seaisByBoxId.get(boxId) || [];
+  const urlLine =
+    box.url && box.url !== TODO_URL
+      ? `<p><a href="${escapeAttr(box.url)}">Wikipedia</a></p>`
+      : "<p>Wikipedia: not yet added (placeholder).</p>";
+
+  const seaiList = seais.length
+    ? `<ul>${seais.map((s) => `<li>${escapeHtml(s.name)} (${escapeHtml(String(s.year_label ?? s.year ?? "?"))})</li>`).join("")}</ul>`
+    : "<p>None recorded.</p>";
+
+  els.inspector.innerHTML = `
+    <h2>${escapeHtml(box.box_name)}</h2>
+    <p>${escapeHtml(box.start_label ?? "?")}–${escapeHtml(box.end_label ?? "?")}</p>
+    <p>Region: ${escapeHtml(box.region_group ?? "?")} — Span: ${escapeHtml(box.span ?? "?")}</p>
+    <p>Confidence: ${escapeHtml(box.confidence ?? "?")}</p>
+    ${box.notes ? `<p>Notes: ${escapeHtml(box.notes)}</p>` : ""}
+    ${urlLine}
+    <h3>SEAIs (${seais.length})</h3>
+    ${seaiList}
+  `;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function escapeAttr(str) {
+  return escapeHtml(str);
+}
+
+let store;
+
+async function main() {
+  setStatus("Loading data…");
+  let data;
+  try {
+    data = await loadAllData("data/");
+  } catch (err) {
+    setStatus(`Failed to load data: ${err.message}`, true);
+    return;
+  }
+
+  setStatus("");
+  renderSummary(data);
+  populateRegionFilter(data.boxes);
+
+  store = createStore();
+  store.subscribe((state) => {
+    renderList(data, state);
+    renderInspector(data, state);
+  });
+
+  els.regionFilter.addEventListener("change", () => {
+    store.set({ regionFilter: els.regionFilter.value, selectedBoxId: null });
+  });
+}
+
+main();
