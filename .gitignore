@@ -12,7 +12,5 @@ __pycache__/
 .venv/
 venv/
 
-# Serena project cache/local config (kept out of version control by its own
-# .serena/.gitignore too; this covers the top-level entry point)
-.serena/cache/
-.serena/project.local.yml
+# Serena MCP tool metadata (local dev-tool state, not project content)
+.serena/

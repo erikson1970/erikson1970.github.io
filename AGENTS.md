@@ -156,18 +156,37 @@ Do not attempt to perfect every historical region before producing a working vis
 
 ## Milestone review process
 
-Before merging a milestone branch to `main`, close out the milestone by
-instantiating a small **council of experts**: independent reviewers (each a
-subagent with a distinct lens — e.g. data integrity, architecture/static-site
-constraints, accessibility/visualization semantics) who each check the
-milestone's stated goal against the actual repo state and report findings.
+A **milestone branch** is one that closes out a numbered phase/milestone from
+`docs/IMPLEMENTATION_PLAN.md` or `TRACEABILITY.md` (e.g. `feature/repo-reset`
+for Milestone 0). Small `fix/<name>` branches for sub-tasks within a milestone
+don't need their own council; only the milestone-closing merge to `main` does.
 
-- Feed the council the milestone's requirements (from `TRACEABILITY.md`/this
-  file) and the current diff/state — not just a summary.
-- Reconcile their findings into `ISSUES.md` (new issues) and
-  `TRACEABILITY.md` (status updates) before deciding to merge.
-- A milestone can close with tabled minor issues; it should not close with
-  open gatekeeper issues.
+Before that merge, close out the milestone by instantiating a small **council
+of experts**: independent reviewers (each a subagent with a distinct lens)
+who check the milestone's stated goal against the actual repo state — not a
+summary of it — and report findings. At minimum, run:
+
+1. a **data/content integrity** lens (whatever the milestone touched:
+   workbook, generated JSON, etc.);
+2. an **architecture/static-site constraints** lens (this file's Project
+   intent constraints, recommended structure, no leftover disposable
+   content);
+3. a **process & documentation consistency** lens (do `ISSUES.md` and
+   `TRACEABILITY.md` cross-reference each other correctly, do stated file
+   paths actually resolve, is anything stale) — do not skip this one; it has
+   caught real issues that the other two lenses miss.
+
+Whoever drives the merge (the session/agent orchestrating the milestone)
+reconciles the council's findings into `ISSUES.md` (new issues, filed at the
+correct severity) and `TRACEABILITY.md` (status updates), and fixes cheap
+wording/process nits inline rather than filing them. Each reviewer should
+report a `VERDICT: PASS | PASS_WITH_MINOR_ISSUES | FAIL` plus a `FINDINGS`
+list tagged `[gatekeeper]` or `[minor]`, citing concrete evidence (file
+paths, counts, quoted lines) rather than impressions.
+
+A milestone can close with tabled minor issues; it should not close with
+open gatekeeper issues, and a `FAIL` verdict from any reviewer blocks the
+merge until resolved or the finding is reclassified with stated reasoning.
 
 ## Definition of done for v0.1
 

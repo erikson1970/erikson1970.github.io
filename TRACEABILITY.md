@@ -38,6 +38,13 @@ repo contents with a clean project structure and bring the source workbook in.
 | `Population.population` filled | 0/390 (expected — see ISSUE-003) |
 | Duplicate `Regions.region_id` | 5 groups repeat by design, one row per country (see ISSUE-001) |
 
+### Milestone 0 council review
+
+Reviewed 2026-09-06 against commit `3f84688`: data integrity PASS, static-site
+architecture/constraints PASS, process & documentation consistency
+PASS_WITH_MINOR_ISSUES (wording/process nits, no gatekeeper findings — see
+`ISSUES.md` § Milestone council reviews). Merged to `main`.
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
