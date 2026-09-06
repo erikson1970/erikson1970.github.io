@@ -71,6 +71,35 @@ PASS_WITH_MINOR_ISSUES (a misfiled issue entry and two stale-docs nits, no
 gatekeeper findings — see `ISSUES.md` § Milestone council reviews). Merged to
 `main`.
 
+## Milestone 2 — Minimal static application
+
+Goal (`docs/IMPLEMENTATION_PLAN.md` Phase 2): a genuinely interactive first
+slice on top of Phase 1's generated JSON — separate data loading, state
+management, and rendering; select a box and see an inspector; at least one
+filter.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M2-1 | Data loading is a separate module from rendering/state | IMPLEMENTATION_PLAN.md Phase 2 | Met | `js/data.js` only fetches/indexes; no DOM references |
+| M2-2 | State management is a separate, minimal module | IMPLEMENTATION_PLAN.md Phase 2 | Met | `js/state.js`: `createStore()` (get/set/subscribe), no rendering logic |
+| M2-3 | Runs as a static site with no build step | AGENTS.md § Project intent | Met | Plain ES modules loaded via `<script type="module">`; no bundler |
+| M2-4 | Select a historical box | README.md § core idea, V1-5 | Met | Box list items are `<button>`s; click toggles `selectedBoxId` |
+| M2-5 | Updates an inspector | README.md § core idea, V1-6 | Met | `renderInspector` shows name/dates/region/span/confidence/notes/url/SEAIs |
+| M2-6 | At least one region filter | README.md § core idea, V1-7 | Met | `region-filter` `<select>` populated from `regionGroups()`, filters the list |
+| M2-7 | Interactive marks don't require hover; keyboard-accessible | AGENTS.md § accessibility | Met | Real `<button>` elements (native click + Enter/Space + Tab focus); `:focus-visible` style in `css/history.css` |
+| M2-8 | Color is not the sole encoding for selection state | AGENTS.md § accessibility | Met | Selected item also gets bold text + a checkmark (`::before`), not just background color |
+| M2-9 | Runtime behavior verified, not just claimed | Process norm established during Milestone 1 (not yet written into AGENTS.md) | Partial | Node (built-in fetch) against a local static server + a minimal DOM stub: `loadAllData`/`regionGroups` against real `data/*.json`, `createStore` pub-sub semantics, full `app.js` wiring (click-to-select, filter narrowing, selection-clear-on-filter-change) — verification performed and independently reproduced by the Milestone 2 data-integrity/architecture council reviewers, but not captured as a committed, repeatable test file (see ISSUE-009) |
+
+### Milestone 2 council review
+
+Reviewed 2026-09-06 against commits `7511bee`/`3881455`: data integrity
+PASS_WITH_MINOR_ISSUES, static-site architecture/constraints & accessibility
+PASS, process & documentation consistency PASS_WITH_MINOR_ISSUES. No
+gatekeeper findings; a real sort-order bug and an unhandled-rejection gap
+were fixed inline, `js/README.md`/`docs/STATUS.md` refreshed, two new minor
+issues tabled (ISSUE-009, ISSUE-010) — see `ISSUES.md` § Milestone council
+reviews. Merged to `main`.
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
@@ -78,11 +107,11 @@ Tracked here so later milestones can check items off against `AGENTS.md`'s
 
 | Req | Requirement | Status |
 |---|---|---|
-| V1-1 | Runs as a static site | Not started |
-| V1-2 | Loads generated JSON | Not started |
+| V1-1 | Runs as a static site | Met (Milestone 2) |
+| V1-2 | Loads generated JSON | Met (Milestone 2) |
 | V1-3 | Interactive chronological Sankey/alluvial subset | Not started |
 | V1-4 | Simple timeline | Not started |
-| V1-5 | Select a historical box | Not started |
-| V1-6 | Updates an inspector | Not started |
-| V1-7 | At least one region filter | Not started |
-| V1-8 | Deployable to GitHub Pages | Not started |
+| V1-5 | Select a historical box | Met (Milestone 2, box-list only; no timeline/alluvial marks yet) |
+| V1-6 | Updates an inspector | Met (Milestone 2) |
+| V1-7 | At least one region filter | Met (Milestone 2) |
+| V1-8 | Deployable to GitHub Pages | Met (live since Milestone 0; Milestone 2 content not yet merged to `main`) |

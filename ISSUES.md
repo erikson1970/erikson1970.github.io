@@ -76,6 +76,20 @@ _(none yet — see Tabled below)_
 - **Description:** A truncated/non-zip `.xlsx` raises an uncaught `zipfile.BadZipFile` from inside `openpyxl.load_workbook`, and a workbook missing an expected sheet raises an uncaught `ValueError` from `wh_data.load_workbook`; neither is wrapped in a try/except in `build_data.py`/`validate_data.py`. Confirmed safe in both cases (exit code 1, no output written) — just not a clean `error:`-prefixed message like the already-handled missing-`--source`-file case.
 - **Deferred until:** whenever the CLI's error UX is revisited, or before non-maintainers start editing the workbook directly.
 
+### ISSUE-009 — No automated test suite for `js/app.js`/`js/data.js`/`js/state.js`
+- **Severity:** Minor
+- **Status:** Tabled
+- **Source:** Milestone 2 process/docs council review
+- **Description:** Parallel to ISSUE-006 but for the frontend: the Milestone 2 commit message documents real Node-based runtime verification (against a live local server and a minimal DOM stub), but none of it is a committed, repeatable test file — only prose in the commit message. ISSUE-006's title/scope is explicitly the Python pipeline (`tools/wh_data.py`) and does not cover this.
+- **Deferred until:** whenever `js/` grows complex enough that manual/ad-hoc verification stops being sufficient, or alongside ISSUE-006 if/when a test runner is introduced for either side.
+
+### ISSUE-010 — Milestone commits land as one (or two) large commits, not the "commit frequently" granularity AGENTS.md describes
+- **Severity:** Minor
+- **Status:** Tabled
+- **Source:** Milestone 2 process/docs council review
+- **Description:** AGENTS.md § Source control workflow says "commit frequently on working branch — small, real commits, not one giant squash at the end." All three milestones so far (0, 1, 2) each landed as one primary commit (plus, for 1 and 2, one small follow-up docs commit) rather than incremental commits during the work. Not flagged by either of the first two council reviews; caught on the third pass. No functional impact — each commit message is detailed and the work was verified as a unit before committing — but it's a real gap between written process and actual practice.
+- **Deferred until:** a decision on whether to tighten actual practice (commit more granularly mid-milestone going forward) or relax AGENTS.md's wording to match reality; not worth rewriting history on already-merged milestones.
+
 ## Resolved
 
 ### ISSUE-000 — Repo contained an unrelated portfolio template and stray files
@@ -107,3 +121,20 @@ Reviewed 2026-09-06 against commit `74459d7` (branch `feature/build-data-pipelin
 | Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
 
 No gatekeeper findings. New minor issues filed: ISSUE-007 (dead code in a vocabulary-check loop), ISSUE-008 (raw traceback on a malformed/corrupt workbook instead of a clean CLI error). The process reviewer's misfiled-`ISSUE-005` finding was fixed inline (moved from `## Resolved` to `## Tabled`, matching its own `Status:` field). Also fixed inline: `tools/README.md` now points at `tools/requirements.txt`, and `docs/STATUS.md` was refreshed to mention the build/validation pipeline. Milestone approved to merge to `main`.
+
+### Milestone 2 — Minimal static application
+Reviewed 2026-09-06 against commits `7511bee`/`3881455` (branch `feature/minimal-app`), three lenses:
+
+| Reviewer | Verdict |
+|---|---|
+| Data integrity | PASS_WITH_MINOR_ISSUES |
+| Static-site architecture / constraints & accessibility | PASS |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No gatekeeper findings. Fixed inline (real code/docs changes, not just tabled):
+- **Sort-order bug** (data-integrity finding): `filteredBoxes` in `js/app.js` sorted the 6 null-`start_year` boxes from ISSUE-005 by their *end* year, misplacing e.g. `US_INDIG` (prehistory–1607) next to 16th–century boxes instead of near other prehistoric-start entities. Changed the fallback from `?? end_year ?? 0` to `?? Number.NEGATIVE_INFINITY` so these boxes sort to the front, consistent with them representing the earliest, least-precisely-dated era for their region.
+- **Unhandled rejection** (architecture finding): `main()`'s call site had no `.catch()`, so a rendering-time error (as opposed to a fetch failure, already handled) would only produce a silent console warning. Added `main().catch(...)` routing to the same `setStatus(..., true)` error display.
+- **Stale `js/README.md`** (process finding): rewritten to describe the actual `data.js`/`state.js`/`app.js` split instead of a since-superseded planned module list.
+- **Stale `docs/STATUS.md`** (process finding): refreshed to mention the Phase 2 prototype and mark "Build first interactive prototype" done.
+
+New minor issues filed (tabled, not gatekeepers): ISSUE-009 (no automated test suite for the new `js/` modules, parallel to ISSUE-006), ISSUE-010 (milestones have landed as one or two large commits rather than the frequent-small-commits granularity AGENTS.md describes — a process/practice gap, not unique to this milestone). Milestone approved to merge to `main`.
