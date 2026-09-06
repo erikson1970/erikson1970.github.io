@@ -63,7 +63,13 @@ content-quality issues.
 | M1-8 | `data/*.json` reproducible from `source/*.xlsx`, never hand-edited | AGENTS.md § Source of truth | Met | `data/README.md` states the rule; build overwrites deterministically on every run |
 | M1-9 | No runtime Python — build-time only | AGENTS.md § Project intent | Met | `tools/` scripts run only at build time; no Python referenced from `index.html`/`js/` |
 
-Council review: not yet run for this milestone — pending before merge to `main`.
+### Milestone 1 council review
+
+Reviewed 2026-09-06 against commit `74459d7`: data integrity PASS, static-site
+architecture/constraints PASS, process & documentation consistency
+PASS_WITH_MINOR_ISSUES (a misfiled issue entry and two stale-docs nits, no
+gatekeeper findings — see `ISSUES.md` § Milestone council reviews). Merged to
+`main`.
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 

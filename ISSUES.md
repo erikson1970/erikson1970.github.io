@@ -54,6 +54,28 @@ _(none yet — see Tabled below)_
 - **Description:** `build_data.py`/`validate_data.py` were exercised manually against the real workbook and against a deliberately corrupted copy (duplicate `box_id`, invalid `color_hex`, cascading FK break) to confirm the ERROR path genuinely blocks output. There's no repeatable test file for this yet.
 - **Deferred until:** whenever the validation logic grows complex enough that manual spot-checks stop being sufficient, or before a CI step is added.
 
+### ISSUE-005 — Six `Boxes` rows have no `start_year`
+- **Severity:** Minor
+- **Status:** Tabled
+- **Source:** Data-integrity council review of `source/world_history_chart_dataset_v2.xlsx`
+- **Description:** A handful of "Indigenous Era" boxes (e.g. `US_INDIG`, `CA_INDIG`, `AR_INDIG`, `AU_INDIG`) have a null `start_year` because the poster prints an illegible "c. [BCE]" with no parseable number there. `end_year` is always present, and `DATA_MODEL.md`'s rule only requires `start_year <= end_year` "when both exist," so this is not a validation-rule violation — just an open transcription gap, consistent with STATUS.md limitation #2.
+- **Resolution:** None yet. Left for whoever transcribes those boxes' start dates, or for the build script to render them with an explicit "unknown start" treatment.
+- **Note:** This entry was misfiled under `## Resolved` from Milestone 0 through Milestone 1 despite its own `Status:` field always saying `Tabled` — caught and moved here by the Milestone 1 process/docs council review.
+
+### ISSUE-007 — `wh_data.py` vocabulary-check loop has dead code for `estimate_method`
+- **Severity:** Minor
+- **Status:** Tabled
+- **Source:** Milestone 1 data-integrity council review
+- **Description:** The loop in `validate_population` iterates `for field_name in ("population_basis", "estimate_method")`, but the guard condition only fires for `field_name == "population_basis"`, so the `estimate_method` branch can never execute. Harmless today because `DATA_MODEL.md` §3 defines no recommended vocabulary for `estimate_method` (nothing is actually missed), but the code reads as if both fields are checked.
+- **Deferred until:** whenever `estimate_method` gets a real controlled vocabulary, or general pipeline cleanup.
+
+### ISSUE-008 — Malformed/corrupt source workbook produces a raw Python traceback, not a clean CLI error
+- **Severity:** Minor
+- **Status:** Tabled
+- **Source:** Milestone 1 data-integrity council review
+- **Description:** A truncated/non-zip `.xlsx` raises an uncaught `zipfile.BadZipFile` from inside `openpyxl.load_workbook`, and a workbook missing an expected sheet raises an uncaught `ValueError` from `wh_data.load_workbook`; neither is wrapped in a try/except in `build_data.py`/`validate_data.py`. Confirmed safe in both cases (exit code 1, no output written) — just not a clean `error:`-prefixed message like the already-handled missing-`--source`-file case.
+- **Deferred until:** whenever the CLI's error UX is revisited, or before non-maintainers start editing the workbook directly.
+
 ## Resolved
 
 ### ISSUE-000 — Repo contained an unrelated portfolio template and stray files
@@ -61,13 +83,6 @@ _(none yet — see Tabled below)_
 - **Status:** Resolved
 - **Description:** `index.html` and `static/` held a generic "Portfolio template" theme (Lorem Ipsum, fake bios) unrelated to this project; `HotelList.txt` (personal hotel-search links) and `chat_log.md` (dead sandbox links from doc handoff) were also present.
 - **Resolution:** Removed `static/`, `HotelList.txt`, `chat_log.md`; replaced `index.html` with a minimal placeholder. Closed by Milestone 0 council review.
-
-### ISSUE-005 — Six `Boxes` rows have no `start_year`
-- **Severity:** Minor
-- **Status:** Tabled
-- **Source:** Data-integrity council review of `source/world_history_chart_dataset_v2.xlsx`
-- **Description:** A handful of "Indigenous Era" boxes (e.g. `US_INDIG`, `CA_INDIG`, `AR_INDIG`, `AU_INDIG`) have a null `start_year` because the poster prints an illegible "c. [BCE]" with no parseable number there. `end_year` is always present, and `DATA_MODEL.md`'s rule only requires `start_year <= end_year` "when both exist," so this is not a validation-rule violation — just an open transcription gap, consistent with STATUS.md limitation #2.
-- **Resolution:** None yet. Left for whoever transcribes those boxes' start dates, or for the build script to render them with an explicit "unknown start" treatment.
 
 ## Milestone council reviews
 
@@ -81,3 +96,14 @@ Reviewed 2026-09-06 against commit `3f84688` (branch `feature/repo-reset`), thre
 | Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
 
 No gatekeeper findings. The process/docs reviewer's minor findings (severity-field enum drift on a resolved issue, no per-entry `Status:` field, ambiguity in `AGENTS.md`'s milestone-review process) were fixed inline in this document and in `AGENTS.md` rather than filed as separate issues. Milestone approved to merge to `main`.
+
+### Milestone 1 — Data build pipeline
+Reviewed 2026-09-06 against commit `74459d7` (branch `feature/build-data-pipeline`), three lenses:
+
+| Reviewer | Verdict |
+|---|---|
+| Data integrity | PASS |
+| Static-site architecture / constraints | PASS |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No gatekeeper findings. New minor issues filed: ISSUE-007 (dead code in a vocabulary-check loop), ISSUE-008 (raw traceback on a malformed/corrupt workbook instead of a clean CLI error). The process reviewer's misfiled-`ISSUE-005` finding was fixed inline (moved from `## Resolved` to `## Tabled`, matching its own `Status:` field). Also fixed inline: `tools/README.md` now points at `tools/requirements.txt`, and `docs/STATUS.md` was refreshed to mention the build/validation pipeline. Milestone approved to merge to `main`.

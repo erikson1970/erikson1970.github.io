@@ -20,7 +20,7 @@ only ever reads the generated JSON in `data/`.
 
 Both accept `--source <path>`; `build_data.py` also accepts `--out <dir>`.
 
-Requires `openpyxl` (`pip install openpyxl`).
+Requires `openpyxl` (`pip install -r tools/requirements.txt`).
 
 Run `validate_data.py` (or `build_data.py`, which validates first) after any
 edit to the workbook, and regenerate `data/*.json` before committing a

@@ -2,9 +2,11 @@
 
 ## Status summary
 
-**Phase:** data transcription complete enough for visualization prototyping.
+**Phase:** data transcription complete enough for visualization prototyping; a validated build pipeline (`tools/build_data.py`) now converts the workbook into the `data/*.json` the site actually loads.
 
 The project currently has a usable first-pass dataset derived from the ChartOrigin *Timeline of World History* poster.
+
+`data/*.json` is generated, not authored, and must never be hand-edited — see `data/README.md`/`tools/README.md`. Re-run `python3 tools/build_data.py` after any workbook edit; it fails (writes nothing) on structural problems and warns on content-quality gaps (see `docs/DATA_MODEL.md` §8).
 
 Canonical poster/source page:
 
