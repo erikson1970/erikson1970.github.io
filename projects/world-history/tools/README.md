@@ -19,6 +19,13 @@ only ever reads the generated JSON in `data/`.
   ```
 
 Both accept `--source <path>`; `build_data.py` also accepts `--out <dir>`.
+Their default paths are relative to this project directory
+(`projects/world-history/`), so run them with that as the working directory:
+
+```
+cd projects/world-history
+python3 tools/build_data.py
+```
 
 Requires `openpyxl` (`pip install -r tools/requirements.txt`).
 

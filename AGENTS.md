@@ -2,7 +2,29 @@
 
 This repository is being developed interactively using Codex and Claude Code.
 
-## Project intent
+## Repository structure
+
+This repo serves `erikson1970.github.io` as a whole:
+
+- `/` (root `index.html`, root `css/`) is a modest personal landing page —
+  not a project in its own right. Keep it simple and static.
+- `projects/<name>/` holds each individual project as a self-contained
+  static site (its own `index.html`, `css/`, `js/`, `data/`, etc.), reachable
+  at `erikson1970.github.io/projects/<name>/`. The first and (for now)
+  primary project is `projects/world-history/`, the world-history explorer
+  described throughout the rest of this file.
+- `ISSUES.md` and `TRACEABILITY.md` at the root are shared across the whole
+  repo (one continuous history, not split per project) — see "Issue and
+  requirement tracking" below.
+- `AGENTS.md` and `README.md` stay at the root as the overall primer; a
+  project may have its own `docs/` for project-specific detail (e.g.
+  `projects/world-history/docs/`).
+
+When adding a new project, give it its own `projects/<name>/` directory and
+link it from the root landing page; don't scatter its files into the shared
+root directories.
+
+## Project intent (`projects/world-history/`)
 
 Build a fully static, graphically rich, interactive world-history explorer for GitHub Pages.
 
@@ -16,11 +38,14 @@ Do not introduce:
 
 Python is acceptable for build-time preprocessing.
 
+The same static-only, no-backend constraints apply to the root landing page
+and to any future project added under `projects/`.
+
 ## Source of truth
 
-Excel files in `source/` are the human-editable source data.
+Excel files in `projects/world-history/source/` are the human-editable source data.
 
-Generated JSON in `data/` should be reproducible from those files.
+Generated JSON in `projects/world-history/data/` should be reproducible from those files.
 
 Do not silently modify generated JSON in a way that cannot be recreated from the source workbook or build script.
 
@@ -29,10 +54,10 @@ Do not silently modify generated JSON in a way that cannot be recreated from the
 Before substantial work, read:
 
 - `README.md`
-- `docs/STATUS.md`
-- `docs/DATA_MODEL.md`
-- `docs/VISUALIZATION.md`
-- `docs/IMPLEMENTATION_PLAN.md`
+- `projects/world-history/docs/STATUS.md`
+- `projects/world-history/docs/DATA_MODEL.md`
+- `projects/world-history/docs/VISUALIZATION.md`
+- `projects/world-history/docs/IMPLEMENTATION_PLAN.md`
 
 ## Historical-data discipline
 
@@ -148,8 +173,10 @@ Do not attempt to perfect every historical region before producing a working vis
   (blocks the current milestone) or **Minor** (tabled — tracked, not
   blocking).
 - `TRACEABILITY.md` tracks closure of stated requirements/goals (from this
-  file, `README.md`, `docs/DATA_MODEL.md`, `docs/IMPLEMENTATION_PLAN.md`)
-  against verification evidence.
+  file, `README.md`, and each project's own docs, e.g.
+  `projects/world-history/docs/DATA_MODEL.md` and
+  `projects/world-history/docs/IMPLEMENTATION_PLAN.md`) against verification
+  evidence.
 - Gatekeeper issues must be resolved (or explicitly reclassified as minor,
   with reasoning) before a milestone branch merges to `main`. Minor issues
   are fine to table indefinitely.
@@ -157,9 +184,12 @@ Do not attempt to perfect every historical region before producing a working vis
 ## Milestone review process
 
 A **milestone branch** is one that closes out a numbered phase/milestone from
-`docs/IMPLEMENTATION_PLAN.md` or `TRACEABILITY.md` (e.g. `feature/repo-reset`
-for Milestone 0). Small `fix/<name>` branches for sub-tasks within a milestone
-don't need their own council; only the milestone-closing merge to `main` does.
+a project's `docs/IMPLEMENTATION_PLAN.md` (e.g.
+`projects/world-history/docs/IMPLEMENTATION_PLAN.md`), a site-level change
+(e.g. the Milestone 3 root/`projects/` restructure), or `TRACEABILITY.md`
+generally (e.g. `feature/repo-reset` for Milestone 0). Small `fix/<name>`
+branches for sub-tasks within a milestone don't need their own council; only
+the milestone-closing merge to `main` does.
 
 Before that merge, close out the milestone by instantiating a small **council
 of experts**: independent reviewers (each a subagent with a distinct lens)
@@ -188,9 +218,9 @@ A milestone can close with tabled minor issues; it should not close with
 open gatekeeper issues, and a `FAIL` verdict from any reviewer blocks the
 merge until resolved or the finding is reclassified with stated reasoning.
 
-## Definition of done for v0.1
+## Definition of done for v0.1 (`projects/world-history/`)
 
-A successful v0.1:
+A successful v0.1 of the world-history explorer:
 
 - runs as a static site;
 - loads generated JSON;

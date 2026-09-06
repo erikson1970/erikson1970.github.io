@@ -1,6 +1,8 @@
 # Issues
 
-Open-issue tracker for the World History Explorer project.
+Open-issue tracker for `erikson1970.github.io` as a whole (the root landing
+page, `projects/world-history/`, and any future project) — one shared,
+continuous history, not split per project.
 
 Severity:
 
@@ -10,6 +12,12 @@ Severity:
 Status: `Open`, `Tabled`, `Resolved`.
 
 An issue closed by a milestone council review notes which review closed it.
+
+**Path note:** issues filed before Milestone 3 refer to paths at the
+repository root (`docs/`, `source/`, `tools/`, `css/`, `js/`, `data/`) —
+accurate at the time. As of Milestone 3 those paths live under
+`projects/world-history/`. Historical entries are left as originally
+recorded rather than rewritten.
 
 ---
 
