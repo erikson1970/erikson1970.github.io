@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World History Explorer</title>
+<meta name="description" content="An interactive, static visualization of world history, built from the ChartOrigin Timeline of World History poster.">
+<link rel="stylesheet" href="css/history.css">
+</head>
+<body>
+  <header>
+    <h1>World History Explorer</h1>
+    <p class="status" id="status">Loading data&hellip;</p>
+    <p class="summary" id="summary"></p>
+  </header>
+
+  <div class="controls">
+    <label for="region-filter">Region</label>
+    <select id="region-filter" aria-describedby="summary"></select>
+  </div>
+
+  <main class="panels">
+    <section aria-labelledby="list-heading">
+      <h2 id="list-heading" class="visually-hidden-heading">Boxes</h2>
+      <ul id="box-list"></ul>
+    </section>
+
+    <section id="inspector" aria-labelledby="inspector-heading">
+      <h2 id="inspector-heading" class="visually-hidden-heading">Inspector</h2>
+      <div id="inspector-content">
+        <p>Select a box to see details.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      This is a Phase 2 sanity-check slice (click a box, inspect it, filter by
+      region) &mdash; not yet the timeline/alluvial views. See
+      <code>docs/IMPLEMENTATION_PLAN.md</code> for the build plan and
+      <code>docs/STATUS.md</code> for current data coverage.
+    </p>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

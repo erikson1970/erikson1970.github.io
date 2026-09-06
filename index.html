@@ -3,45 +3,63 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>World History Explorer</title>
-<meta name="description" content="An interactive, static visualization of world history, built from the ChartOrigin Timeline of World History poster.">
-<link rel="stylesheet" href="css/history.css">
+<title>erikson1970</title>
+<meta name="description" content="Personal site of erikson1970 — engineer and technologist working in RF systems, radar, SDR, and embedded computing.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+<link rel="stylesheet" href="css/site.css">
 </head>
 <body>
-  <header>
-    <h1>World History Explorer</h1>
-    <p class="status" id="status">Loading data&hellip;</p>
-    <p class="summary" id="summary"></p>
-  </header>
+  <div class="hall">
+    <header class="hero">
+      <p class="kicker">erikson1970</p>
+      <h1>Part Viking, part sous-chef.</h1>
+      <p class="tagline">Engineer &amp; technologist.</p>
+    </header>
 
-  <div class="controls">
-    <label for="region-filter">Region</label>
-    <select id="region-filter" aria-describedby="summary"></select>
+    <hr class="knotwork" aria-hidden="true">
+
+    <main>
+      <section aria-labelledby="about-heading">
+        <h2 id="about-heading" class="visually-hidden-heading">About</h2>
+        <p>
+          erikson1970, part Viking, part sous-chef, is an engineer and
+          technologist with broad interests in RF systems, radar,
+          software-defined radio, phased arrays, embedded computing, and
+          signal processing. He enjoys exploring the intersection of
+          hardware and software, particularly through hands-on
+          experimentation, modeling, prototyping, and open-source tools.
+        </p>
+        <p>
+          His interests also extend to systems engineering, space and
+          sensing technologies, scientific computing, and the history of
+          technology. Outside of engineering, he has a longstanding
+          interest in history, public institutions, gardening, cooking,
+          and practical DIY projects.
+        </p>
+      </section>
+
+      <section aria-labelledby="projects-heading">
+        <h2 id="projects-heading">Projects</h2>
+        <ul class="project-list">
+          <li class="project-card">
+            <h3><a href="projects/world-history/">World History Explorer</a></h3>
+            <p>
+              An interactive, static visualization of world history built
+              from the ChartOrigin <em>Timeline of World History</em>
+              poster &mdash; historical polities, significant events, and
+              (in progress) succession relationships.
+            </p>
+          </li>
+          <!-- Future projects: add another <li class="project-card"> here. -->
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <p><a href="https://github.com/erikson1970">github.com/erikson1970</a></p>
+    </footer>
   </div>
-
-  <main class="panels">
-    <section aria-labelledby="list-heading">
-      <h2 id="list-heading" class="visually-hidden-heading">Boxes</h2>
-      <ul id="box-list"></ul>
-    </section>
-
-    <section id="inspector" aria-labelledby="inspector-heading">
-      <h2 id="inspector-heading" class="visually-hidden-heading">Inspector</h2>
-      <div id="inspector-content">
-        <p>Select a box to see details.</p>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <p>
-      This is a Phase 2 sanity-check slice (click a box, inspect it, filter by
-      region) &mdash; not yet the timeline/alluvial views. See
-      <code>docs/IMPLEMENTATION_PLAN.md</code> for the build plan and
-      <code>docs/STATUS.md</code> for current data coverage.
-    </p>
-  </footer>
-
-  <script type="module" src="js/app.js"></script>
 </body>
 </html>

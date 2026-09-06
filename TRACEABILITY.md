@@ -7,6 +7,18 @@ council review (see `AGENTS.md` § Milestone review process). Not a substitute f
 
 Status values: `Met`, `Partial`, `Not started`.
 
+**Path note:** Milestones 0–2 below predate the Milestone 3 restructure and
+refer to `index.html`, `css/`, `js/`, `data/`, `source/`, `tools/`, and
+`docs/` at the repository root — accurate at the time each was written. As
+of Milestone 3, the world-history project (and those paths) live under
+`projects/world-history/`; see the Milestone 3 section. Historical entries
+are left as originally recorded rather than rewritten. This also applies to
+`README.md` section citations below (e.g. "README.md § Recommended site
+structure", "§ Data authority", "§ core idea"): that content moved wholesale
+to `projects/world-history/README.md` in Milestone 3 — the root `README.md`
+today only has `## Structure` and `## Projects` sections. Follow the cited
+section name into `projects/world-history/README.md` instead.
+
 ---
 
 ## Milestone 0 — Repository reset & data intake
@@ -99,6 +111,35 @@ gatekeeper findings; a real sort-order bug and an unhandled-rejection gap
 were fixed inline, `js/README.md`/`docs/STATUS.md` refreshed, two new minor
 issues tabled (ISSUE-009, ISSUE-010) — see `ISSUES.md` § Milestone council
 reviews. Merged to `main`.
+
+## Milestone 3 — Site restructure
+
+Goal (user request, relayed 2026-09-06): make the repository root a modest
+personal landing page for erikson1970, move the World History Explorer to
+live under `projects/world-history/`, and put the site in a shape that
+supports adding further projects later — without breaking the existing
+project or losing its history.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M3-1 | World History Explorer fully relocated to `projects/world-history/` with no broken internal paths | User request | Met | Whole tree moved as one `git mv` commit (`121b4ff`, git-detected 100% renames); internal relative references between `index.html`/`css/`/`js/`/`data/` are unaffected since the whole subtree moved together |
+| M3-2 | Root becomes a modest personal landing page (Viking/Nordic/French-themed), not the world-history project | User request | Met | New root `index.html` + `css/site.css`: navy/forest-green ground, gold/bronze accents, serif display headings, CSS-only knotwork divider, user's verbatim bio copy |
+| M3-3 | Root design supports future project expansion | User request | Met | `.project-list`/`.project-card` pattern designed for repeated `<li>` entries; root `README.md` documents adding a `projects/<name>/` directory per new project |
+| M3-4 | Moved project verified functional at its new nested path | Process norm (established Milestone 1/2) | Partial | Local static server + `curl` against `projects/world-history/`, `css/history.css`, `js/app.js`, `data/boxes.json` (independently reproduced by the Milestone 3 path/link-integrity council reviewer); `python3 tools/validate_data.py` run from `projects/world-history/` (671 warnings, 0 errors, unchanged — independently reproduced); a Node `loadAllData()` run against the moved JSON was also performed (198/83/390/89 rows, unchanged) but, like the Milestone 2 runtime checks (see M2-9, ISSUE-009), was not captured as a committed, repeatable test file — downgraded from Met to Partial for this sub-claim during Milestone 3 reconciliation |
+| M3-5 | `ISSUES.md`/`TRACEABILITY.md` kept shared at repository root, one continuous history | User request (explicit choice over per-project split) | Met | Neither file moved; both got a "Path note" explaining pre-Milestone-3 entries reference now-superseded root-relative paths |
+| M3-6 | `AGENTS.md`/`README.md` updated to describe the new structure | Process norm (docs must match reality) | Met | `AGENTS.md` gained a "Repository structure" section and updated paths throughout; root `README.md` rewritten for the personal-site framing; old `README.md` moved to `projects/world-history/README.md` with a historical note added |
+| M3-7 | No production backend/DB/auth/API keys introduced | AGENTS.md § Project intent | Met | Restructure introduced only static HTML/CSS and doc changes |
+
+### Milestone 3 council review
+
+Reviewed 2026-09-06 against commit `ce8b234`: path & link integrity PASS,
+static-site architecture/constraints & accessibility PASS_WITH_MINOR_ISSUES,
+process & documentation consistency PASS_WITH_MINOR_ISSUES. No gatekeeper
+findings; a missing project-card heading and a missing font preconnect were
+fixed inline, stale `README.md` section citations were addressed by
+extending the Path note above, and M3-4 was downgraded to Partial to match
+its actual evidence — see `ISSUES.md` § Milestone council reviews. Merged to
+`main`.
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
