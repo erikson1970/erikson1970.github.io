@@ -72,6 +72,24 @@ header .summary { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 1rem
   color: var(--fg);
 }
 
+.alluvial-section {
+  margin-bottom: 1.5rem;
+}
+.alluvial-section h2 {
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+.alluvial-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem;
+}
+#alluvial {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-height: 320px;
+}
+
 .panels {
   display: grid;
   grid-template-columns: 1fr 1fr;

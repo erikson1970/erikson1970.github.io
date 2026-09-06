@@ -6,6 +6,7 @@
 <title>World History Explorer</title>
 <meta name="description" content="An interactive, static visualization of world history, built from the ChartOrigin Timeline of World History poster.">
 <link rel="stylesheet" href="css/history.css">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 <body>
   <header>
@@ -18,6 +19,19 @@
     <label for="region-filter">Region</label>
     <select id="region-filter" aria-describedby="summary"></select>
   </div>
+
+  <section aria-labelledby="alluvial-heading" class="alluvial-section">
+    <h2 id="alluvial-heading">Succession (alluvial view, prototype subset)</h2>
+    <p class="alluvial-note">
+      Ribbon width represents equal weighting for now, not literal population
+      transfer or estimated historical scale &mdash; see
+      <code>docs/VISUALIZATION.md</code>. Covers a small hand-authored subset
+      (Roman &rarr; Western Roman/Byzantine &rarr; Ottoman;
+      Frankish &rarr; West/East Francia &rarr; France/Holy Roman Empire), not
+      the full dataset.
+    </p>
+    <div id="alluvial" role="img" aria-label="Alluvial diagram of a small subset of historical successions"></div>
+  </section>
 
   <main class="panels">
     <section aria-labelledby="list-heading">
@@ -35,10 +49,10 @@
 
   <footer>
     <p>
-      This is a Phase 2 sanity-check slice (click a box, inspect it, filter by
-      region) &mdash; not yet the timeline/alluvial views. See
-      <code>docs/IMPLEMENTATION_PLAN.md</code> for the build plan and
-      <code>docs/STATUS.md</code> for current data coverage.
+      This is a Phase 2/3 slice (click a box, inspect it, filter by region;
+      a small alluvial/Sankey succession prototype) &mdash; not yet the full
+      timeline view. See <code>docs/IMPLEMENTATION_PLAN.md</code> for the
+      build plan and <code>docs/STATUS.md</code> for current data coverage.
     </p>
   </footer>
 

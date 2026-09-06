@@ -8,12 +8,13 @@ const FILES = {
   seais: "seais.json",
   population: "population.json",
   regions: "regions.json",
+  links: "links.json",
 };
 
 /**
- * Load boxes/seais/population/regions from `baseUrl` (default "data/") and
- * return { boxes, seais, population, regions, boxesById, seaisByBoxId,
- * populationByBoxId }.
+ * Load boxes/seais/population/regions/links from `baseUrl` (default
+ * "data/") and return { boxes, seais, population, regions, links,
+ * boxesById, seaisByBoxId, populationByBoxId, linksByBoxId }.
  */
 export async function loadAllData(baseUrl = "data/") {
   const entries = Object.entries(FILES);
@@ -34,7 +35,7 @@ export async function loadAllData(baseUrl = "data/") {
   return { ...tables, ...buildIndices(tables) };
 }
 
-function buildIndices({ boxes, seais, population }) {
+function buildIndices({ boxes, seais, population, links }) {
   const boxesById = new Map(boxes.map((b) => [b.box_id, b]));
 
   const seaisByBoxId = new Map();
@@ -49,7 +50,19 @@ function buildIndices({ boxes, seais, population }) {
     populationByBoxId.get(p.box_id).push(p);
   }
 
-  return { boxesById, seaisByBoxId, populationByBoxId };
+  const linksById = new Map(links.map((l) => [l.link_id, l]));
+
+  // Every box_id that appears as either end of a link, so the alluvial view
+  // knows which boxes have link data at all (see js/sankey.js).
+  const linksByBoxId = new Map();
+  for (const l of links) {
+    for (const boxId of [l.source_box_id, l.target_box_id]) {
+      if (!linksByBoxId.has(boxId)) linksByBoxId.set(boxId, []);
+      linksByBoxId.get(boxId).push(l);
+    }
+  }
+
+  return { boxesById, seaisByBoxId, populationByBoxId, linksById, linksByBoxId };
 }
 
 /** Distinct `region_group` values from Boxes, sorted, for a filter control. */

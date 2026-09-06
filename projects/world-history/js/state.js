@@ -5,6 +5,10 @@
 const initialState = () => ({
   selectedBoxId: null,
   selectedSeaiId: null,
+  // Not in IMPLEMENTATION_PLAN.md Phase 2's suggested shape (that predates
+  // Links existing) -- added in Phase 3 so a clicked alluvial-diagram link
+  // can drive the same shared inspector as a clicked box.
+  selectedLinkId: null,
   regionFilter: "all",
   countryFilter: "all",
   yearStart: -3000,

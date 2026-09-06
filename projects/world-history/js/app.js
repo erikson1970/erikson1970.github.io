@@ -1,10 +1,12 @@
 // Wiring: load data, hold shared state, render. This is the "small subset"
 // slice from AGENTS.md's Scope control -- a sortable/filterable list of
-// Boxes with click-to-select and an inspector panel, not yet the
-// timeline/alluvial views (docs/IMPLEMENTATION_PLAN.md Phases 3-4).
+// Boxes with click-to-select and an inspector panel, plus (Phase 3) a small
+// alluvial/Sankey succession prototype over data/links.json. Not yet the
+// full timeline view (docs/IMPLEMENTATION_PLAN.md Phase 4).
 
 import { loadAllData, regionGroups } from "./data.js";
 import { createStore } from "./state.js";
+import { renderSankey } from "./sankey.js";
 
 const TODO_URL = "https://en.wikipedia.org/wiki/Time_management#Implementation_of_goals";
 
@@ -14,6 +16,7 @@ const els = {
   regionFilter: document.getElementById("region-filter"),
   boxList: document.getElementById("box-list"),
   inspector: document.getElementById("inspector-content"),
+  alluvial: document.getElementById("alluvial"),
 };
 
 function setStatus(message, isError = false) {
@@ -90,7 +93,10 @@ function renderList(data, state) {
 
     button.append(swatch, label);
     button.addEventListener("click", () => {
-      store.set({ selectedBoxId: box.box_id === store.get().selectedBoxId ? null : box.box_id });
+      store.set({
+        selectedBoxId: box.box_id === store.get().selectedBoxId ? null : box.box_id,
+        selectedLinkId: null,
+      });
     });
 
     li.appendChild(button);
@@ -99,9 +105,14 @@ function renderList(data, state) {
 }
 
 function renderInspector(data, state) {
+  if (state.selectedLinkId) {
+    renderLinkInspector(data, state.selectedLinkId);
+    return;
+  }
+
   const boxId = state.selectedBoxId;
   if (!boxId) {
-    els.inspector.innerHTML = "<p>Select a box to see details.</p>";
+    els.inspector.innerHTML = "<p>Select a box, or a node/link in the alluvial diagram, to see details.</p>";
     return;
   }
 
@@ -130,6 +141,28 @@ function renderInspector(data, state) {
     ${urlLine}
     <h3>SEAIs (${seais.length})</h3>
     ${seaiList}
+  `;
+}
+
+function renderLinkInspector(data, linkId) {
+  const link = data.linksById.get(linkId);
+  if (!link) {
+    els.inspector.innerHTML = "<p>Selected link not found.</p>";
+    return;
+  }
+
+  const source = data.boxesById.get(link.source_box_id);
+  const target = data.boxesById.get(link.target_box_id);
+  const urlLine = link.source_url
+    ? `<p><a href="${escapeAttr(link.source_url)}">Source</a></p>`
+    : "<p>No source recorded.</p>";
+
+  els.inspector.innerHTML = `
+    <h2>${escapeHtml(source?.box_name ?? link.source_box_id)} &rarr; ${escapeHtml(target?.box_name ?? link.target_box_id)}</h2>
+    <p>${escapeHtml(link.year != null ? String(link.year) : "?")} &mdash; ${escapeHtml(link.relation_type ?? "?")}</p>
+    <p>Confidence: ${escapeHtml(link.confidence ?? "?")}</p>
+    ${link.notes ? `<p>Notes: ${escapeHtml(link.notes)}</p>` : ""}
+    ${urlLine}
   `;
 }
 
@@ -163,8 +196,24 @@ async function main() {
   });
 
   els.regionFilter.addEventListener("change", () => {
-    store.set({ regionFilter: els.regionFilter.value, selectedBoxId: null });
+    store.set({ regionFilter: els.regionFilter.value, selectedBoxId: null, selectedLinkId: null });
   });
+
+  try {
+    renderSankey(
+      els.alluvial,
+      { links: data.links, boxesById: data.boxesById },
+      {
+        onSelectBox: (boxId) => store.set({ selectedBoxId: boxId, selectedLinkId: null }),
+        onSelectLink: (link) => store.set({ selectedLinkId: link.link_id, selectedBoxId: null }),
+      }
+    );
+  } catch (err) {
+    // Plotly failing to load (e.g. offline, CDN blocked) shouldn't take
+    // down the rest of the page -- the box list/inspector/filter above
+    // still work without it.
+    els.alluvial.textContent = `Alluvial diagram unavailable: ${err.message}`;
+  }
 }
 
 main().catch((err) => {
