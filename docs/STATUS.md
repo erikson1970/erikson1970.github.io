@@ -8,6 +8,8 @@ The project currently has a usable first-pass dataset derived from the ChartOrig
 
 `data/*.json` is generated, not authored, and must never be hand-edited — see `data/README.md`/`tools/README.md`. Re-run `python3 tools/build_data.py` after any workbook edit; it fails (writes nothing) on structural problems and warns on content-quality gaps (see `docs/DATA_MODEL.md` §8).
 
+A first interactive prototype now exists (`index.html` + `js/`): load the generated JSON, list all `Boxes` sorted chronologically with color swatches, click one to see an inspector panel, filter by `region_group`. This satisfies "Build first interactive prototype" below; it is a sanity-check slice, not yet the Sankey/alluvial or timeline views (Phases 3–4).
+
 Canonical poster/source page:
 
 - https://chartorigin.com/product/timeline-of-world-history/
@@ -157,7 +159,7 @@ Priority order:
 2. Add `BoxSegments`.
 3. Populate a small, representative subset of `Population`.
 4. Add real Wikipedia URLs gradually.
-5. Build first interactive prototype.
+5. ~~Build first interactive prototype.~~ Done — see Milestone 2 above.
 6. Let visualization needs drive further data refinement.
 
 ## Recommended first population subset

@@ -88,9 +88,17 @@ filter.
 | M2-6 | At least one region filter | README.md § core idea, V1-7 | Met | `region-filter` `<select>` populated from `regionGroups()`, filters the list |
 | M2-7 | Interactive marks don't require hover; keyboard-accessible | AGENTS.md § accessibility | Met | Real `<button>` elements (native click + Enter/Space + Tab focus); `:focus-visible` style in `css/history.css` |
 | M2-8 | Color is not the sole encoding for selection state | AGENTS.md § accessibility | Met | Selected item also gets bold text + a checkmark (`::before`), not just background color |
-| M2-9 | Runtime behavior verified, not just claimed | Established session discipline | Met | Node (built-in fetch) against a local static server + a minimal DOM stub: `loadAllData`/`regionGroups` against real `data/*.json`, `createStore` pub-sub semantics, full `app.js` wiring (click-to-select, filter narrowing, selection-clear-on-filter-change) — see Milestone 2 commit message for exact assertions |
+| M2-9 | Runtime behavior verified, not just claimed | Process norm established during Milestone 1 (not yet written into AGENTS.md) | Partial | Node (built-in fetch) against a local static server + a minimal DOM stub: `loadAllData`/`regionGroups` against real `data/*.json`, `createStore` pub-sub semantics, full `app.js` wiring (click-to-select, filter narrowing, selection-clear-on-filter-change) — verification performed and independently reproduced by the Milestone 2 data-integrity/architecture council reviewers, but not captured as a committed, repeatable test file (see ISSUE-009) |
 
-Council review: pending — see `ISSUES.md` § Milestone council reviews once run.
+### Milestone 2 council review
+
+Reviewed 2026-09-06 against commits `7511bee`/`3881455`: data integrity
+PASS_WITH_MINOR_ISSUES, static-site architecture/constraints & accessibility
+PASS, process & documentation consistency PASS_WITH_MINOR_ISSUES. No
+gatekeeper findings; a real sort-order bug and an unhandled-rejection gap
+were fixed inline, `js/README.md`/`docs/STATUS.md` refreshed, two new minor
+issues tabled (ISSUE-009, ISSUE-010) — see `ISSUES.md` § Milestone council
+reviews. Merged to `main`.
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 

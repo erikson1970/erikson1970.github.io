@@ -42,13 +42,19 @@ function populateRegionFilter(boxes) {
   }
 }
 
+// A handful of boxes (ISSUE-005: illegible "c. [BCE]" prehistory labels on
+// the source poster) have a null start_year but a real end_year. Falling
+// back to end_year for the sort key would misfile them next to boxes whose
+// *start* date matches that number -- e.g. an Indigenous Era box ending in
+// 1607 would sort next to 16th-century boxes instead of near other
+// prehistoric-start entities. Sort those to the front instead.
 function filteredBoxes(data, state) {
   return data.boxes
     .filter((b) => state.regionFilter === "all" || b.region_group === state.regionFilter)
     .slice()
     .sort((a, b) => {
-      const ay = a.start_year ?? a.end_year ?? 0;
-      const by = b.start_year ?? b.end_year ?? 0;
+      const ay = a.start_year ?? Number.NEGATIVE_INFINITY;
+      const by = b.start_year ?? Number.NEGATIVE_INFINITY;
       return ay - by;
     });
 }
@@ -161,4 +167,10 @@ async function main() {
   });
 }
 
-main();
+main().catch((err) => {
+  // Belt-and-suspenders: the data-load try/catch inside main() already
+  // handles fetch failures, but a thrown error from rendering itself
+  // (e.g. an unexpected data shape) would otherwise surface only as an
+  // unhandled-rejection console warning with no user-visible message.
+  setStatus(`Unexpected error: ${err.message}`, true);
+});
