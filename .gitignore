@@ -1,1 +1,18 @@
-#foo
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor/tooling
+.vscode/
+.idea/
+
+# Python (build-time tooling only, never shipped)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Serena project cache/local config (kept out of version control by its own
+# .serena/.gitignore too; this covers the top-level entry point)
+.serena/cache/
+.serena/project.local.yml
