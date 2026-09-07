@@ -1,12 +1,14 @@
 // Wiring: load data, hold shared state, render. This is the "small subset"
 // slice from AGENTS.md's Scope control -- a sortable/filterable list of
-// Boxes with click-to-select and an inspector panel, plus (Phase 3) a small
-// alluvial/Sankey succession prototype over data/links.json. Not yet the
-// full timeline view (docs/IMPLEMENTATION_PLAN.md Phase 4).
+// Boxes with click-to-select and an inspector panel, a small alluvial/Sankey
+// succession prototype over data/links.json (Phase 3), and a first D3
+// timeline view (Phase 4). Box width in the timeline is not yet
+// population-based (Population is still a scaffold -- see ISSUE-003).
 
 import { loadAllData, regionGroups } from "./data.js";
 import { createStore } from "./state.js";
 import { renderSankey } from "./sankey.js";
+import { buildTimelineLayout, renderTimeline } from "./timeline.js";
 
 const TODO_URL = "https://en.wikipedia.org/wiki/Time_management#Implementation_of_goals";
 
@@ -18,6 +20,10 @@ const els = {
   inspector: document.getElementById("inspector-content"),
   alluvial: document.getElementById("alluvial"),
   alluvialList: document.getElementById("alluvial-list"),
+  timeline: document.getElementById("timeline"),
+  yearStart: document.getElementById("year-start"),
+  yearEnd: document.getElementById("year-end"),
+  showSeais: document.getElementById("show-seais"),
 };
 
 function setStatus(message, isError = false) {
@@ -132,6 +138,28 @@ function renderAlluvialList(data) {
   }
 }
 
+// Re-derives the layout and re-draws the whole SVG on every state change
+// (region/year filter, SEAI toggle, box selection) -- the dataset is small
+// enough (198 boxes) that a full redraw is simpler than diffing, matching
+// renderList()'s same full-redraw approach above.
+function renderTimelineView(data, state) {
+  if (!els.timeline) return;
+  try {
+    const layout = buildTimelineLayout(data.boxes, data.seaisByBoxId, state);
+    renderTimeline(
+      els.timeline,
+      layout,
+      state,
+      { onSelectBox: (boxId) => store.set({ selectedBoxId: boxId, selectedLinkId: null }) }
+    );
+  } catch (err) {
+    // D3 failing to load (e.g. offline, CDN blocked) shouldn't take down
+    // the rest of the page -- same reasoning as the try/catch around
+    // renderSankey in main() below.
+    els.timeline.textContent = `Timeline unavailable: ${err.message}`;
+  }
+}
+
 function renderInspector(data, state) {
   if (state.selectedLinkId) {
     renderLinkInspector(data, state.selectedLinkId);
@@ -221,10 +249,47 @@ async function main() {
   store.subscribe((state) => {
     renderList(data, state);
     renderInspector(data, state);
+    renderTimelineView(data, state);
   });
 
   els.regionFilter.addEventListener("change", () => {
     store.set({ regionFilter: els.regionFilter.value, selectedBoxId: null, selectedLinkId: null });
+  });
+
+  // Year-range/SEAI controls only affect the timeline view; they intentionally
+  // leave selectedBoxId/selectedLinkId alone (unlike the region filter above,
+  // which clears selection because it can remove the selected box from the
+  // list entirely).
+  const initial = store.get();
+  els.yearStart.value = initial.yearStart;
+  els.yearEnd.value = initial.yearEnd;
+  els.showSeais.checked = initial.showSeais;
+  // A reversed range (yearStart > yearEnd) doesn't crash timeline.js's
+  // d3.scaleLinear (it just draws chronology flowing right-to-left with no
+  // warning), which would violate AGENTS.md's "chronology must remain
+  // semantically correct" -- so reject it here instead of ever letting it
+  // reach the store. Revert the input's own displayed value too, or it
+  // would visually disagree with the state it failed to change.
+  els.yearStart.addEventListener("change", () => {
+    const value = Number(els.yearStart.value);
+    const current = store.get();
+    if (!Number.isFinite(value) || value > current.yearEnd) {
+      els.yearStart.value = current.yearStart;
+      return;
+    }
+    store.set({ yearStart: value });
+  });
+  els.yearEnd.addEventListener("change", () => {
+    const value = Number(els.yearEnd.value);
+    const current = store.get();
+    if (!Number.isFinite(value) || value < current.yearStart) {
+      els.yearEnd.value = current.yearEnd;
+      return;
+    }
+    store.set({ yearEnd: value });
+  });
+  els.showSeais.addEventListener("change", () => {
+    store.set({ showSeais: els.showSeais.checked });
   });
 
   // Populated from the fetched data directly, independent of whether Plotly

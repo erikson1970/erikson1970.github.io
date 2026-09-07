@@ -195,6 +195,89 @@ not fully resolved). M4-6/M4-7/M4-8 wording reconciled so a Partial rating
 doesn't overclaim what's actually verified — see `ISSUES.md` § Milestone
 council reviews. Merged to `main`.
 
+## Milestone 5 — D3 timeline prototype (Phase 4)
+
+Goal (`docs/IMPLEMENTATION_PLAN.md` Phase 4): render source-poster-inspired
+boxes from `Boxes` as an SVG timeline, with correct dates, matching colors,
+click selection, date zoom/filter, and SEAI overlay.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M5-1 | Boxes render at correct dates | IMPLEMENTATION_PLAN.md Phase 4 acceptance criteria | Met | `buildTimelineLayout()` in `js/timeline.js` maps each in-view box to `{effectiveStart, end}`; `renderTimeline()` draws a `d3.scaleLinear` x-axis over `[yearStart, yearEnd]` and positions each bar accordingly. Verified by `js/timeline.test.mjs` (committed, run with `node js/timeline.test.mjs`) against the real generated `data/boxes.json`: rows sort ascending by `effectiveStart`, narrowing the year range correctly drops boxes entirely outside it, and region filtering never mixes regions |
+| M5-2 | Colors match source data | IMPLEMENTATION_PLAN.md Phase 4 acceptance criteria | Met | Bar `fill` is `box.color_hex` directly (same field the box list's swatch already uses), falling back to a neutral gray only if a box is missing one |
+| M5-3 | Click selection works | IMPLEMENTATION_PLAN.md Phase 4 acceptance criteria | Partial | `renderTimeline()` wires a click handler on each row's `<g>` calling `onSelectBox(box.box_id)`, which `js/app.js` routes to the same shared `selectedBoxId` the box list uses (mutually exclusive with `selectedLinkId`, matching the existing pattern). The event-routing/store logic was code-reviewed against the identical, already-verified pattern in `js/sankey.js`/`js/app.js`; unlike Milestone 4, this round did not rebuild the fake-DOM harness to simulate an actual click event on a rendered D3 element (cost-conscious tradeoff this milestone — see council review note below), so real click-firing on the rendered SVG is unverified in this environment |
+| M5-4 | Date zoom/filter works | IMPLEMENTATION_PLAN.md Phase 4 acceptance criteria | Met | Plain `<input type="number">` "From year"/"To year" controls (not a D3 brush — chosen specifically because a brush needs real mouse-drag events this no-browser environment can't simulate, whereas a number input's `change` event and resulting `buildTimelineLayout()` output are Node-testable) drive `state.yearStart`/`yearEnd`, with a guard in `js/app.js` rejecting a reversed range (`yearStart > yearEnd`) before it ever reaches the store — `d3.scaleLinear` doesn't throw on one, it just silently draws chronology backwards. Verified by `js/timeline.test.mjs`: narrowing the range to 1900–2000 removes every box whose `end_year` predates it or whose real/effective start postdates it |
+| M5-5 | SEAIs can be overlaid | IMPLEMENTATION_PLAN.md Phase 4 acceptance criteria | Met | `buildTimelineLayout()` builds `seaiMarkers` from `seaisByBoxId`, filtered to the current year range and gated on `state.showSeais` (wired to a checkbox); `renderTimeline()` draws each as a `d3.symbolDiamond` path — a distinct shape, not just a color dot, per AGENTS.md's "color isn't the sole encoding." Verified by `js/timeline.test.mjs`: `showSeais:false` yields zero markers, `showSeais:true` yields a nonempty set, and every marker's year falls within the current domain |
+| M5-6 | ISSUE-005 boxes (no legible start date) don't get a fabricated coordinate | AGENTS.md § Historical-data discipline; docs/STATUS.md limitation #2 | Met | The 6 null-`start_year` boxes get `approxStart: true` and an `effectiveStart` pinned to the current view's left edge (`state.yearStart`), not an invented year; `renderTimeline()` draws these with a dashed (`stroke-dasharray`) stroke — the whole bar's outline, not literally just its left edge (an SVG `<rect>` doesn't support per-side dashing without extra path work). Verified by `js/timeline.test.mjs`: exactly the 6 known ISSUE-005 boxes (`US_INDIG`, `CA_INDIG`, `AR_INDIG`, `AU_INDIG`, `UK_CELTIC`, `JP_JOMON`) carry `approxStart`, all six clamp to `domainStart`, and all six correctly drop out once the visible range starts after their real `end_year` (confirmed with a 1900–2000 window; their actual `end_year`s range from **-300** (`JP_JOMON`) to 1788 (`AU_INDIG`), not 43–1788 as an earlier draft of this row incorrectly stated) |
+| M5-7 | Page remains static; D3 CDN failure degrades gracefully | IMPLEMENTATION_PLAN.md Phase 4, AGENTS.md § Project intent | Partial | D3 loaded via a pinned-version CDN `<script>` (`cdnjs.cloudflare.com/.../d3/7.9.0/d3.min.js`, reachability verified with `curl -I`); `renderTimelineView()` in `js/app.js` wraps `renderTimeline()` in a plain synchronous try/catch (simpler than the Sankey pattern, M4-8, since `renderTimeline()` has no promises to await) so a missing `window.d3` shows a text fallback instead of breaking the rest of the page. `buildTimelineLayout()` itself has no D3/DOM dependency at all and is directly unit-tested by `js/timeline.test.mjs`. Marked Partial for the same reason as M4-8: no real browser in this environment to confirm actual D3 SVG rendering or genuine click-firing |
+| M5-8 | No independent hidden-list fallback for the timeline chart (deliberate, documented) | AGENTS.md § Accessibility | Met | Unlike `#alluvial-list` (M4-9), the timeline intentionally has no hidden-button mirror of its own: `js/app.js`'s `filteredBoxes()` (box list) filters only by region, while `buildTimelineLayout()` filters by region *and* year range, so the box list is always a superset of what the timeline draws for any filter combination — every box shown here is already in the box list, which is fully keyboard-operable and drives the identical `selectedBoxId`. `#timeline` still carries `role="img"`/`aria-label`, and both `index.html`'s visible `.timeline-note` and this table's reasoning state the justification explicitly, so the omission reads as a decision, not an oversight |
+| M5-9 | No production backend/DB/auth/API keys introduced | AGENTS.md § Project intent | Met | Phase 4 added only static JS/CSS/HTML, a pinned CDN script load, and a `package.json` (`{"type":"module"}`, needed only so Node can run `js/timeline.test.mjs` — it changes nothing about how the browser loads the site) |
+
+### Milestone 5 council review
+
+Reviewed against commits `d80728f`/`212409b` (branch `feature/timeline-view`),
+three lenses:
+
+| Reviewer | Verdict |
+|---|---|
+| Data / content integrity | PASS_WITH_MINOR_ISSUES |
+| Architecture / static-site constraints & accessibility | PASS_WITH_MINOR_ISSUES |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No lens found a data-corruption or accessibility gatekeeper defect; the process
+lens flagged two gatekeepers, both about this document and `ISSUES.md`
+disagreeing with themselves, and both fixed inline below rather than tabled:
+
+- **This table's own "v0.1 definition of done" section still said V1-4
+  ("Simple timeline") was "Not started"** in the same commit that added this
+  Milestone 5 section claiming M5-1 "Met" — fixed by superseding V1-4 below,
+  the same way V1-3 was updated after Milestone 4.
+- **ISSUE-009 (no committed test suite for `js/`) was not extended for what
+  would have been its 4th recurrence** — this time actually fixed rather than
+  re-tabled: `js/timeline.test.mjs` is now a committed, repeatable test for
+  `buildTimelineLayout()` (run with `node js/timeline.test.mjs`; a
+  `package.json` with `"type": "module"` was added so Node can load it and
+  `./timeline.js` directly, no scratch-copy workaround needed). This closes
+  the gap for `timeline.js` specifically — `sankey.js`, `app.js`, `data.js`,
+  and `state.js` remain uncovered, so ISSUE-009 stays open with a note
+  rather than resolved outright. `renderTimeline()`'s actual D3/DOM behavior
+  and real click-firing are still unverified in this no-browser environment
+  (see M5-3/M5-7 above) — the new test only covers the pure half.
+
+Also fixed inline (real code changes, not just tabled):
+- **Reversed year-range bug** (architecture finding): setting "From year" >
+  "To year" didn't crash, but `d3.scaleLinear` silently drew the axis and
+  every bar's chronology right-to-left with no warning — a real, if
+  non-crashing, violation of AGENTS.md's "chronology must remain
+  semantically correct." `js/app.js`'s year-input handlers now reject (and
+  visually revert) a change that would put `yearStart` past `yearEnd` or
+  vice versa, before it ever reaches the store.
+- **Dead SEAI tooltip** (architecture finding): `.seai-marker`'s
+  `pointer-events: none` in `css/history.css` meant the diamond's `<title>`
+  tooltip (added in `renderTimeline()`) could never actually receive a
+  hover. Removed the `pointer-events: none` rule.
+- **Wrong evidence numbers and citations** (data-integrity and process
+  findings, both independently caught the same errors): M5-6's stated
+  `end_year` range for the six ISSUE-005 boxes ("43–1788") omitted
+  `JP_JOMON`'s -300 and its "dashed left edge" description overstated what
+  the CSS actually draws; its `AGENTS.md` citation ("§ data honesty") didn't
+  match any real heading. All three corrected above.
+- **Imprecise code comment** (data-integrity finding): `js/timeline.js`'s
+  comment describing how many SEAIs lack a numeric year said "a handful";
+  the real dataset has exactly one. Corrected.
+
+Tabled as new minor issues (not gatekeepers): **ISSUE-012** (no resize
+re-render for the timeline SVG, unlike the Sankey diagram's
+`responsive: true`; a handful of prehistoric-landmark SEAIs whose real year
+predates their parent box's own span by millennia can visually detach from
+their row if a user widens "From year" far enough to bring them into view).
+Also updated inline: `ISSUE-005`/`ISSUE-003` now note this milestone's use
+of them (matching the existing `ISSUE-004` pattern); `ISSUE-010` notes
+Milestone 5 landed as 2 commits, back from Milestone 4's 3. Milestone
+approved to merge to `main`. See `ISSUES.md` § Milestone council reviews for
+the full write-up (also backfilled there: a Milestone 4 section that should
+have existed already but didn't, caught during this review).
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
@@ -205,7 +288,7 @@ Tracked here so later milestones can check items off against `AGENTS.md`'s
 | V1-1 | Runs as a static site | Met (Milestone 2) |
 | V1-2 | Loads generated JSON | Met (Milestone 2) |
 | V1-3 | Interactive chronological Sankey/alluvial subset | Partial (Milestone 4, small 7-link Mediterranean/Europe subset; see M4-6/M4-8 caveats) |
-| V1-4 | Simple timeline | Not started |
+| V1-4 | Simple timeline | Partial (Milestone 5; a first D3 Gantt-style bar-per-box timeline exists with click selection, year-range filter, and SEAI overlay — see M5-1..M5-9 — but not yet the poster's own lane/segment geometry or population-based width) |
 | V1-5 | Select a historical box | Met (Milestone 2 box-list; Milestone 4 adds alluvial node/link selection for the Links subset, see M4-6) |
 | V1-6 | Updates an inspector | Met (Milestone 2) |
 | V1-7 | At least one region filter | Met (Milestone 2) |
