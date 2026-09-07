@@ -195,6 +195,33 @@ not fully resolved). M4-6/M4-7/M4-8 wording reconciled so a Partial rating
 doesn't overclaim what's actually verified — see `ISSUES.md` § Milestone
 council reviews. Merged to `main`.
 
+## Milestone 5 — D3 timeline prototype (Phase 4)
+
+Goal (`docs/IMPLEMENTATION_PLAN.md` Phase 4): render source-poster-inspired
+boxes from `Boxes` as an SVG timeline, with correct dates, matching colors,
+click selection, date zoom/filter, and SEAI overlay.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M5-1 | Boxes render at correct dates | IMPLEMENTATION_PLAN.md Phase 4 acceptance criteria | Met | `buildTimelineLayout()` in `js/timeline.js` maps each in-view box to `{effectiveStart, end}`; `renderTimeline()` draws a `d3.scaleLinear` x-axis over `[yearStart, yearEnd]` and positions each bar accordingly. Verified with a Node unit test against the real generated `data/boxes.json`: rows sort ascending by `effectiveStart`, narrowing the year range correctly drops boxes entirely outside it, and region filtering never mixes regions |
+| M5-2 | Colors match source data | IMPLEMENTATION_PLAN.md Phase 4 acceptance criteria | Met | Bar `fill` is `box.color_hex` directly (same field the box list's swatch already uses), falling back to a neutral gray only if a box is missing one |
+| M5-3 | Click selection works | IMPLEMENTATION_PLAN.md Phase 4 acceptance criteria | Partial | `renderTimeline()` wires a click handler on each row's `<g>` calling `onSelectBox(box.box_id)`, which `js/app.js` routes to the same shared `selectedBoxId` the box list uses (mutually exclusive with `selectedLinkId`, matching the existing pattern). The event-routing/store logic was code-reviewed against the identical, already-verified pattern in `js/sankey.js`/`js/app.js`; unlike Milestone 4, this round did not rebuild the fake-DOM harness to simulate an actual click event on a rendered D3 element (cost-conscious tradeoff this milestone — see council review note below), so real click-firing on the rendered SVG is unverified in this environment |
+| M5-4 | Date zoom/filter works | IMPLEMENTATION_PLAN.md Phase 4 acceptance criteria | Met | Plain `<input type="number">` "From year"/"To year" controls (not a D3 brush — chosen specifically because a brush needs real mouse-drag events this no-browser environment can't simulate, whereas a number input's `change` event and resulting `buildTimelineLayout()` output are Node-testable) drive `state.yearStart`/`yearEnd`. Verified via the Node unit test: narrowing the range to 1900–2000 removes every box whose `end_year` predates it or whose real/effective start postdates it |
+| M5-5 | SEAIs can be overlaid | IMPLEMENTATION_PLAN.md Phase 4 acceptance criteria | Met | `buildTimelineLayout()` builds `seaiMarkers` from `seaisByBoxId`, filtered to the current year range and gated on `state.showSeais` (wired to a checkbox); `renderTimeline()` draws each as a `d3.symbolDiamond` path — a distinct shape, not just a color dot, per AGENTS.md's "color isn't the sole encoding." Verified via the Node unit test: `showSeais:false` yields zero markers, `showSeais:true` yields a nonempty set, and every marker's year falls within the current domain |
+| M5-6 | ISSUE-005 boxes (no legible start date) don't get a fabricated coordinate | AGENTS.md § data honesty; docs/STATUS.md limitation #2 | Met | The 6 null-`start_year` boxes get `approxStart: true` and an `effectiveStart` pinned to the current view's left edge (`state.yearStart`), not an invented year; `renderTimeline()` draws these with a dashed (`stroke-dasharray`) left edge. Verified via the Node unit test: exactly 6 rows carry `approxStart`, all six clamp to `domainStart`, and all six correctly drop out once the visible range starts after their real `end_year` (confirmed with a 1900–2000 window against each box's actual `end_year`, ranging 43–1788) |
+| M5-7 | Page remains static; D3 CDN failure degrades gracefully | IMPLEMENTATION_PLAN.md Phase 4, AGENTS.md § Project intent | Partial | D3 loaded via a pinned-version CDN `<script>` (`cdnjs.cloudflare.com/.../d3/7.9.0/d3.min.js`, reachability verified with `curl -I`); `renderTimelineView()` in `js/app.js` wraps `renderTimeline()` in a try/catch (mirroring the Sankey pattern, M4-8) so a missing `window.d3` shows a text fallback instead of breaking the rest of the page. `buildTimelineLayout()` itself has no D3/DOM dependency at all and was directly unit-tested in Node. Marked Partial for the same reason as M4-8: no real browser in this environment to confirm actual D3 SVG rendering or genuine click-firing |
+| M5-8 | No independent hidden-list fallback for the timeline chart (deliberate, documented) | AGENTS.md § accessibility | Met | Unlike `#alluvial-list` (M4-9), the timeline intentionally has no hidden-button mirror of its own: every box it draws is already in the box list, which is fully keyboard-operable and drives the identical `selectedBoxId`. `#timeline` still carries `role="img"`/`aria-label`, and both `index.html`'s visible `.timeline-note` and this table's reasoning state the justification explicitly, so the omission reads as a decision, not an oversight |
+| M5-9 | No production backend/DB/auth/API keys introduced | AGENTS.md § Project intent | Met | Phase 4 added only static JS/CSS/HTML and a pinned CDN script load, same as Phase 3 |
+
+### Milestone 5 council review
+
+Not yet run as of this writing — pending before merge to `main`, following the
+same 3-lens process as Milestones 0–4 (see `ISSUES.md` for reconciliation
+once complete). Recorded up front in this section so the verification-depth
+caveats above (M5-3/M5-7: no fake-DOM/browser harness rebuilt this round, a
+deliberate cost-conscious tradeoff for this milestone) are visible to
+reviewers rather than only discovered during review.
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
