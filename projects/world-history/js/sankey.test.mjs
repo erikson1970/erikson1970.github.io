@@ -64,11 +64,23 @@ assert(
 );
 assert(boxSel.linkColor.every((c) => c === colors.muted), "selecting a box (not a link) leaves every link muted");
 
-const someLinkId = links[0].link_id;
-const linkSel = computeSankeyHighlight(links, figure.boxIds, { selectedBoxId: null, selectedLinkId: someLinkId }, colors);
+// A selected link also outlines its two endpoint nodes (not just the link's
+// own color) -- a Sankey link has no non-color channel of its own, so
+// without this a selected link would be encoded by color alone (council
+// review gatekeeper finding, AGENTS.md "color isn't the sole encoding").
+const someLink = links[0];
+const linkSel = computeSankeyHighlight(links, figure.boxIds, { selectedBoxId: null, selectedLinkId: someLink.link_id }, colors);
 assert(linkSel.linkColor[0] === colors.accent, "selected link is accent-colored");
 assert(linkSel.linkColor.slice(1).every((c) => c === colors.muted), "every other link stays muted");
-assert(linkSel.nodeLineWidth.every((w) => w === 0), "selecting a link (not a box) leaves every node line width 0");
+const endpointIndices = [someLink.source_box_id, someLink.target_box_id].map((id) => figure.boxIds.indexOf(id));
+assert(
+  endpointIndices.every((i) => linkSel.nodeLineWidth[i] === 3),
+  "a selected link's two endpoint nodes are outlined"
+);
+assert(
+  linkSel.nodeLineWidth.filter((w) => w === 3).length === endpointIndices.length,
+  "only the selected link's own endpoints are outlined, nothing else"
+);
 
 // -- A box_id/link_id that isn't in this subset at all highlights nothing --
 const nothingSel = computeSankeyHighlight(links, figure.boxIds, { selectedBoxId: "NOT_A_REAL_BOX", selectedLinkId: "NOT_A_REAL_LINK" }, colors);

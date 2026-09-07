@@ -17,7 +17,12 @@ Current modules (Phase 2–5):
   `cdn.plot.ly` in `index.html`, not bundled. `applySankeySelection()`
   (Phase 5) re-colors the already-rendered trace via `Plotly.restyle` to
   reflect a selection made anywhere on the page, without re-running
-  `Plotly.newPlot` (which would double-register the click handler).
+  `Plotly.newPlot` (which would double-register the click handler); the
+  actual selection→style computation is split out into
+  `computeSankeyHighlight()`, a pure function with no Plotly/DOM
+  dependency. Both `buildSankeyFigure()` and `computeSankeyHighlight()`
+  have a committed test, `sankey.test.mjs` — run with `node
+  js/sankey.test.mjs`.
 - `timeline.js` — Phase 4 timeline prototype. `buildTimelineLayout()` is a
   pure data transform from `Boxes`/SEAIs plus the shared filter state
   (region, year range, SEAI toggle) to a row list and SEAI marker list, one

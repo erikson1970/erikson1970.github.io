@@ -156,6 +156,13 @@ header .summary { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 1rem
 #timeline .timeline-bar.link-endpoint {
   stroke: var(--accent);
   stroke-width: 2;
+  /* Override .approx-start's dasharray explicitly (equal CSS specificity,
+     so source order alone isn't a reliable enough guarantee to leave
+     implicit) -- a box that's both an ISSUE-005 approx-start box and a
+     selected link's endpoint must still read as solid here, or the "solid,
+     not dashed" distinction this class exists for silently stops applying
+     (council review finding). */
+  stroke-dasharray: none;
 }
 #timeline .timeline-row:hover .timeline-bar {
   opacity: 0.85;
