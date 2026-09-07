@@ -150,6 +150,13 @@ header .summary { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 1rem
   stroke: var(--accent);
   stroke-width: 3;
 }
+/* Phase 5: a selected alluvial link highlights its two endpoint boxes here
+   too. Solid (not dashed like .approx-start) so the two cues stay visually
+   distinct even on a box that happens to be both. */
+#timeline .timeline-bar.link-endpoint {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
 #timeline .timeline-row:hover .timeline-bar {
   opacity: 0.85;
 }
@@ -189,6 +196,18 @@ header .summary { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 1rem
   background: var(--bg);
   color: var(--fg);
   cursor: pointer;
+}
+/* Phase 5: mirrors .box-item.selected's treatment (background + bold +
+   leading checkmark, not color alone) so a link selected via the Sankey
+   diagram or elsewhere is visibly marked here too. */
+#alluvial-list button.selected {
+  background: var(--selected-bg);
+  font-weight: 600;
+}
+#alluvial-list button.selected::before {
+  content: "\2713 ";
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .panels {

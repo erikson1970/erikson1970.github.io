@@ -64,6 +64,12 @@ export function buildTimelineLayout(boxes, seaisByBoxId, state) {
  * element) using the D3 UMD build already loaded as `window.d3` (see
  * index.html). Clicking a bar calls `onSelectBox(boxId)`.
  *
+ * `state.linkHighlightBoxIds` (Phase 5, docs/IMPLEMENTATION_PLAN.md): an
+ * optional Set of box_ids to mark with the `.link-endpoint` class -- js/app.js
+ * fills this in from the selected alluvial link's source/target when one is
+ * selected, so choosing a link anywhere still lights something up here even
+ * though the timeline has no link geometry of its own to select.
+ *
  * The container carries `role="img"` like js/sankey.js's #alluvial, but
  * deliberately has no hidden fallback list of its own: unlike the Sankey
  * links (which had no other accessible representation at all before
@@ -121,9 +127,17 @@ export function renderTimeline(container, layout, state, { onSelectBox }) {
     .style("cursor", "pointer")
     .on("click", (_event, d) => onSelectBox(d.box.box_id));
 
+  const linkHighlightBoxIds = state.linkHighlightBoxIds || null;
   rowSel
     .append("rect")
-    .attr("class", (d) => "timeline-bar" + (d.box.box_id === state.selectedBoxId ? " selected" : "") + (d.approxStart ? " approx-start" : ""))
+    .attr(
+      "class",
+      (d) =>
+        "timeline-bar" +
+        (d.box.box_id === state.selectedBoxId ? " selected" : "") +
+        (linkHighlightBoxIds?.has(d.box.box_id) ? " link-endpoint" : "") +
+        (d.approxStart ? " approx-start" : "")
+    )
     .attr("x", (d) => xClamped(d.effectiveStart))
     .attr("y", 2)
     .attr("width", (d) => Math.max(2, xClamped(d.end) - xClamped(d.effectiveStart)))

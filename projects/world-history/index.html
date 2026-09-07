@@ -33,7 +33,11 @@
       Click a bar, or a box in the list below, to select it &mdash; the box
       list already gives full keyboard access to every box shown here, so
       this chart doesn't duplicate it with a hidden list of its own the way
-      the alluvial diagram below does.
+      the alluvial diagram below does. Selecting a box or a succession link
+      anywhere on the page (here, the list, or the alluvial diagram) is
+      reflected everywhere else: the selected box's bar and the alluvial
+      diagram's matching node both get an outline, and a selected link's two
+      endpoint boxes are outlined here too.
     </p>
     <div class="timeline-controls">
       <label for="year-start">From year</label>
@@ -59,7 +63,8 @@
       &rarr; Byzantine Empire; Frankish Kingdom &rarr; West Francia and
       &rarr; East Francia; West Francia &rarr; Kingdom of France; East
       Francia &rarr; Holy Roman Empire; and Byzantine Empire &rarr; Ottoman
-      Empire.
+      Empire. Selecting a node or link here is reflected in the timeline and
+      box list too, and vice versa &mdash; see the timeline's own note above.
     </p>
     <div
       id="alluvial"
@@ -89,10 +94,12 @@
 
   <footer>
     <p>
-      This is a Phase 2/3/4 slice (click a box, inspect it, filter by region
-      and year range; a small alluvial/Sankey succession prototype; a first
-      D3 timeline view) &mdash; population-based box width, BoxSegments-based
-      geography, and full-dataset succession links are still to come. See
+      This is a Phase 2/3/4/5 slice (click a box, inspect it, filter by
+      region and year range; a small alluvial/Sankey succession prototype; a
+      first D3 timeline view; selection synchronized across all of the
+      above) &mdash; population-based box width, BoxSegments-based
+      geography, a semantic-zoom time scale, and full-dataset succession
+      links are still to come. See
       <code>docs/IMPLEMENTATION_PLAN.md</code> for the build plan and
       <code>docs/STATUS.md</code> for current data coverage.
     </p>

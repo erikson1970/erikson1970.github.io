@@ -1,13 +1,15 @@
 // Wiring: load data, hold shared state, render. This is the "small subset"
 // slice from AGENTS.md's Scope control -- a sortable/filterable list of
 // Boxes with click-to-select and an inspector panel, a small alluvial/Sankey
-// succession prototype over data/links.json (Phase 3), and a first D3
-// timeline view (Phase 4). Box width in the timeline is not yet
-// population-based (Population is still a scaffold -- see ISSUE-003).
+// succession prototype over data/links.json (Phase 3), a first D3
+// timeline view (Phase 4), and cross-panel selection sync between the two
+// plus the box list/alluvial list (Phase 5). Box width in the timeline is
+// not yet population-based (Population is still a scaffold -- see
+// ISSUE-003).
 
 import { loadAllData, regionGroups } from "./data.js";
 import { createStore } from "./state.js";
-import { renderSankey } from "./sankey.js";
+import { renderSankey, applySankeySelection } from "./sankey.js";
 import { buildTimelineLayout, renderTimeline } from "./timeline.js";
 
 const TODO_URL = "https://en.wikipedia.org/wiki/Time_management#Implementation_of_goals";
@@ -127,6 +129,8 @@ function renderAlluvialList(data) {
     const li = document.createElement("li");
     const button = document.createElement("button");
     button.type = "button";
+    button.dataset.linkId = link.link_id;
+    button.setAttribute("aria-pressed", "false");
     button.textContent =
       `${source?.box_name ?? link.source_box_id} → ${target?.box_name ?? link.target_box_id} ` +
       `(${link.year ?? "?"}, ${link.relation_type ?? "?"})`;
@@ -138,18 +142,41 @@ function renderAlluvialList(data) {
   }
 }
 
+// Phase 5: the buttons above are built once (the link list itself never
+// changes), so selection is synced separately here on every state change,
+// the same "build once, toggle a class on change" split renderList() uses
+// for the box list's own .selected state.
+function renderAlluvialListSelection(state) {
+  if (!els.alluvialList) return;
+  for (const button of els.alluvialList.querySelectorAll("button")) {
+    const isSelected = button.dataset.linkId === state.selectedLinkId;
+    button.setAttribute("aria-pressed", String(isSelected));
+    button.classList.toggle("selected", isSelected);
+  }
+}
+
 // Re-derives the layout and re-draws the whole SVG on every state change
 // (region/year filter, SEAI toggle, box selection) -- the dataset is small
 // enough (198 boxes) that a full redraw is simpler than diffing, matching
 // renderList()'s same full-redraw approach above.
+//
+// Phase 5: a selected link (data.linksById, not part of the shared store
+// itself -- the store only knows the id) is resolved here to its two
+// endpoint box_ids and passed through as state.linkHighlightBoxIds, so
+// selecting a link anywhere still shows something on the timeline even
+// though the timeline has no link geometry of its own to select. Deriving
+// this here (not in timeline.js) keeps timeline.js ignorant of Links, the
+// same separation buildTimelineLayout already has from data.js's indices.
 function renderTimelineView(data, state) {
   if (!els.timeline) return;
   try {
     const layout = buildTimelineLayout(data.boxes, data.seaisByBoxId, state);
+    const link = state.selectedLinkId ? data.linksById.get(state.selectedLinkId) : null;
+    const linkHighlightBoxIds = link ? new Set([link.source_box_id, link.target_box_id]) : null;
     renderTimeline(
       els.timeline,
       layout,
-      state,
+      { ...state, linkHighlightBoxIds },
       { onSelectBox: (boxId) => store.set({ selectedBoxId: boxId, selectedLinkId: null }) }
     );
   } catch (err) {
@@ -157,6 +184,24 @@ function renderTimelineView(data, state) {
     // the rest of the page -- same reasoning as the try/catch around
     // renderSankey in main() below.
     els.timeline.textContent = `Timeline unavailable: ${err.message}`;
+  }
+}
+
+// Phase 5: `sankeyInfo` is only set once renderSankey() has actually
+// resolved (see main() below) -- until then this is a no-op, since
+// Plotly.restyle needs the trace to already exist. A restyle failure is
+// swallowed rather than surfaced through els.alluvial.textContent like
+// renderSankey's own try/catch does: losing the selection *highlight* isn't
+// the same failure as losing the diagram itself, and clobbering an already-
+// rendered chart with an error message over a cosmetic sync issue would be
+// worse than just leaving the highlight stale.
+let sankeyInfo = null;
+function renderSankeySelection(data, state) {
+  if (!sankeyInfo || !els.alluvial) return;
+  try {
+    applySankeySelection(els.alluvial, { links: data.links, boxIds: sankeyInfo.boxIds }, state);
+  } catch (err) {
+    console.warn("Sankey selection sync failed:", err);
   }
 }
 
@@ -250,6 +295,8 @@ async function main() {
     renderList(data, state);
     renderInspector(data, state);
     renderTimelineView(data, state);
+    renderAlluvialListSelection(state);
+    renderSankeySelection(data, state);
   });
 
   els.regionFilter.addEventListener("change", () => {
@@ -298,7 +345,7 @@ async function main() {
   renderAlluvialList(data);
 
   try {
-    await renderSankey(
+    sankeyInfo = await renderSankey(
       els.alluvial,
       { links: data.links, boxesById: data.boxesById },
       {
@@ -306,6 +353,12 @@ async function main() {
         onSelectLink: (link) => store.set({ selectedLinkId: link.link_id, selectedBoxId: null }),
       }
     );
+    // The diagram just rendered with no selection styling applied; if a
+    // selection was already made elsewhere while Plotly was still loading
+    // (a race the try/catch structure allows, since data-load/render is
+    // async), catch it up immediately rather than leaving it unhighlighted
+    // until the next unrelated state change.
+    renderSankeySelection(data, store.get());
   } catch (err) {
     // Plotly failing to load (e.g. offline, CDN blocked) shouldn't take
     // down the rest of the page -- the box list/inspector/filter above
