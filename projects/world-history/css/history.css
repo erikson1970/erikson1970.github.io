@@ -117,6 +117,13 @@ header .summary { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 1rem
   background: var(--bg);
   color: var(--fg);
 }
+/* Phase 5.5: the semantic-zoom slider (docs/timescaleRequirement.md). Given
+   an explicit width like the number inputs above rather than the browser
+   default (which varies a lot, e.g. Firefox's much wider default), and
+   enough of it to make small drags legible. */
+.timeline-controls input[type="range"] {
+  width: 10rem;
+}
 #timeline {
   border: 1px solid var(--border);
   border-radius: 6px;

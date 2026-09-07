@@ -34,11 +34,32 @@ function assert(cond, msg) {
 }
 
 // -- Default state (matches js/state.js's initialState()) --
-const defaultState = { regionFilter: "all", yearStart: -3000, yearEnd: 2026, showSeais: true };
+const defaultState = { regionFilter: "all", yearStart: -3000, yearEnd: 2026, showSeais: true, timeScale: 0 };
 const layout = buildTimelineLayout(boxes, seaisByBoxId, defaultState);
 
 assert(layout.rows.length > 0, "default state produces some rows");
 assert(layout.rows.length <= boxes.length, "rows never exceed box count");
+
+// -- Phase 5.5: shared semantic-zoom scale (docs/timescaleRequirement.md) --
+assert(typeof layout.scale?.yearToX === "function", "layout exposes a scale with yearToX");
+assert(layout.scale.yearToX(layout.domainStart) === 0, "scale.yearToX(domainStart) === 0");
+assert(layout.scale.yearToX(layout.domainEnd) === 1, "scale.yearToX(domainEnd) === 1");
+assert(Array.isArray(layout.ticks) && layout.ticks.length > 0, "layout exposes calendar-time-first ticks");
+assert(
+  layout.ticks.every((t) => typeof t.year === "number" && t.x === layout.scale.yearToX(t.year)),
+  "every tick's x matches the shared scale applied to its year"
+);
+for (let i = 1; i < layout.ticks.length; i++) {
+  assert(layout.ticks[i].x > layout.ticks[i - 1].x, "ticks strictly increase in x");
+}
+// A different timeScale slider value changes p (exponent), so at least one
+// row's effectiveStart should map to a different x than at s=0 -- confirms
+// buildTimelineLayout actually threads state.timeScale through, not just
+// state.yearStart/yearEnd.
+{
+  const zoomedLayout = buildTimelineLayout(boxes, seaisByBoxId, { ...defaultState, timeScale: 2 });
+  assert(zoomedLayout.scale.exponent() !== layout.scale.exponent(), "timeScale changes the scale's exponent");
+}
 
 // -- ISSUE-005: exactly the 6 known null-start_year boxes get approxStart --
 const approxRows = layout.rows.filter((r) => r.approxStart);

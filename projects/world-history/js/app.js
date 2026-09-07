@@ -9,7 +9,7 @@
 
 import { loadAllData, regionGroups } from "./data.js";
 import { createStore } from "./state.js";
-import { renderSankey, applySankeySelection } from "./sankey.js";
+import { renderSankey, applySankeySelection, applySankeyTimeScale } from "./sankey.js";
 import { buildTimelineLayout, renderTimeline } from "./timeline.js";
 
 const TODO_URL = "https://en.wikipedia.org/wiki/Time_management#Implementation_of_goals";
@@ -26,6 +26,7 @@ const els = {
   yearStart: document.getElementById("year-start"),
   yearEnd: document.getElementById("year-end"),
   showSeais: document.getElementById("show-seais"),
+  timeScale: document.getElementById("time-scale"),
 };
 
 function setStatus(message, isError = false) {
@@ -205,6 +206,21 @@ function renderSankeySelection(data, state) {
   }
 }
 
+// Phase 5.5: kept as its own function/subscribe entry, separate from
+// renderSankeySelection above, rather than merged into it -- position
+// (this) and selection-highlight (that) are different concerns, and
+// keeping them apart avoids touching the already-reviewed Milestone 6
+// selection code for this milestone (see js/sankey.js's
+// applySankeyTimeScale comment for the fuller reasoning).
+function renderSankeyTimeScale(data, state) {
+  if (!sankeyInfo || !els.alluvial) return;
+  try {
+    applySankeyTimeScale(els.alluvial, { boxIds: sankeyInfo.boxIds, boxesById: data.boxesById }, state);
+  } catch (err) {
+    console.warn("Sankey time-scale sync failed:", err);
+  }
+}
+
 function renderInspector(data, state) {
   if (state.selectedLinkId) {
     renderLinkInspector(data, state.selectedLinkId);
@@ -297,6 +313,7 @@ async function main() {
     renderTimelineView(data, state);
     renderAlluvialListSelection(state);
     renderSankeySelection(data, state);
+    renderSankeyTimeScale(data, state);
   });
 
   els.regionFilter.addEventListener("change", () => {
@@ -311,12 +328,15 @@ async function main() {
   els.yearStart.value = initial.yearStart;
   els.yearEnd.value = initial.yearEnd;
   els.showSeais.checked = initial.showSeais;
-  // A reversed range (yearStart > yearEnd) doesn't crash timeline.js's
-  // d3.scaleLinear (it just draws chronology flowing right-to-left with no
-  // warning), which would violate AGENTS.md's "chronology must remain
-  // semantically correct" -- so reject it here instead of ever letting it
-  // reach the store. Revert the input's own displayed value too, or it
-  // would visually disagree with the state it failed to change.
+  if (els.timeScale) els.timeScale.value = initial.timeScale;
+  // A reversed range (yearStart > yearEnd) doesn't crash js/timescale.js's
+  // semanticTimeScale (M just floors to a near-zero epsilon, per that
+  // module's own degenerate-domain guard), but it would draw chronology
+  // flowing right-to-left with no warning, which would violate AGENTS.md's
+  // "chronology must remain semantically correct" -- so reject it here
+  // instead of ever letting it reach the store. Revert the input's own
+  // displayed value too, or it would visually disagree with the state it
+  // failed to change.
   els.yearStart.addEventListener("change", () => {
     const value = Number(els.yearStart.value);
     const current = store.get();
@@ -338,6 +358,15 @@ async function main() {
   els.showSeais.addEventListener("change", () => {
     store.set({ showSeais: els.showSeais.checked });
   });
+  // Phase 5.5 (docs/timescaleRequirement.md "Zoom Interaction"): recompute
+  // continuously while dragging, so this listens on `input` (fires on every
+  // drag tick) rather than `change` (fires only on release) like the
+  // controls above.
+  if (els.timeScale) {
+    els.timeScale.addEventListener("input", () => {
+      store.set({ timeScale: Number(els.timeScale.value) });
+    });
+  }
 
   // Populated from the fetched data directly, independent of whether Plotly
   // itself loads -- this is the accessible fallback, not just a mirror of
@@ -348,6 +377,7 @@ async function main() {
     sankeyInfo = await renderSankey(
       els.alluvial,
       { links: data.links, boxesById: data.boxesById },
+      store.get(),
       {
         onSelectBox: (boxId) => store.set({ selectedBoxId: boxId, selectedLinkId: null }),
         onSelectLink: (link) => store.set({ selectedLinkId: link.link_id, selectedBoxId: null }),
@@ -357,8 +387,10 @@ async function main() {
     // selection was already made elsewhere while Plotly was still loading
     // (a race the try/catch structure allows, since data-load/render is
     // async), catch it up immediately rather than leaving it unhighlighted
-    // until the next unrelated state change.
+    // until the next unrelated state change. Same reasoning applies to the
+    // time scale (Phase 5.5) -- the slider could have moved during load too.
     renderSankeySelection(data, store.get());
+    renderSankeyTimeScale(data, store.get());
   } catch (err) {
     // Plotly failing to load (e.g. offline, CDN blocked) shouldn't take
     // down the rest of the page -- the box list/inspector/filter above
