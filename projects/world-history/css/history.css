@@ -1,0 +1,311 @@
+/* Minimal styling for the Phase 2 sanity-check UI: a filterable box list and
+   an inspector panel. Deliberately plain -- no framework, no build step (see
+   AGENTS.md "prefer plain HTML, CSS, modular JavaScript"). Layout/visual
+   design for the real timeline/alluvial views comes in later phases. */
+
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --muted: #666666;
+  --border: #d8d8d8;
+  --accent: #2456a8;
+  --selected-bg: #eaf1fb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191c;
+    --fg: #e8e8e8;
+    --muted: #a0a0a0;
+    --border: #3a3d42;
+    --accent: #6ea6ff;
+    --selected-bg: #1f2a3d;
+  }
+}
+
+* { box-sizing: border-box; }
+
+/* Visible sections still get a real <h2> for screen readers / structure,
+   but the two-panel layout doesn't need it printed on screen. Also used
+   (Phase 3) for a hidden-but-focusable text/button alternative to the
+   Plotly Sankey diagram -- see #alluvial-list in index.html. */
+.visually-hidden,
+.visually-hidden-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+/* ...but a focused child (e.g. a keyboard-focused button inside the hidden
+   #alluvial-list) must become visible, or keyboard users lose all focus
+   indication -- AGENTS.md accessibility: keyboard access must be real, not
+   just technically present in the DOM. */
+.visually-hidden:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 1.5rem;
+  max-width: 72rem;
+  margin-inline: auto;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+header h1 { margin-bottom: 0.25rem; }
+header .status { color: var(--muted); margin: 0.25rem 0; }
+header .status-error { color: #b3261e; }
+header .summary { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 1rem; }
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.controls label { font-weight: 600; }
+.controls select {
+  font: inherit;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.timeline-section {
+  margin-bottom: 1.5rem;
+}
+.timeline-section h2 {
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+.timeline-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem;
+}
+.timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+.timeline-controls label { font-weight: 600; }
+.timeline-controls input[type="number"] {
+  font: inherit;
+  width: 6rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+}
+/* Phase 5.5: the semantic-zoom slider (docs/timescaleRequirement.md). Given
+   an explicit width like the number inputs above rather than the browser
+   default (which varies a lot, e.g. Firefox's much wider default), and
+   enough of it to make small drags legible. */
+.timeline-controls input[type="range"] {
+  width: 10rem;
+}
+#timeline {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-height: 120px;
+  max-height: 70vh;
+  overflow: auto;
+}
+.timeline-empty {
+  padding: 0.75rem;
+  color: var(--muted);
+}
+/* D3-drawn SVG content: theme-match the axis, and give bars/markers a
+   real shape/stroke cue in addition to color (AGENTS.md accessibility:
+   color isn't the sole encoding). */
+#timeline .timeline-axis .domain,
+#timeline .timeline-axis .tick line {
+  stroke: var(--border);
+}
+#timeline .timeline-axis .tick text {
+  fill: var(--muted);
+  font-size: 0.7rem;
+}
+#timeline .timeline-bar {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+#timeline .timeline-bar.approx-start {
+  stroke-dasharray: 4 2;
+}
+#timeline .timeline-bar.selected {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+/* Phase 5: a selected alluvial link highlights its two endpoint boxes here
+   too. Solid (not dashed like .approx-start) so the two cues stay visually
+   distinct even on a box that happens to be both. */
+#timeline .timeline-bar.link-endpoint {
+  stroke: var(--accent);
+  stroke-width: 2;
+  /* Override .approx-start's dasharray explicitly (equal CSS specificity,
+     so source order alone isn't a reliable enough guarantee to leave
+     implicit) -- a box that's both an ISSUE-005 approx-start box and a
+     selected link's endpoint must still read as solid here, or the "solid,
+     not dashed" distinction this class exists for silently stops applying
+     (council review finding). */
+  stroke-dasharray: none;
+}
+#timeline .timeline-row:hover .timeline-bar {
+  opacity: 0.85;
+}
+#timeline .seai-marker {
+  fill: var(--fg);
+  stroke: var(--bg);
+  stroke-width: 1;
+}
+
+.alluvial-section {
+  margin-bottom: 1.5rem;
+}
+.alluvial-section h2 {
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+.alluvial-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem;
+}
+#alluvial {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-height: 320px;
+}
+#alluvial-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+#alluvial-list button {
+  font: inherit;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+}
+/* Phase 5: mirrors .box-item.selected's treatment (background + bold +
+   leading checkmark, not color alone) so a link selected via the Sankey
+   diagram or elsewhere is visibly marked here too. */
+#alluvial-list button.selected {
+  background: var(--selected-bg);
+  font-weight: 600;
+}
+#alluvial-list button.selected::before {
+  content: "\2713 ";
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 40rem) {
+  .panels { grid-template-columns: 1fr; }
+}
+
+#box-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+#box-list li + li { border-top: 1px solid var(--border); }
+.box-empty { padding: 0.75rem; color: var(--muted); }
+
+.box-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.box-item:hover { background: var(--selected-bg); }
+.box-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.box-item.selected {
+  background: var(--selected-bg);
+  font-weight: 600;
+}
+/* Selection state also carries a text/shape cue (bold + a leading marker via
+   ::before), not just color -- AGENTS.md accessibility: color isn't the sole
+   encoding. */
+.box-item.selected::before {
+  content: "\2713";
+  color: var(--accent);
+  font-weight: 700;
+  width: 1rem;
+  flex: none;
+}
+.box-item:not(.selected)::before {
+  content: "";
+  width: 1rem;
+  flex: none;
+}
+
+.swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  flex: none;
+}
+
+.box-label { overflow-wrap: anywhere; }
+
+#inspector {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+#inspector h2 { margin-top: 0; }
+#inspector ul { margin: 0.25rem 0; padding-left: 1.25rem; }
+
+footer {
+  margin-top: 2rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+footer code { background: rgba(127, 127, 127, 0.15); padding: 0.1rem 0.3rem; border-radius: 3px; }

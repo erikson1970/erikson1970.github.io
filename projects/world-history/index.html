@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World History Explorer</title>
+<meta name="description" content="An interactive, static visualization of world history, built from the ChartOrigin Timeline of World History poster.">
+<link rel="stylesheet" href="css/history.css">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>World History Explorer</h1>
+    <p class="status" id="status">Loading data&hellip;</p>
+    <p class="summary" id="summary"></p>
+  </header>
+
+  <div class="controls">
+    <label for="region-filter">Region</label>
+    <select id="region-filter" aria-describedby="summary"></select>
+  </div>
+
+  <section aria-labelledby="timeline-heading" class="timeline-section">
+    <h2 id="timeline-heading">Timeline (prototype)</h2>
+    <p class="timeline-note">
+      One row per box in view, ordered chronologically; bar width shows the
+      poster's own start/end dates, not yet population-weighted &mdash; see
+      <code>docs/VISUALIZATION.md</code>. Six boxes have no legible start
+      date on the source poster (<code>ISSUES.md</code> ISSUE-005); their
+      bar runs to the left edge of the visible range with a dashed edge to
+      mark that as approximate, not a real date. Diamond markers are SEAIs.
+      Click a bar, or a box in the list below, to select it &mdash; the box
+      list already gives full keyboard access to every box shown here, so
+      this chart doesn't duplicate it with a hidden list of its own the way
+      the alluvial diagram below does. Selecting a box or a succession link
+      anywhere on the page (here, the list, or the alluvial diagram) is
+      reflected everywhere else: the selected box's bar and the alluvial
+      diagram's matching node both get an outline, and a selected link's two
+      endpoint boxes are outlined here too. The year range and time
+      compression slider below are shared with the alluvial diagram too
+      (see <code>docs/timescaleRequirement.md</code>): both views place
+      dates along the same nonlinear axis, so a year always lands at the
+      same relative position in both.
+    </p>
+    <div class="timeline-controls">
+      <label for="year-start">From year</label>
+      <input type="number" id="year-start" step="1">
+      <label for="year-end">To year</label>
+      <input type="number" id="year-end" step="1">
+      <label><input type="checkbox" id="show-seais"> Show SEAIs</label>
+      <label for="time-scale">Time compression (ancient detail &harr; recent detail)</label>
+      <input type="range" id="time-scale" min="-2" max="2" step="0.1" value="0">
+    </div>
+    <div
+      id="timeline"
+      role="img"
+      aria-label="Timeline of boxes in the current filter, ordered chronologically, with SEAI markers"
+    ></div>
+  </section>
+
+  <section aria-labelledby="alluvial-heading" class="alluvial-section">
+    <h2 id="alluvial-heading">Succession (alluvial view, prototype subset)</h2>
+    <p class="alluvial-note">
+      Ribbon width represents equal weighting for now, not literal population
+      transfer or estimated historical scale &mdash; see
+      <code>docs/VISUALIZATION.md</code>. Covers 7 hand-authored links, not
+      the full dataset: Roman Empire &rarr; Western Roman Empire and
+      &rarr; Byzantine Empire; Frankish Kingdom &rarr; West Francia and
+      &rarr; East Francia; West Francia &rarr; Kingdom of France; East
+      Francia &rarr; Holy Roman Empire; and Byzantine Empire &rarr; Ottoman
+      Empire. Selecting a node or link here is reflected in the timeline and
+      box list too, and vice versa &mdash; see the timeline's own note above.
+      Node position (left-to-right) is chronological, placed on the same
+      shared, nonlinear time scale as the timeline above &mdash; the year
+      range and time compression slider up there apply here too.
+    </p>
+    <div
+      id="alluvial"
+      role="img"
+      aria-label="Alluvial diagram of a small subset of historical successions"
+      aria-describedby="alluvial-list-heading"
+    ></div>
+    <h3 id="alluvial-list-heading" class="visually-hidden">
+      Successions in the alluvial diagram (text alternative, also usable by keyboard)
+    </h3>
+    <ul id="alluvial-list" class="visually-hidden"></ul>
+  </section>
+
+  <main class="panels">
+    <section aria-labelledby="list-heading">
+      <h2 id="list-heading" class="visually-hidden-heading">Boxes</h2>
+      <ul id="box-list"></ul>
+    </section>
+
+    <section id="inspector" aria-labelledby="inspector-heading">
+      <h2 id="inspector-heading" class="visually-hidden-heading">Inspector</h2>
+      <div id="inspector-content">
+        <p>Select a box to see details.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      This is a Phase 2/3/4/5/5.5 slice (click a box, inspect it, filter by
+      region and year range; a small alluvial/Sankey succession prototype; a
+      first D3 timeline view; selection synchronized across all of the
+      above; a shared, nonlinear semantic-zoom time scale across both the
+      timeline and the alluvial diagram) &mdash; population-based box width,
+      BoxSegments-based geography, and full-dataset succession links are
+      still to come. See
+      <code>docs/IMPLEMENTATION_PLAN.md</code> for the build plan and
+      <code>docs/STATUS.md</code> for current data coverage.
+    </p>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

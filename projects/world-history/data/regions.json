@@ -1,0 +1,625 @@
+[
+  {
+    "region_id": "NE_SCAND",
+    "region_name": "Northern Europe / Scandinavia",
+    "country": "Denmark",
+    "country_order": 1,
+    "notes": "Operational grouping uses the five Nordic sovereign states; broader than strict 'Scandinavia'."
+  },
+  {
+    "region_id": "NE_SCAND",
+    "region_name": "Northern Europe / Scandinavia",
+    "country": "Finland",
+    "country_order": 2,
+    "notes": null
+  },
+  {
+    "region_id": "NE_SCAND",
+    "region_name": "Northern Europe / Scandinavia",
+    "country": "Iceland",
+    "country_order": 3,
+    "notes": null
+  },
+  {
+    "region_id": "NE_SCAND",
+    "region_name": "Northern Europe / Scandinavia",
+    "country": "Norway",
+    "country_order": 4,
+    "notes": null
+  },
+  {
+    "region_id": "NE_SCAND",
+    "region_name": "Northern Europe / Scandinavia",
+    "country": "Sweden",
+    "country_order": 5,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Belarus",
+    "country_order": 1,
+    "notes": "Cultural/linguistic Slavic grouping spanning parts of Eastern, Central, and Southeastern Europe; not a strict UN geographic region."
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Bosnia and Herzegovina",
+    "country_order": 2,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Bulgaria",
+    "country_order": 3,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Croatia",
+    "country_order": 4,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Czechia",
+    "country_order": 5,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Montenegro",
+    "country_order": 6,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "North Macedonia",
+    "country_order": 7,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Poland",
+    "country_order": 8,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Russia",
+    "country_order": 9,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Serbia",
+    "country_order": 10,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Slovakia",
+    "country_order": 11,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Slovenia",
+    "country_order": 12,
+    "notes": null
+  },
+  {
+    "region_id": "EE_SLAVIC",
+    "region_name": "Eastern Europe / Slavic world",
+    "country": "Ukraine",
+    "country_order": 13,
+    "notes": null
+  },
+  {
+    "region_id": "SE_ASIA",
+    "region_name": "Southeast Asia",
+    "country": "Brunei",
+    "country_order": 1,
+    "notes": "Modern sovereign states conventionally grouped as Southeast Asia."
+  },
+  {
+    "region_id": "SE_ASIA",
+    "region_name": "Southeast Asia",
+    "country": "Cambodia",
+    "country_order": 2,
+    "notes": null
+  },
+  {
+    "region_id": "SE_ASIA",
+    "region_name": "Southeast Asia",
+    "country": "Indonesia",
+    "country_order": 3,
+    "notes": null
+  },
+  {
+    "region_id": "SE_ASIA",
+    "region_name": "Southeast Asia",
+    "country": "Laos",
+    "country_order": 4,
+    "notes": null
+  },
+  {
+    "region_id": "SE_ASIA",
+    "region_name": "Southeast Asia",
+    "country": "Malaysia",
+    "country_order": 5,
+    "notes": null
+  },
+  {
+    "region_id": "SE_ASIA",
+    "region_name": "Southeast Asia",
+    "country": "Myanmar",
+    "country_order": 6,
+    "notes": null
+  },
+  {
+    "region_id": "SE_ASIA",
+    "region_name": "Southeast Asia",
+    "country": "Philippines",
+    "country_order": 7,
+    "notes": null
+  },
+  {
+    "region_id": "SE_ASIA",
+    "region_name": "Southeast Asia",
+    "country": "Singapore",
+    "country_order": 8,
+    "notes": null
+  },
+  {
+    "region_id": "SE_ASIA",
+    "region_name": "Southeast Asia",
+    "country": "Thailand",
+    "country_order": 9,
+    "notes": null
+  },
+  {
+    "region_id": "SE_ASIA",
+    "region_name": "Southeast Asia",
+    "country": "Timor-Leste",
+    "country_order": 10,
+    "notes": null
+  },
+  {
+    "region_id": "SE_ASIA",
+    "region_name": "Southeast Asia",
+    "country": "Vietnam",
+    "country_order": 11,
+    "notes": null
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "Bahrain",
+    "country_order": 1,
+    "notes": "Arabian Peninsula plus the core Levant. Iraq is not duplicated here because it already has a dedicated original-chart span."
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "Israel",
+    "country_order": 2,
+    "notes": null
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "Jordan",
+    "country_order": 3,
+    "notes": null
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "Kuwait",
+    "country_order": 4,
+    "notes": null
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "Lebanon",
+    "country_order": 5,
+    "notes": null
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "Oman",
+    "country_order": 6,
+    "notes": null
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "Palestine",
+    "country_order": 7,
+    "notes": null
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "Qatar",
+    "country_order": 8,
+    "notes": null
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "Saudi Arabia",
+    "country_order": 9,
+    "notes": null
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "Syria",
+    "country_order": 10,
+    "notes": null
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "United Arab Emirates",
+    "country_order": 11,
+    "notes": null
+  },
+  {
+    "region_id": "ARAB_LEVANT",
+    "region_name": "Arabia and the Levant",
+    "country": "Yemen",
+    "country_order": 12,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Angola",
+    "country_order": 1,
+    "notes": "Broad modern-country grouping; Sudan is kept with North Africa, while Mauritania is included with sub-Saharan/West Africa."
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Benin",
+    "country_order": 2,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Botswana",
+    "country_order": 3,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Burkina Faso",
+    "country_order": 4,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Burundi",
+    "country_order": 5,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Cabo Verde",
+    "country_order": 6,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Cameroon",
+    "country_order": 7,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Central African Republic",
+    "country_order": 8,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Chad",
+    "country_order": 9,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Comoros",
+    "country_order": 10,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Democratic Republic of the Congo",
+    "country_order": 11,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Djibouti",
+    "country_order": 12,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Equatorial Guinea",
+    "country_order": 13,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Eritrea",
+    "country_order": 14,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Eswatini",
+    "country_order": 15,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Ethiopia",
+    "country_order": 16,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Gabon",
+    "country_order": 17,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Gambia",
+    "country_order": 18,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Ghana",
+    "country_order": 19,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Guinea",
+    "country_order": 20,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Guinea-Bissau",
+    "country_order": 21,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Côte d’Ivoire",
+    "country_order": 22,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Kenya",
+    "country_order": 23,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Lesotho",
+    "country_order": 24,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Liberia",
+    "country_order": 25,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Madagascar",
+    "country_order": 26,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Malawi",
+    "country_order": 27,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Mali",
+    "country_order": 28,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Mauritania",
+    "country_order": 29,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Mauritius",
+    "country_order": 30,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Mozambique",
+    "country_order": 31,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Namibia",
+    "country_order": 32,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Niger",
+    "country_order": 33,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Nigeria",
+    "country_order": 34,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Republic of the Congo",
+    "country_order": 35,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Rwanda",
+    "country_order": 36,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "São Tomé and Príncipe",
+    "country_order": 37,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Senegal",
+    "country_order": 38,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Seychelles",
+    "country_order": 39,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Sierra Leone",
+    "country_order": 40,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Somalia",
+    "country_order": 41,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "South Africa",
+    "country_order": 42,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "South Sudan",
+    "country_order": 43,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Tanzania",
+    "country_order": 44,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Togo",
+    "country_order": 45,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Uganda",
+    "country_order": 46,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Zambia",
+    "country_order": 47,
+    "notes": null
+  },
+  {
+    "region_id": "SSA",
+    "region_name": "Sub-Saharan Africa",
+    "country": "Zimbabwe",
+    "country_order": 48,
+    "notes": null
+  }
+]

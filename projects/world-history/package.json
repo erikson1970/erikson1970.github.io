@@ -1,0 +1,6 @@
+{
+  "name": "world-history",
+  "private": true,
+  "type": "module",
+  "description": "No build step for the site itself -- index.html loads js/*.js directly as browser <script type=\"module\">, and this file changes nothing about that. It exists solely so `node js/timeline.test.mjs` can import ./timeline.js as an ES module (Node otherwise defaults a bare .js file to CommonJS, which can't parse `export`)."
+}
