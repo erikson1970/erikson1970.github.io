@@ -10,7 +10,7 @@
 // environment doesn't have -- so this is a partial, not complete,
 // resolution of ISSUE-009 (see ISSUES.md).
 
-import { buildSankeyFigure, computeSankeyHighlight } from "./sankey.js";
+import { buildSankeyFigure, computeSankeyHighlight, computeSankeyNodeX } from "./sankey.js";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -29,8 +29,11 @@ function assert(cond, msg) {
   }
 }
 
-// -- buildSankeyFigure --
-const figure = buildSankeyFigure(links, boxesById);
+// -- buildSankeyFigure (Phase 5.5: node x now comes from the shared,
+// app-wide semantic-zoom scale -- state, matching js/state.js's
+// initialState() defaults -- not a per-subset min/max) --
+const defaultState = { yearStart: -3000, yearEnd: 2026, timeScale: 0 };
+const figure = buildSankeyFigure(links, boxesById, defaultState);
 assert(figure.boxIds.length > 0, "buildSankeyFigure finds some boxIds from the links subset");
 assert(
   new Set(figure.boxIds).size === figure.boxIds.length,
@@ -44,6 +47,20 @@ const xByBox = figure.boxIds.map((id, i) => ({ id, x: figure.data[0].node.x[i], 
 const dated = xByBox.filter((b) => typeof b.start === "number").sort((a, b) => a.start - b.start);
 for (let i = 1; i < dated.length; i++) {
   assert(dated[i - 1].x <= dated[i].x, `node x-order matches start_year order (${dated[i - 1].id} before ${dated[i].id})`);
+}
+
+// -- computeSankeyNodeX: shares its result with what buildSankeyFigure put
+// into node.x above (same function, called with the same args) --
+{
+  const nodeX = computeSankeyNodeX(figure.boxIds, boxesById, defaultState);
+  assert(
+    nodeX.every((x, i) => x === figure.data[0].node.x[i]),
+    "computeSankeyNodeX matches buildSankeyFigure's node.x for the same state"
+  );
+  // Changing timeScale changes the exponent, so at least one node (a box not
+  // at yearStart or yearEnd exactly) should move.
+  const zoomedX = computeSankeyNodeX(figure.boxIds, boxesById, { ...defaultState, timeScale: 2 });
+  assert(zoomedX.some((x, i) => x !== nodeX[i]), "computeSankeyNodeX responds to a timeScale change");
 }
 
 // -- computeSankeyHighlight --

@@ -119,6 +119,13 @@ _(none yet — see Tabled below)_
 - **Description:** Two independent minor gaps in `js/timeline.js`: (1) `renderTimeline()` computes SVG width once per render from `container.clientWidth`; unlike the Sankey/Plotly diagram (`responsive: true`), it only picks up a new width on the next state change, not on a bare window resize. (2) A few `seais.json` rows (e.g. `L15`/`PT_TRIBES` at year -3500, `L18`/`ES_IBERIAN` at -14500, `L21`/`FR_GAUL` at -17000) have a real numeric year that predates their parent box's own `start_year` by thousands of years — a pre-existing quirk in the data, not something `timeline.js` introduced. At the default `-3000..2026` view these are correctly excluded by the ordinary year-range filter, but if a user widens "From year" enough to bring one into view, its diamond marker clamps to the plot's left edge while its parent box's bar sits far to the right, which could read as misattributed.
 - **Deferred until:** (1) whenever the timeline gets enough real usage to justify a resize listener; (2) whenever those specific `seais.json` rows are reviewed for whether their year, their parent `box_id`, or both need correcting — likely alongside whatever eventually addresses ISSUE-005's prehistoric-era boxes generally.
 
+### ISSUE-013 — Semantic-zoom time scale changes snap instantly, not smoothly animated
+- **Severity:** Minor
+- **Status:** Tabled
+- **Source:** Milestone 7 (Phase 5.5) implementation, `docs/timescaleRequirement.md` § Zoom Interaction
+- **Description:** That doc explicitly frames smooth animation while zooming/dragging the time-compression slider or year-range inputs as optional ("if technically practical, animate the layout smoothly"). The current implementation (`js/timeline.js`'s full SVG redraw per state change, `js/sankey.js`'s `applySankeyTimeScale()` via `Plotly.restyle`) recomputes and redraws positions immediately on every `input` event with no transition/tween, so bars, markers, ticks, and Sankey nodes jump to their new position each frame rather than easing.
+- **Deferred until:** real usage suggests the instant-snap behavior is actually distracting/hard to track at the current ~198-box, small-Links-subset scale; would likely mean D3 `.transition()` calls in `renderTimeline()` and a Plotly `layout.transition`/animated `restyle` for the Sankey side.
+
 ## Resolved
 
 ### ISSUE-000 — Repo contained an unrelated portfolio template and stray files

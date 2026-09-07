@@ -8,42 +8,55 @@
 // dependency, Node-testable) and a rendering function (renderSankey --
 // needs a real browser and the Plotly UMD build loaded as window.Plotly).
 
+import { semanticTimeScale } from "./timescale.js";
+
+// Plotly's fixed arrangement wants x strictly inside (0, 1); clamp away from
+// the edges so the first/last node aren't drawn clipped.
+const clamp = (v) => Math.min(0.98, Math.max(0.02, v));
+
+/**
+ * Phase 5.5 (docs/timescaleRequirement.md "Shared Scale"): Sankey node
+ * x-position is one of the elements explicitly called out as needing the
+ * *same* scale instance as the timeline -- so this uses the app's shared
+ * view domain (`state.yearStart`/`state.yearEnd`/`state.timeScale`), not a
+ * per-subset min/max the way the pre-5.5 version of buildSankeyFigure did.
+ * The node *set* itself is still whatever links.json references, unfiltered
+ * by yearStart/yearEnd (unchanged from before Phase 5.5) -- only where each
+ * node's x lands changes.
+ *
+ * Split out from buildSankeyFigure (same reasoning as
+ * computeSankeyHighlight below) so applySankeyTimeScale can recompute just
+ * the x array on a slider `input` event without rebuilding the whole
+ * figure.
+ */
+export function computeSankeyNodeX(boxIds, boxesById, state) {
+  const scale = semanticTimeScale({ tMin: state.yearStart, tMax: state.yearEnd, scaler: state.timeScale ?? 0 });
+  return boxIds.map((id) => {
+    const box = boxesById.get(id);
+    const y = box && typeof box.start_year === "number" ? box.start_year : state.yearStart;
+    return clamp(scale.yearToX(y));
+  });
+}
+
 /**
  * Build a Plotly Sankey `data`/`layout` pair plus the `boxIds` array used to
  * map a clicked node index back to a box_id.
  *
- * Node x-positions are normalized from each box's start_year across the
- * range spanned by the subset, so the diagram reads left-to-right in
- * chronological order regardless of link/node insertion order. This is
+ * Node x-positions come from computeSankeyNodeX -- the shared semantic-zoom
+ * scale (Phase 5.5) -- so the diagram reads left-to-right in chronological
+ * order regardless of link/node insertion order, using the same
+ * [yearStart, yearEnd, timeScale] the timeline view uses. This is
  * `arrangement: "fixed"` deliberately: AGENTS.md's "Visualization semantics"
  * says chronology must remain semantically correct and auto-layout must not
  * reorder nodes in a historically misleading way.
  */
-export function buildSankeyFigure(links, boxesById) {
+export function buildSankeyFigure(links, boxesById, state) {
   const boxIds = [...new Set(links.flatMap((l) => [l.source_box_id, l.target_box_id]))];
-  const boxes = boxIds.map((id) => boxesById.get(id)).filter(Boolean);
-
-  const years = boxes.map((b) => b.start_year).filter((y) => typeof y === "number");
-  // Guard against an empty subset (every referenced box has a null
-  // start_year, per ISSUE-005): Math.min/max of an empty array is
-  // +Infinity/-Infinity, and `-Infinity || 1` is still -Infinity (a truthy
-  // value in JS), which would silently produce NaN node x-positions below.
-  const minYear = years.length ? Math.min(...years) : 0;
-  const maxYear = years.length ? Math.max(...years) : 0;
-  const yearSpan = maxYear - minYear || 1;
-
-  // Plotly's fixed arrangement wants x strictly inside (0, 1); clamp away
-  // from the edges so the first/last node aren't drawn clipped.
-  const clamp = (v) => Math.min(0.98, Math.max(0.02, v));
 
   const nodeIndex = new Map(boxIds.map((id, i) => [id, i]));
   const nodeLabel = boxIds.map((id) => boxesById.get(id)?.box_name ?? id);
   const nodeColor = boxIds.map((id) => boxesById.get(id)?.color_hex || "#888888");
-  const nodeX = boxIds.map((id) => {
-    const box = boxesById.get(id);
-    const y = box && typeof box.start_year === "number" ? box.start_year : minYear;
-    return clamp((y - minYear) / yearSpan);
-  });
+  const nodeX = computeSankeyNodeX(boxIds, boxesById, state);
   // x is meaningful (chronology); y only needs to keep nodes from
   // overlapping, so spread evenly in insertion order.
   const nodeY = boxIds.map((_, i) => 0.05 + (0.9 * i) / Math.max(1, boxIds.length - 1));
@@ -100,11 +113,11 @@ export function buildSankeyFigure(links, boxesById) {
  * js/app.js's try/catch around this call, instead of becoming an
  * unhandled promise rejection that bypasses the intended fallback message.
  */
-export async function renderSankey(container, { links, boxesById }, { onSelectBox, onSelectLink }) {
+export async function renderSankey(container, { links, boxesById }, state, { onSelectBox, onSelectLink }) {
   if (typeof window === "undefined" || !window.Plotly) {
     throw new Error("Plotly is not loaded (expected window.Plotly on the page)");
   }
-  const { data, layout, boxIds } = buildSankeyFigure(links, boxesById);
+  const { data, layout, boxIds } = buildSankeyFigure(links, boxesById, state);
 
   // Match the page's light/dark theme (css/history.css defines --bg/--fg on
   // :root) instead of Plotly's opaque-white default, which would otherwise
@@ -194,4 +207,20 @@ export function applySankeySelection(container, { links, boxIds }, state) {
     { "node.line.width": [nodeLineWidth], "node.line.color": [nodeLineColor], "link.color": [linkColor] },
     [0]
   );
+}
+
+/**
+ * Phase 5.5: re-position the already-rendered Sankey trace's nodes to
+ * reflect a change to the shared view domain/time-scale slider (`state`'s
+ * yearStart/yearEnd/timeScale) -- via `Plotly.restyle`, kept as its own
+ * function/call rather than folded into applySankeySelection above, per
+ * this milestone's design decision to keep position-syncing and
+ * selection-highlighting separate (minimizes churn on the already-reviewed
+ * Milestone 6 selection code; costs one extra `Plotly.restyle` call per
+ * state change, which is cheap relative to a full re-render).
+ */
+export function applySankeyTimeScale(container, { boxIds, boxesById }, state) {
+  if (typeof window === "undefined" || !window.Plotly) return;
+  const nodeX = computeSankeyNodeX(boxIds, boxesById, state);
+  window.Plotly.restyle(container, { "node.x": [nodeX] }, [0]);
 }

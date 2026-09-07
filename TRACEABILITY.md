@@ -289,7 +289,7 @@ have existed already but didn't, caught during this review).
 | M6-5 | A `box_id`/`link_id` not present in the Sankey's 7-link subset (e.g. selected via the box list) highlights nothing, rather than throwing or mis-highlighting | Correctness / defensive handling | Met | `js/sankey.test.mjs`: "unknown selectedBoxId/selectedLinkId highlights nothing" assertions pass against real `data/links.json` |
 | M6-6 | Deep-link URL query params (`?box=BYZANTINE&year=537`, IMPLEMENTATION_PLAN.md Phase 5's own example) | IMPLEMENTATION_PLAN.md Phase 5, explicitly framed there as "Possible future deep link" | Deferred | Explicit scope decision, not an oversight: the plan's own wording marks it as a future item, not a Phase 5 acceptance criterion. Not implemented this milestone |
 | M6-7 | New selection UI doesn't use color as the only cue | AGENTS.md § Accessibility ("color isn't the sole encoding") | Met | `#alluvial-list button.selected` mirrors `.box-item.selected`'s existing treatment: background + bold + a leading checkmark (`::before`), not a color change alone; the timeline's `.link-endpoint` stroke is a distinct outline from `.approx-start`'s dashed one, and explicitly resets `stroke-dasharray` so the two cues stay distinguishable even on a box that's both. Originally missed for the Sankey diagram itself — a selected link's ribbon was color-only (`computeSankeyHighlight`'s `linkColor`, no other channel on a Plotly Sankey link) — flagged as a council-review gatekeeper finding and fixed during reconciliation: a selected link now also outlines its two endpoint nodes via `node.line` (the same mechanism a selected box already used), verified by `js/sankey.test.mjs`'s "endpoint nodes are outlined" assertions |
-| M6-8 | Semantic-zoom timescale requirement folded into a development phase and recorded in traceability | User instruction, 2026-09-07: "fold that into one of the development phases... add the requirement to our traceability file" | Met | `docs/IMPLEMENTATION_PLAN.md` new "Phase 5.5" section (ordered before Phase 6); `TRACEABILITY.md` "Planned — Phase 5.5" section below, TS-1..TS-10 — documentation only, not implemented (see that section's own Status column) |
+| M6-8 | Semantic-zoom timescale requirement folded into a development phase and recorded in traceability | User instruction, 2026-09-07: "fold that into one of the development phases... add the requirement to our traceability file" | Met | `docs/IMPLEMENTATION_PLAN.md` new "Phase 5.5" section (ordered before Phase 6); TS-1..TS-11, at the time documentation only, not yet implemented — see "Milestone 7 — Semantic zoom time scale (Phase 5.5)" below for the implementation and updated status |
 | M6-9 | No production backend/DB/auth/API keys introduced | AGENTS.md § Project intent | Met | This milestone changed only static JS/CSS/HTML/Markdown; no new dependency, network call, or CDN source beyond the two already in use (`cdn.plot.ly`, `cdnjs.cloudflare.com/.../d3`) |
 
 ### Milestone 6 council review
@@ -353,29 +353,27 @@ No new issue filed this milestone. `ISSUE-009` gained a Milestone 6 note
 Milestone approved to merge to `main`. See `ISSUES.md` § Milestone council
 reviews for the corresponding entry there.
 
-## Planned — Phase 5.5 (semantic zoom time scale)
+## Milestone 7 — Semantic zoom time scale (Phase 5.5)
 
-Requirement captured 2026-09-07 (user-authored `docs/timescaleRequirement.md`)
-ahead of implementation — not yet started. Folded into
-`docs/IMPLEMENTATION_PLAN.md` as a new "Phase 5.5", ordered before Phase 6
-since population knot points must sit on the same time scale, and noted as
-revisiting Phase 3's Sankey and Phase 4's timeline x-positioning (both
-currently plain linear). Recorded here now, ahead of any implementation, so
-the requirement is tracked in this file rather than living only in the
-standalone doc.
+Requirement captured 2026-09-07 (user-authored `docs/timescaleRequirement.md`),
+folded into `docs/IMPLEMENTATION_PLAN.md` as "Phase 5.5" during Milestone 6,
+now implemented: a new pure module (`js/timescale.js`) plus its use as the
+single shared x-position source for both the timeline (Phase 4) and the
+Sankey diagram (Phase 3), and a new "Time compression" slider control.
 
 | Req | Requirement | Source | Status | Evidence |
 |---|---|---|---|---|
-| TS-1 | Nonlinear "semantic zoom" year→x mapping: `p = 1 / (1 + (M/3000) * 2^s)`, `x = 1 - (a/M)^p` | docs/timescaleRequirement.md § Core Mapping | Not started | — |
-| TS-2 | Boundary conditions: `yearToX(tMin) == 0`, `yearToX(tMax) == 1` | docs/timescaleRequirement.md § Validation | Not started | — |
-| TS-3 | Monotonic for all `t1 < t2`, any valid `M > 0`, `s in [-2, 2]` | docs/timescaleRequirement.md § Validation | Not started | — |
-| TS-4 | Inverse transform (`xToYear`) round-trips within float tolerance | docs/timescaleRequirement.md § Implementation Guidance / Validation | Not started | — |
-| TS-5 | Reusable `semanticTimeScale({tMin, tMax, scaler})` module, not baked into one view's rendering code | docs/timescaleRequirement.md § Implementation Guidance | Not started | — |
-| TS-6 | Shared scale: every time-based element in a view (box start/end, SEAIs, event markers, succession transitions, Sankey/alluvial node x, population knot points, ticks) uses the same transform — no mixed linear/semantic placement within one view | docs/timescaleRequirement.md § Shared Scale | Not started | — |
-| TS-7 | Coordinate stability: mapping depends only on `[tMin, tMax, s]`, never on SEAI/box/population filtering or event density | docs/timescaleRequirement.md § Coordinate Stability | Not started | — |
-| TS-8 | User-adjustable slider, range `[-2, 2]`, default `0`, labeled for effect (e.g. "Ancient detail ↔ Recent detail") — raw exponent not exposed | docs/timescaleRequirement.md § User Control | Not started | — |
-| TS-9 | Ticks generated in calendar time first, then transformed (not evenly spaced screen ticks reverse-mapped); density adapts to zoom level | docs/timescaleRequirement.md § Tick Generation | Not started | — |
-| TS-10 | Updates interactively (slider drag, zoom) without a full page reload; cheap enough to recompute continuously during drag | docs/timescaleRequirement.md § Performance | Not started | — |
+| TS-1 | Nonlinear "semantic zoom" year→x mapping: `p = 1 / (1 + (M/3000) * 2^s)`, `x = 1 - (a/M)^p` | docs/timescaleRequirement.md § Core Mapping | Met | `js/timescale.js`'s `semanticTimeScale()` implements exactly this formula (the multiplicative form, not the additive one the doc warns against); `js/timescale.test.mjs`'s "Zoom behavior" assertions confirm `M=3000,s=0 → p=0.5` and `M→0 → p→1` |
+| TS-2 | Boundary conditions: `yearToX(tMin) == 0`, `yearToX(tMax) == 1` | docs/timescaleRequirement.md § Validation | Met | `js/timescale.test.mjs` "Boundary conditions" — exact equality at all 5 tested `s` values |
+| TS-3 | Monotonic for all `t1 < t2`, any valid `M > 0`, `s in [-2, 2]` | docs/timescaleRequirement.md § Validation | Met | `js/timescale.test.mjs` "Monotonicity" sweeps 5 window sizes (including a near-degenerate one) × 6 scaler values × years both inside and outside `[tMin, tMax]` (needed since `js/timeline.js`'s `xClamped` relies on the scale not blowing up for out-of-domain years) |
+| TS-4 | Inverse transform (`xToYear`) round-trips within float tolerance | docs/timescaleRequirement.md § Implementation Guidance / Validation | Met | `js/timescale.test.mjs` "Round trip" — 11 representative years including two outside `[tMin, tMax]`, tolerance `1e-6` |
+| TS-5 | Reusable `semanticTimeScale({tMin, tMax, scaler})` module, not baked into one view's rendering code | docs/timescaleRequirement.md § Implementation Guidance | Met | `js/timescale.js` has zero D3/DOM/Plotly imports; both `js/timeline.js` and `js/sankey.js` import and call it independently |
+| TS-6 | Shared scale: every time-based element in a view (box start/end, SEAIs, event markers, succession transitions, Sankey/alluvial node x, population knot points, ticks) uses the same transform — no mixed linear/semantic placement within one view | docs/timescaleRequirement.md § Shared Scale | Partial | `js/timeline.js`'s `buildTimelineLayout()` builds one `scale` instance and uses it for box bars, SEAI markers, and axis ticks alike; `js/sankey.js`'s `computeSankeyNodeX()` builds an equivalent instance from the same `state.yearStart/yearEnd/timeScale`, so Sankey node x and the timeline agree. Population knot points aren't part of this (Phase 6 doesn't exist yet — `Population` is still a 0%-filled scaffold, ISSUE-003), so that element of the list is not yet applicable, not unmet |
+| TS-7 | Coordinate stability: mapping depends only on `[tMin, tMax, s]`, never on SEAI/box/population filtering or event density | docs/timescaleRequirement.md § Coordinate Stability | Met | `semanticTimeScale()`'s signature has no other inputs; `js/timescale.test.mjs` "Coordinate stability" confirms two instances built from identical `[tMin, tMax, s]` agree exactly |
+| TS-8 | User-adjustable slider, range `[-2, 2]`, default `0`, labeled for effect (e.g. "Ancient detail ↔ Recent detail") — raw exponent not exposed | docs/timescaleRequirement.md § User Control | Met | `index.html`'s `#time-scale` (`type="range" min="-2" max="2" step="0.1" value="0"`), labeled "Time compression (ancient detail ↔ recent detail)"; `js/state.js`'s `timeScale: 0` default; only the slider's own `s` value is shown, never `p`/exponent |
+| TS-9 | Ticks generated in calendar time first, then transformed (not evenly spaced screen ticks reverse-mapped); density adapts to zoom level | docs/timescaleRequirement.md § Tick Generation | Met | `js/timescale.js`'s `timeTicks(tMin, tMax)` picks candidate tick *years* from a fixed interval list before any x-transform is applied; `js/timeline.js`'s `renderTimeline()` only ever calls `scale.yearToX()` on those years, never the reverse. Interval chosen from `span / 10`, so density adapts as the visible range narrows |
+| TS-10 | Updates interactively (slider drag, zoom) without a full page reload; cheap enough to recompute continuously during drag | docs/timescaleRequirement.md § Performance | Met | Slider bound to the `input` event (fires continuously while dragging), not `change`; timeline redraws its SVG per state change (same full-redraw approach as the pre-existing region/year filters, 198-box dataset), Sankey uses `Plotly.restyle` (no full re-render) — no page reload in either path |
+| TS-11 | Optional: animate the layout smoothly while zooming | docs/timescaleRequirement.md § Zoom Interaction ("if technically practical") | Deferred | Explicitly framed as optional in the source doc; not attempted this milestone — logged in `ISSUES.md` |
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 

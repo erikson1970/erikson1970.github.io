@@ -15,6 +15,10 @@ const initialState = () => ({
   yearEnd: 2026,
   widthMode: "equal",
   showSeais: true,
+  // Phase 5.5 (docs/timescaleRequirement.md): the semantic-zoom slider's
+  // `s`, range [-2, 2], default 0. Shared by the timeline and the Sankey
+  // diagram -- see js/timescale.js's semanticTimeScale().
+  timeScale: 0,
 });
 
 export function createStore() {
