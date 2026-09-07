@@ -278,6 +278,30 @@ approved to merge to `main`. See `ISSUES.md` § Milestone council reviews for
 the full write-up (also backfilled there: a Milestone 4 section that should
 have existed already but didn't, caught during this review).
 
+## Planned — Phase 5.5 (semantic zoom time scale)
+
+Requirement captured 2026-09-07 (user-authored `docs/timescaleRequirement.md`)
+ahead of implementation — not yet started. Folded into
+`docs/IMPLEMENTATION_PLAN.md` as a new "Phase 5.5", ordered before Phase 6
+since population knot points must sit on the same time scale, and noted as
+revisiting Phase 3's Sankey and Phase 4's timeline x-positioning (both
+currently plain linear). Recorded here now, ahead of any implementation, so
+the requirement is tracked in this file rather than living only in the
+standalone doc.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| TS-1 | Nonlinear "semantic zoom" year→x mapping: `p = 1 / (1 + (M/3000) * 2^s)`, `x = 1 - (a/M)^p` | docs/timescaleRequirement.md § Core Mapping | Not started | — |
+| TS-2 | Boundary conditions: `yearToX(tMin) == 0`, `yearToX(tMax) == 1` | docs/timescaleRequirement.md § Validation | Not started | — |
+| TS-3 | Monotonic for all `t1 < t2`, any valid `M > 0`, `s in [-2, 2]` | docs/timescaleRequirement.md § Validation | Not started | — |
+| TS-4 | Inverse transform (`xToYear`) round-trips within float tolerance | docs/timescaleRequirement.md § Implementation Guidance / Validation | Not started | — |
+| TS-5 | Reusable `semanticTimeScale({tMin, tMax, scaler})` module, not baked into one view's rendering code | docs/timescaleRequirement.md § Implementation Guidance | Not started | — |
+| TS-6 | Shared scale: every time-based element in a view (box start/end, SEAIs, event markers, succession transitions, Sankey/alluvial node x, population knot points, ticks) uses the same transform — no mixed linear/semantic placement within one view | docs/timescaleRequirement.md § Shared Scale | Not started | — |
+| TS-7 | Coordinate stability: mapping depends only on `[tMin, tMax, s]`, never on SEAI/box/population filtering or event density | docs/timescaleRequirement.md § Coordinate Stability | Not started | — |
+| TS-8 | User-adjustable slider, range `[-2, 2]`, default `0`, labeled for effect (e.g. "Ancient detail ↔ Recent detail") — raw exponent not exposed | docs/timescaleRequirement.md § User Control | Not started | — |
+| TS-9 | Ticks generated in calendar time first, then transformed (not evenly spaced screen ticks reverse-mapped); density adapts to zoom level | docs/timescaleRequirement.md § Tick Generation | Not started | — |
+| TS-10 | Updates interactively (slider drag, zoom) without a full page reload; cheap enough to recompute continuously during drag | docs/timescaleRequirement.md § Performance | Not started | — |
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s

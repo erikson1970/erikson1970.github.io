@@ -163,6 +163,50 @@ Possible future deep link:
 ?box=BYZANTINE&year=537
 ```
 
+# Phase 5.5 — Semantic zoom time scale
+
+Full spec: `docs/timescaleRequirement.md` (added 2026-09-07).
+
+Replace the timeline's plain linear year→x mapping with a nonlinear
+"semantic zoom" scale that gives recent history progressively more
+horizontal room as the visible span widens, and relaxes toward linear as
+the view narrows:
+
+```text
+p = 1 / (1 + (M / 3000) * 2^s)
+x = 1 - (a / M)^p
+```
+
+where `M` is the visible year span, `a` is an event's age relative to the
+right edge of the viewport, and `s` is a user-adjustable scale parameter.
+
+Implement as a reusable module (`semanticTimeScale({ tMin, tMax, scaler })`
+returning `yearToX`/`xToYear`/`exponent`), not baked into `timeline.js`
+directly — every time-based visual element in a view (box start/end,
+SEAIs, event markers, succession transitions, Sankey/alluvial node
+placement, population knot points, tick locations) must share the same
+transform; no mixing linear and semantic placement within one view.
+
+User control: a single slider, range `[-2, 2]`, default `0` ("Ancient
+detail ↔ Recent detail"); the raw exponent stays internal, not exposed in
+the UI.
+
+Should land before Phase 6 (population knot points must sit on the same
+scale) and revisits Phase 3's Sankey x-positioning and Phase 4's timeline
+x-positioning, both currently linear.
+
+Acceptance criteria (see `docs/timescaleRequirement.md` for full
+derivations):
+
+- `yearToX(tMin) == 0`, `yearToX(tMax) == 1`;
+- monotonic for any `t1 < t2`, any valid `M`/`s`;
+- round-trips (`xToYear(yearToX(t)) ≈ t`);
+- depends only on `[tMin, tMax, s]` — never on SEAI/box/population
+  filtering or density;
+- ticks generated in calendar time, then transformed (not evenly spaced
+  screen ticks reverse-mapped);
+- updates interactively (slider drag, zoom) without a full page reload.
+
 # Phase 6 — Population experiment
 
 Populate only enough data to test width encodings.
