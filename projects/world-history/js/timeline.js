@@ -43,9 +43,10 @@ export function buildTimelineLayout(boxes, seaisByBoxId, state) {
 
   const rowIndexByBoxId = new Map(rows.map((r, i) => [r.box.box_id, i]));
 
-  // SEAIs without a numeric year (a handful use a text-only year_label) are
-  // silently skipped here rather than mis-plotted -- same "don't fabricate a
-  // coordinate" reasoning as approxStart above.
+  // SEAIs without a numeric year (one, as of this dataset -- a text-only
+  // year_label like "Natural landmark") are silently skipped here rather
+  // than mis-plotted -- same "don't fabricate a coordinate" reasoning as
+  // approxStart above.
   const seaiMarkers = showSeais
     ? rows.flatMap((r) => {
         const seais = seaisByBoxId.get(r.box.box_id) || [];

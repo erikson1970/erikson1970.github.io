@@ -157,7 +157,6 @@ header .summary { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 1rem
   fill: var(--fg);
   stroke: var(--bg);
   stroke-width: 1;
-  pointer-events: none;
 }
 
 .alluvial-section {

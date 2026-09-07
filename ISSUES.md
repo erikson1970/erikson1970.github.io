@@ -47,6 +47,7 @@ _(none yet — see Tabled below)_
 - **Source:** `docs/STATUS.md`
 - **Description:** All 390 seeded knot-point rows have no `population` value yet, by design (values intentionally not invented). No width-by-population rendering is possible until a representative subset is filled.
 - **Deferred until:** Phase 6 (population experiment); STATUS.md's recommended first-subset list (Roman, Byzantine, Persian, Ottoman, major Chinese dynasties, etc.).
+- **Note (Milestone 5):** This is why the Phase 4 timeline (`js/timeline.js`) has no population-based width mode: `js/state.js`'s `widthMode` field exists but has no UI control yet, deferred until this table has real values to render.
 
 ### ISSUE-004 — `Links` and `BoxSegments` tables do not exist yet
 - **Severity:** Minor
@@ -70,6 +71,7 @@ _(none yet — see Tabled below)_
 - **Description:** A handful of "Indigenous Era" boxes (e.g. `US_INDIG`, `CA_INDIG`, `AR_INDIG`, `AU_INDIG`) have a null `start_year` because the poster prints an illegible "c. [BCE]" with no parseable number there. `end_year` is always present, and `DATA_MODEL.md`'s rule only requires `start_year <= end_year` "when both exist," so this is not a validation-rule violation — just an open transcription gap, consistent with STATUS.md limitation #2.
 - **Resolution:** None yet. Left for whoever transcribes those boxes' start dates, or for the build script to render them with an explicit "unknown start" treatment.
 - **Note:** This entry was misfiled under `## Resolved` from Milestone 0 through Milestone 1 despite its own `Status:` field always saying `Tabled` — caught and moved here by the Milestone 1 process/docs council review.
+- **Note (Milestone 5):** `js/timeline.js`'s `buildTimelineLayout()` gives these six boxes exactly the "explicit unknown start treatment" this issue's resolution note anticipated — `approxStart: true`, with the bar's rendered start pinned to the current view's left edge rather than a fabricated year. Still not resolved (no real `start_year` has been transcribed), just no longer un-rendered.
 
 ### ISSUE-007 — `wh_data.py` vocabulary-check loop has dead code for `estimate_method`
 - **Severity:** Minor
@@ -91,6 +93,7 @@ _(none yet — see Tabled below)_
 - **Source:** Milestone 2 process/docs council review
 - **Description:** Parallel to ISSUE-006 but for the frontend: the Milestone 2 commit message documents real Node-based runtime verification (against a live local server and a minimal DOM stub), but none of it is a committed, repeatable test file — only prose in the commit message. ISSUE-006's title/scope is explicitly the Python pipeline (`tools/wh_data.py`) and does not cover this. The same gap recurred in Milestone 3: a Node `loadAllData()` run verified the moved `data/*.json` still loads correctly post-move, again only as prose (see `TRACEABILITY.md` M3-4, downgraded to Partial for this reason). Recurred a third time in Milestone 4: a Node fake-DOM harness verified the Sankey/Links integration (data load, box-list render, region-filter narrowing, box- and link-click-to-inspector, the accessible fallback list, and the Plotly-unavailable degradation path), but again only as commit-message/`TRACEABILITY.md` prose, not a committed test file (see `TRACEABILITY.md` M4-6/M4-8).
 - **Deferred until:** whenever `js/` grows complex enough that manual/ad-hoc verification stops being sufficient, or alongside ISSUE-006 if/when a test runner is introduced for either side.
+- **Note (Milestone 5):** Partially resolved rather than recurring a 4th time — `js/timeline.test.mjs` is a committed, repeatable test for `buildTimelineLayout()` (run with `node js/timeline.test.mjs`; a new root `package.json` with `"type": "module"` lets Node load it and `./timeline.js` directly, no scratch-copy workaround needed). `renderTimeline()`'s actual D3/DOM rendering and click-firing are still unverified (no real browser in this environment), and `sankey.js`/`app.js`/`data.js`/`state.js` remain entirely uncovered, so this issue stays open and Tabled rather than moving to Resolved.
 
 ### ISSUE-010 — Milestone commits land as one (or two) large commits, not the "commit frequently" granularity AGENTS.md describes
 - **Severity:** Minor
@@ -99,6 +102,7 @@ _(none yet — see Tabled below)_
 - **Description:** AGENTS.md § Source control workflow says "commit frequently on working branch — small, real commits, not one giant squash at the end." All three milestones so far (0, 1, 2) each landed as one primary commit (plus, for 1 and 2, one small follow-up docs commit) rather than incremental commits during the work. Not flagged by either of the first two council reviews; caught on the third pass. No functional impact — each commit message is detailed and the work was verified as a unit before committing — but it's a real gap between written process and actual practice.
 - **Deferred until:** a decision on whether to tighten actual practice (commit more granularly mid-milestone going forward) or relax AGENTS.md's wording to match reality; not worth rewriting history on already-merged milestones.
 - **Note (Milestone 4):** Improved, not resolved — Milestone 4 split cleanly into three commits (data pipeline, UI, docs/traceability) instead of one or two, closer to but still short of the "small, real commits" ideal. Left open since Milestones 0–3 are unaffected and the practice isn't yet consistent enough to call this closed.
+- **Note (Milestone 5):** Regressed back to two commits (code, then docs/traceability) — not egregious (still a clean split, not a single squash), but not the three-commit improvement Milestone 4 made either. Practice still inconsistent; left open.
 
 ### ISSUE-011 — `Links` "transition year sensible" check is a loose union-envelope heuristic, not a real sensibility check
 - **Severity:** Minor
@@ -106,6 +110,13 @@ _(none yet — see Tabled below)_
 - **Source:** Milestone 4 data-integrity council review
 - **Description:** `docs/DATA_MODEL.md` §8 lists "transition year sensible" as a `Links` validation rule. The actual implementation (`tools/wh_data.py` `validate_links`) checks only that the link's `year` falls within `[min(source.start_year, target.start_year), max(source.end_year, target.end_year)]` — the *union* of both boxes' lifespans, not their overlap or adjacency. A link between two boxes centuries apart could still pass this check if the chosen year happened to land inside the wider combined span. Not triggered by any of the current 7 rows (all pass cleanly and are historically accurate), and it's correctly scoped as a WARNING rather than a build-blocking ERROR, but the word "sensible" oversells what's actually verified.
 - **Deferred until:** whenever a real subset gets large/varied enough that this heuristic would plausibly miss a genuinely bad link, or general validation-logic cleanup.
+
+### ISSUE-012 — Timeline SVG doesn't re-render on window resize; a few prehistoric-landmark SEAIs can visually detach from their row if the year range is widened enough
+- **Severity:** Minor
+- **Status:** Tabled
+- **Source:** Milestone 5 architecture/accessibility council review
+- **Description:** Two independent minor gaps in `js/timeline.js`: (1) `renderTimeline()` computes SVG width once per render from `container.clientWidth`; unlike the Sankey/Plotly diagram (`responsive: true`), it only picks up a new width on the next state change, not on a bare window resize. (2) A few `seais.json` rows (e.g. `L15`/`PT_TRIBES` at year -3500, `L18`/`ES_IBERIAN` at -14500, `L21`/`FR_GAUL` at -17000) have a real numeric year that predates their parent box's own `start_year` by thousands of years — a pre-existing quirk in the data, not something `timeline.js` introduced. At the default `-3000..2026` view these are correctly excluded by the ordinary year-range filter, but if a user widens "From year" enough to bring one into view, its diamond marker clamps to the plot's left edge while its parent box's bar sits far to the right, which could read as misattributed.
+- **Deferred until:** (1) whenever the timeline gets enough real usage to justify a resize listener; (2) whenever those specific `seais.json` rows are reviewed for whether their year, their parent `box_id`, or both need correcting — likely alongside whatever eventually addresses ISSUE-005's prehistoric-era boxes generally.
 
 ## Resolved
 
@@ -172,3 +183,55 @@ No gatekeeper findings. Fixed inline (real code/docs changes, not just tabled):
 - **M3-4 evidence overstated** (process finding): the requirement's "Met" status rested partly on a Node `loadAllData()` run that, like Milestone 2's equivalent checks (ISSUE-009), was never captured as a committed, repeatable test — only asserted in prose. Downgraded M3-4 to Partial in `TRACEABILITY.md` and extended ISSUE-009's description to note the recurrence.
 
 Noted, not newly filed: Milestone 3 again landed as two large commits (`121b4ff`, `ce8b234`), consistent with the already-tabled ISSUE-010 rather than a new or worsened gap. Milestone approved to merge to `main`.
+
+### Milestone 4 — Plotly alluvial prototype (Phase 3)
+Reviewed against commits `e363906`/`be635c9`/`65f38ab` (branch
+`feature/alluvial-prototype`), three lenses:
+
+| Reviewer | Verdict |
+|---|---|
+| Data / content integrity | PASS_WITH_MINOR_ISSUES |
+| Architecture / static-site constraints & accessibility | PASS_WITH_MINOR_ISSUES |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No gatekeeper findings. Fixed inline (real code/docs changes, not just tabled):
+- **No keyboard/AT access to Sankey links** (architecture/accessibility finding): Plotly's SVG hit-targets are mouse-only with no tabindex, and unlike box selection (already a real `<button>` list), a link had no accessible alternative at all. Added `#alluvial-list`, a visually-hidden-but-focusable `<ul>` of real `<button>`s (`.visually-hidden`/`:focus-within` in `css/history.css`) driving the same `selectedLinkId` as a Plotly click.
+- **Dark-theme bug** (architecture finding): Plotly's default opaque-white `paper_bgcolor`/`plot_bgcolor` rendered as a stark white rectangle in dark mode. `renderSankey()` now reads the page's own `--bg`/`--fg` CSS custom properties via `getComputedStyle` and passes them into `layout`.
+- **`links.json` fetch failure could take down the whole page** (architecture finding): `loadAllData()` originally fetched all tables via one `Promise.all`, so a broken/missing `links.json` — feeding only the peripheral Sankey prototype — would fail the box list, inspector, and region filter too. Split into required (`boxes`/`seais`/`population`/`regions`, still hard-failing) and optional (`links`, defaults to `[]` with a `console.warn`) fetches.
+- **NaN edge case** (architecture finding): `buildSankeyFigure()`'s `Math.min(...years)`/`Math.max(...years)` over an empty array (every referenced box has a null `start_year`, per ISSUE-005) would silently produce `NaN` node x-positions (`-Infinity || 1` is still `-Infinity`, a truthy value in JS). Guarded with a length check.
+- **Un-awaited Plotly promise** (architecture finding): `renderSankey()` called `Plotly.newPlot` without awaiting it, so an asynchronous rejection (as opposed to a synchronous throw) would bypass `js/app.js`'s intended fallback message and surface only as an unhandled-rejection console warning. Made `renderSankey()` `async`, `await`ed the call, and `await`ed the call site inside the existing try/catch.
+- **Misleading UI copy** (process finding): the alluvial section's note didn't disclose that it covers only a 7-row hand-authored subset, not the full dataset. Reworded to name the exact 7 successions.
+- **JSDoc gap** (process finding): `buildSankeyFigure()`'s doc comment didn't explain the `arrangement: "fixed"` chronology-preservation rationale. Extended.
+- **Opaque validation error** (data-integrity finding): `validate_links()` gave the same generic message for both "missing `relation_type`" and "`relation_type` not in the controlled vocabulary." Split into two distinct messages.
+
+New minor issue filed (tabled, not a gatekeeper): ISSUE-011 (the `Links` "transition year sensible" check is a loose union-envelope heuristic, not a real overlap-adjacency check). ISSUE-004 noted as partially addressed (small Mediterranean/Europe `Links` subset now exists); ISSUE-009 extended for a third recurrence (Node fake-DOM harness verification, again only commit-message/prose, not a committed test file); ISSUE-010 noted as improved (three commits this milestone instead of one or two). Milestone approved to merge to `main`.
+
+**Note (added retroactively during the Milestone 5 review):** this section
+was missing from `ISSUES.md` despite `TRACEABILITY.md`'s Milestone 4 section
+and commit `09eea5f` ("Milestone 4 council review: reconcile findings, close
+out") both referring to it — caught by the Milestone 5 process/docs council
+review and backfilled here from that commit's actual history rather than
+left broken.
+
+### Milestone 5 — D3 timeline prototype (Phase 4)
+Reviewed against commits `d80728f`/`212409b` (branch `feature/timeline-view`),
+three lenses:
+
+| Reviewer | Verdict |
+|---|---|
+| Data / content integrity | PASS_WITH_MINOR_ISSUES |
+| Architecture / static-site constraints & accessibility | PASS_WITH_MINOR_ISSUES |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+Two gatekeeper findings, both about this repo's own docs disagreeing with
+themselves, both fixed inline rather than tabled — see `TRACEABILITY.md`'s
+Milestone 5 council-review note for the full list (reversed year-range bug,
+dead SEAI tooltip, wrong evidence numbers/citations, the V1-4 supersession
+row, and closing ISSUE-009's recurrence with an actual committed test file,
+`js/timeline.test.mjs`, instead of tabling it a fourth time). New minor
+issue filed: ISSUE-012 (no resize re-render; a few prehistoric-landmark
+SEAIs can visually detach from their row if the year range is widened
+enough). ISSUE-005/ISSUE-003 annotated with this milestone's use of them;
+ISSUE-010 noted as regressed to two commits. This Milestone 4 section was
+also backfilled during this review (see note above). Milestone approved to
+merge to `main`.

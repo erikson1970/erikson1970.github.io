@@ -264,13 +264,29 @@ async function main() {
   els.yearStart.value = initial.yearStart;
   els.yearEnd.value = initial.yearEnd;
   els.showSeais.checked = initial.showSeais;
+  // A reversed range (yearStart > yearEnd) doesn't crash timeline.js's
+  // d3.scaleLinear (it just draws chronology flowing right-to-left with no
+  // warning), which would violate AGENTS.md's "chronology must remain
+  // semantically correct" -- so reject it here instead of ever letting it
+  // reach the store. Revert the input's own displayed value too, or it
+  // would visually disagree with the state it failed to change.
   els.yearStart.addEventListener("change", () => {
     const value = Number(els.yearStart.value);
-    if (Number.isFinite(value)) store.set({ yearStart: value });
+    const current = store.get();
+    if (!Number.isFinite(value) || value > current.yearEnd) {
+      els.yearStart.value = current.yearStart;
+      return;
+    }
+    store.set({ yearStart: value });
   });
   els.yearEnd.addEventListener("change", () => {
     const value = Number(els.yearEnd.value);
-    if (Number.isFinite(value)) store.set({ yearEnd: value });
+    const current = store.get();
+    if (!Number.isFinite(value) || value < current.yearStart) {
+      els.yearEnd.value = current.yearEnd;
+      return;
+    }
+    store.set({ yearEnd: value });
   });
   els.showSeais.addEventListener("change", () => {
     store.set({ showSeais: els.showSeais.checked });

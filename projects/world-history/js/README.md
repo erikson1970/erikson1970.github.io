@@ -22,7 +22,10 @@ Current modules (Phase 2–4):
   as an SVG with D3 (bars + diamond SEAI markers + a year axis) and wires
   bar clicks to box selection. Loaded from `cdnjs.cloudflare.com` in
   `index.html`, not bundled. Box width is still literal start/end year, not
-  population-based (see `ISSUES.md` ISSUE-003).
+  population-based (see `ISSUES.md` ISSUE-003). `buildTimelineLayout()` has
+  a committed test, `timeline.test.mjs` — run with `node
+  js/timeline.test.mjs` (the project root's `package.json` sets
+  `"type": "module"` so Node can load these files directly).
 - `app.js` — wiring: loads data, creates the store, renders the box
   list/inspector/region-filter UI, the alluvial diagram, and the timeline
   into `index.html`, and handles click-to-select for boxes and links.
