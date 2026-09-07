@@ -61,6 +61,22 @@ for (let i = 1; i < dated.length; i++) {
   // at yearStart or yearEnd exactly) should move.
   const zoomedX = computeSankeyNodeX(figure.boxIds, boxesById, { ...defaultState, timeScale: 2 });
   assert(zoomedX.some((x, i) => x !== nodeX[i]), "computeSankeyNodeX responds to a timeScale change");
+
+  // ISSUE-005: a box with no start_year (none of data/links.json's current
+  // subset has one, so this exercises the fallback with a synthetic box
+  // rather than real data) falls back to state.yearStart, same "don't
+  // fabricate a date" reasoning as js/timeline.js's approxStart -- not
+  // some other placeholder that could land it off-screen or at a
+  // misleadingly specific position (council review minor finding: this
+  // branch was previously untested).
+  const syntheticBoxesById = new Map(boxesById);
+  syntheticBoxesById.set("NO_START_YEAR", { box_id: "NO_START_YEAR", start_year: null });
+  const withUndated = computeSankeyNodeX([...figure.boxIds, "NO_START_YEAR"], syntheticBoxesById, defaultState);
+  assert(Number.isFinite(withUndated.at(-1)), "a box with no start_year still gets a finite node x");
+  assert(
+    Math.abs(withUndated.at(-1) - Math.min(0.98, Math.max(0.02, 0))) < 1e-9,
+    "a box with no start_year lands at the clamped left edge (state.yearStart)"
+  );
 }
 
 // -- computeSankeyHighlight --

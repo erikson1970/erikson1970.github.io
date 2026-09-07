@@ -76,6 +76,19 @@ export function timeTicks(tMin, tMax) {
   const interval = TICK_INTERVALS.find((c) => c >= target) ?? TICK_INTERVALS[TICK_INTERVALS.length - 1];
   const first = Math.ceil(tMin / interval) * interval;
   const ticks = [];
-  for (let t = first; t <= tMax + 1e-9; t += interval) ticks.push(t);
+  for (let t = first; t <= tMax + 1e-9; t += interval) {
+    // docs/DATA_MODEL.md: "There is no attempt to model a historical year
+    // zero" -- every real box/SEAI year in this dataset is a nonzero
+    // integer (negative BCE, positive CE), so a tick landing on the
+    // interval arithmetic's year 0 (any span whose bounds straddle it, at
+    // an interval that divides evenly into it -- true for every interval
+    // in TICK_INTERVALS, so this hits the app's own default -3000..2026
+    // view) doesn't correspond to any calendar year this app's BCE/CE
+    // convention can label (council review gatekeeper finding: it was
+    // rendering as "0 CE", which isn't a real year under that convention).
+    // Simplest correct fix is to just not draw a tick there; the
+    // neighboring ticks on either side still anchor the axis.
+    if (t !== 0) ticks.push(t);
+  }
   return ticks;
 }

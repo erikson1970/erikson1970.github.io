@@ -104,6 +104,7 @@ _(none yet — see Tabled below)_
 - **Deferred until:** a decision on whether to tighten actual practice (commit more granularly mid-milestone going forward) or relax AGENTS.md's wording to match reality; not worth rewriting history on already-merged milestones.
 - **Note (Milestone 4):** Improved, not resolved — Milestone 4 split cleanly into three commits (data pipeline, UI, docs/traceability) instead of one or two, closer to but still short of the "small, real commits" ideal. Left open since Milestones 0–3 are unaffected and the practice isn't yet consistent enough to call this closed.
 - **Note (Milestone 5):** Regressed back to two commits (code, then docs/traceability) — not egregious (still a clean split, not a single squash), but not the three-commit improvement Milestone 4 made either. Practice still inconsistent; left open.
+- **Note (Milestone 7):** Regressed further — landed as a single commit bundling the new `js/timescale.js` module, the `js/timeline.js`/`js/sankey.js`/`js/app.js`/`index.html` integration, all three test files, and all docs/traceability updates together (flagged by that milestone's own architecture council review). Practice remains inconsistent milestone to milestone; left open.
 
 ### ISSUE-011 — `Links` "transition year sensible" check is a loose union-envelope heuristic, not a real sensibility check
 - **Severity:** Minor
@@ -125,6 +126,13 @@ _(none yet — see Tabled below)_
 - **Source:** Milestone 7 (Phase 5.5) implementation, `docs/timescaleRequirement.md` § Zoom Interaction
 - **Description:** That doc explicitly frames smooth animation while zooming/dragging the time-compression slider or year-range inputs as optional ("if technically practical, animate the layout smoothly"). The current implementation (`js/timeline.js`'s full SVG redraw per state change, `js/sankey.js`'s `applySankeyTimeScale()` via `Plotly.restyle`) recomputes and redraws positions immediately on every `input` event with no transition/tween, so bars, markers, ticks, and Sankey nodes jump to their new position each frame rather than easing.
 - **Deferred until:** real usage suggests the instant-snap behavior is actually distracting/hard to track at the current ~198-box, small-Links-subset scale; would likely mean D3 `.transition()` calls in `renderTimeline()` and a Plotly `layout.transition`/animated `restyle` for the Sankey side.
+
+### ISSUE-014 — Time-scale slider's continuous `input` updates re-render every panel, not just the ones that depend on it
+- **Severity:** Minor
+- **Status:** Tabled
+- **Source:** Milestone 7 (Phase 5.5) council review (accessibility/UX lens)
+- **Description:** `js/app.js`'s single `store.subscribe` callback re-runs `renderList` (rebuilds the ~198-item box list), `renderInspector`, `renderTimelineView`, `renderAlluvialListSelection`, `renderSankeySelection`, and `renderSankeyTimeScale` on every state change, including the new `#time-scale` slider's `input` event — which can fire many times per second during a drag or a held arrow key. Only `renderTimelineView` and `renderSankeyTimeScale` actually depend on `timeScale`; the rest do redundant work each tick. `docs/timescaleRequirement.md`'s own Performance section recommends updating only x-related geometry where possible. Unlikely to be noticeably slow at the current ~198-box/7-link scale (the pre-existing region/year filters already do a full box-list rebuild on `change`, just far less frequently), but this is the first control wired to a high-frequency event, and the gap is real and unaddressed.
+- **Deferred until:** real usage shows jank during a slider drag, or the dataset grows enough (more boxes, a larger `Links` subset) to make the redundant work costly — likely fix is either narrowing what `store.subscribe` re-renders per patch (e.g. a per-field subscription) or `requestAnimationFrame`-throttling the slider's `store.set` calls.
 
 ## Resolved
 
@@ -259,3 +267,43 @@ Two gatekeeper findings, both fixed inline rather than tabled — see
 (the Sankey selected-link color-only encoding, and this section's own
 missing Milestone 6 note, backfilled now rather than left broken). No new
 issue filed. Milestone approved to merge to `main`.
+
+### Milestone 7 — Semantic zoom time scale (Phase 5.5)
+Reviewed against commit `887f483` (branch `feature/semantic-zoom-scale`)
+vs. `main` at `2df28c3`, three lenses:
+
+| Reviewer | Verdict |
+|---|---|
+| Correctness & data-fidelity | PASS |
+| Accessibility & UX | PASS_WITH_MINOR_ISSUES |
+| Architecture & docs/process | PASS |
+
+One gatekeeper finding, fixed inline: `js/timeline.js`'s `formatTickYear`
+rendered a tick landing on calendar year 0 as "0 CE" — a year that doesn't
+exist under this dataset's own documented BCE/CE convention
+(`docs/DATA_MODEL.md`: "There is no attempt to model a historical year
+zero"), and the app's own default `-3000..2026` view produces exactly such
+a tick. Fixed at the source: `js/timescale.js`'s `timeTicks()` now excludes
+an exact-0 candidate (covered by a new `timescale.test.mjs` assertion);
+`formatTickYear` itself also now guards year 0 (and the `-0` `Math.round`
+can produce) in case it's ever reused for a hover/inspector display of an
+exact year, per `docs/timescaleRequirement.md`'s own recommendation.
+
+Minor findings, two fixed inline, two tabled:
+- Fixed: `js/sankey.test.mjs` didn't exercise `computeSankeyNodeX`'s
+  null-`start_year` fallback (ISSUE-005) with any real data — added a
+  synthetic-box case.
+- Fixed: `js/timeline.js`'s tick rendering recomputed `scale.yearToX(year)`
+  a second time per tick instead of reusing the `x` `buildTimelineLayout`
+  already put on each `layout.ticks` entry — simplified to reuse it.
+- Tabled as ISSUE-013: smooth animation while zooming/dragging isn't
+  implemented — explicitly optional in `docs/timescaleRequirement.md`.
+- Tabled as ISSUE-014: the new time-scale slider's `input` listener
+  triggers a full re-render of every panel (not just the ones that
+  actually depend on `timeScale`) on every drag tick — no debounce/RAF
+  throttle exists. Unlikely to matter at the current dataset scale.
+
+ISSUE-010 (milestone commit granularity) noted as regressed further this
+milestone (a single commit, where Milestone 4 managed three and Milestone
+5/6 managed two) — see that issue's own Milestone 7 note. Milestone
+approved to merge to `main`.

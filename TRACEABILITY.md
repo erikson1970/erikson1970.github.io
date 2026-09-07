@@ -375,6 +375,43 @@ Sankey diagram (Phase 3), and a new "Time compression" slider control.
 | TS-10 | Updates interactively (slider drag, zoom) without a full page reload; cheap enough to recompute continuously during drag | docs/timescaleRequirement.md § Performance | Met | Slider bound to the `input` event (fires continuously while dragging), not `change`; timeline redraws its SVG per state change (same full-redraw approach as the pre-existing region/year filters, 198-box dataset), Sankey uses `Plotly.restyle` (no full re-render) — no page reload in either path |
 | TS-11 | Optional: animate the layout smoothly while zooming | docs/timescaleRequirement.md § Zoom Interaction ("if technically practical") | Deferred | Explicitly framed as optional in the source doc; not attempted this milestone — logged in `ISSUES.md` |
 
+### Milestone 7 council review
+
+Reviewed commit `887f483` (branch `feature/semantic-zoom-scale`) vs. `main`
+at `2df28c3`, three lenses:
+
+| Reviewer | Verdict |
+|---|---|
+| Correctness & data-fidelity | PASS |
+| Accessibility & UX | PASS_WITH_MINOR_ISSUES |
+| Architecture & docs/process | PASS |
+
+One gatekeeper finding, fixed inline before merge: **tick label "0 CE"**
+(accessibility gatekeeper) — `js/timeline.js`'s `formatTickYear` rendered a
+tick landing on calendar year 0 as "0 CE", but `docs/DATA_MODEL.md`
+documents that this dataset has no historical year zero, and the app's own
+default `-3000..2026` view produces exactly such a tick (TS-9's "density
+adapts to zoom level" claim was accurate, but didn't account for this
+label being wrong at the *default* zoom). Fixed at the source: `timeTicks()`
+now excludes an exact-0 tick candidate (new assertion in
+`timescale.test.mjs`); `formatTickYear` also independently guards year 0
+(and the `-0` `Math.round` can produce for a fractional year) for any
+future reuse as a hover/inspector label.
+
+Also fixed inline (minor, not gatekeepers):
+- `js/sankey.test.mjs` didn't exercise `computeSankeyNodeX`'s null-`start_year`
+  fallback (ISSUE-005) — added a synthetic-box test case.
+- `js/timeline.js`'s tick rendering recomputed `scale.yearToX(year)` a
+  second time per tick instead of reusing the `x` already computed on each
+  `layout.ticks` entry — simplified to reuse it.
+
+Tabled (see `ISSUES.md`): ISSUE-013 (smooth zoom animation, explicitly
+optional per the spec) and new ISSUE-014 (the time-scale slider's `input`
+listener re-renders every panel, not just the ones depending on
+`timeScale` — no debounce/RAF throttle). ISSUE-010 (commit granularity)
+noted as regressed further this milestone (a single commit). Milestone
+approved to merge to `main`.
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s

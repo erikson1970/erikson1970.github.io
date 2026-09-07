@@ -126,7 +126,8 @@ export function renderTimeline(container, layout, state, { onSelectBox }) {
   // also absorbs the rare floating-point overshoot at exactly domainStart/
   // domainEnd -- scale.yearToX there is exactly 0/1, but a tick generated a
   // hair past domainEnd by timeTicks' loop bound could land at e.g. 1.0000001.)
-  const xClamped = (year) => Math.min(innerWidth, Math.max(0, scale.yearToX(year) * innerWidth));
+  const xNorm = (x) => Math.min(innerWidth, Math.max(0, x * innerWidth));
+  const xClamped = (year) => xNorm(scale.yearToX(year));
 
   const svg = d3
     .select(container)
@@ -149,7 +150,10 @@ export function renderTimeline(container, layout, state, { onSelectBox }) {
     .data(ticks, (d) => d.year)
     .join("g")
     .attr("class", "tick")
-    .attr("transform", (d) => `translate(${xClamped(d.year)},0)`);
+    // Reuse the x layout.ticks already computed (council review minor
+    // finding: recomputing scale.yearToX(d.year) here duplicated work --
+    // same value, since it's the same pure scale, just wasted).
+    .attr("transform", (d) => `translate(${xNorm(d.x)},0)`);
   tickSel.append("line").attr("y2", 6);
   tickSel
     .append("text")
@@ -208,7 +212,16 @@ export function renderTimeline(container, layout, state, { onSelectBox }) {
 // d3.format("d") behavior) don't read as history at a glance the way a
 // labeled era does, and that matters more now that pixel spacing is
 // nonlinear and so more easily misread as proportional to elapsed time.
+//
+// docs/DATA_MODEL.md: "There is no attempt to model a historical year
+// zero" -- js/timescale.js's timeTicks() already excludes an exact-0 tick
+// for that reason, but this function is also the obvious one to reuse for
+// a future hover/inspector display of an exact (possibly fractional) year
+// per the spec's own recommendation, so it guards year 0 (and the `-0`
+// Math.round(-0.4) can produce, which `rounded < 0` alone treats as
+// non-negative) itself rather than relying on the caller never passing it.
 function formatTickYear(year) {
   const rounded = Math.round(year);
+  if (rounded === 0) return year < 0 ? "1 BCE" : "1 CE";
   return rounded < 0 ? `${-rounded} BCE` : `${rounded} CE`;
 }

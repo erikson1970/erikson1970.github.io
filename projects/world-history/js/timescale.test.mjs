@@ -99,6 +99,15 @@ assert(semanticTimeScale({ tMin: 0, tMax: 1, scaler: 0 }).exponent() > 0.99, "M 
   const narrowTicks = timeTicks(1990, 2000);
   assert(narrowTicks.length > 0, "timeTicks handles a narrow span without throwing");
   assert(timeTicks(500, 500).length === 1, "zero-width span falls back to a single tick, not a crash/empty array");
+
+  // docs/DATA_MODEL.md: "There is no attempt to model a historical year
+  // zero" -- a span whose calendar-arithmetic ticks would otherwise land
+  // exactly on 0 (the app's own default -3000..2026 view is exactly this
+  // case) must not produce one; there's no real calendar year to label it
+  // with (council review gatekeeper finding -- js/timeline.js's
+  // formatTickYear was rendering it as "0 CE").
+  assert(!ticks.includes(0), "timeTicks never includes year 0 (no historical year zero)");
+  assert(!timeTicks(-500, 500).includes(0), "a span straddling 0 at a smaller interval still excludes it");
 }
 
 if (failures > 0) {
