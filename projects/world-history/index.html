@@ -7,6 +7,7 @@
 <meta name="description" content="An interactive, static visualization of world history, built from the ChartOrigin Timeline of World History poster.">
 <link rel="stylesheet" href="css/history.css">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 </head>
 <body>
   <header>
@@ -19,6 +20,34 @@
     <label for="region-filter">Region</label>
     <select id="region-filter" aria-describedby="summary"></select>
   </div>
+
+  <section aria-labelledby="timeline-heading" class="timeline-section">
+    <h2 id="timeline-heading">Timeline (prototype)</h2>
+    <p class="timeline-note">
+      One row per box in view, ordered chronologically; bar width shows the
+      poster's own start/end dates, not yet population-weighted &mdash; see
+      <code>docs/VISUALIZATION.md</code>. Six boxes have no legible start
+      date on the source poster (<code>ISSUES.md</code> ISSUE-005); their
+      bar runs to the left edge of the visible range with a dashed edge to
+      mark that as approximate, not a real date. Diamond markers are SEAIs.
+      Click a bar, or a box in the list below, to select it &mdash; the box
+      list already gives full keyboard access to every box shown here, so
+      this chart doesn't duplicate it with a hidden list of its own the way
+      the alluvial diagram below does.
+    </p>
+    <div class="timeline-controls">
+      <label for="year-start">From year</label>
+      <input type="number" id="year-start" step="1">
+      <label for="year-end">To year</label>
+      <input type="number" id="year-end" step="1">
+      <label><input type="checkbox" id="show-seais"> Show SEAIs</label>
+    </div>
+    <div
+      id="timeline"
+      role="img"
+      aria-label="Timeline of boxes in the current filter, ordered chronologically, with SEAI markers"
+    ></div>
+  </section>
 
   <section aria-labelledby="alluvial-heading" class="alluvial-section">
     <h2 id="alluvial-heading">Succession (alluvial view, prototype subset)</h2>
@@ -60,10 +89,12 @@
 
   <footer>
     <p>
-      This is a Phase 2/3 slice (click a box, inspect it, filter by region;
-      a small alluvial/Sankey succession prototype) &mdash; not yet the full
-      timeline view. See <code>docs/IMPLEMENTATION_PLAN.md</code> for the
-      build plan and <code>docs/STATUS.md</code> for current data coverage.
+      This is a Phase 2/3/4 slice (click a box, inspect it, filter by region
+      and year range; a small alluvial/Sankey succession prototype; a first
+      D3 timeline view) &mdash; population-based box width, BoxSegments-based
+      geography, and full-dataset succession links are still to come. See
+      <code>docs/IMPLEMENTATION_PLAN.md</code> for the build plan and
+      <code>docs/STATUS.md</code> for current data coverage.
     </p>
   </footer>
 

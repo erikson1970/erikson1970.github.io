@@ -88,6 +88,78 @@ header .summary { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 1rem
   color: var(--fg);
 }
 
+.timeline-section {
+  margin-bottom: 1.5rem;
+}
+.timeline-section h2 {
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+.timeline-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem;
+}
+.timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+.timeline-controls label { font-weight: 600; }
+.timeline-controls input[type="number"] {
+  font: inherit;
+  width: 6rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+}
+#timeline {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-height: 120px;
+  max-height: 70vh;
+  overflow: auto;
+}
+.timeline-empty {
+  padding: 0.75rem;
+  color: var(--muted);
+}
+/* D3-drawn SVG content: theme-match the axis, and give bars/markers a
+   real shape/stroke cue in addition to color (AGENTS.md accessibility:
+   color isn't the sole encoding). */
+#timeline .timeline-axis .domain,
+#timeline .timeline-axis .tick line {
+  stroke: var(--border);
+}
+#timeline .timeline-axis .tick text {
+  fill: var(--muted);
+  font-size: 0.7rem;
+}
+#timeline .timeline-bar {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+#timeline .timeline-bar.approx-start {
+  stroke-dasharray: 4 2;
+}
+#timeline .timeline-bar.selected {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+#timeline .timeline-row:hover .timeline-bar {
+  opacity: 0.85;
+}
+#timeline .seai-marker {
+  fill: var(--fg);
+  stroke: var(--bg);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
 .alluvial-section {
   margin-bottom: 1.5rem;
 }
