@@ -150,6 +150,20 @@ header .summary { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 1rem
   stroke: var(--accent);
   stroke-width: 3;
 }
+/* Phase 5: a selected alluvial link highlights its two endpoint boxes here
+   too. Solid (not dashed like .approx-start) so the two cues stay visually
+   distinct even on a box that happens to be both. */
+#timeline .timeline-bar.link-endpoint {
+  stroke: var(--accent);
+  stroke-width: 2;
+  /* Override .approx-start's dasharray explicitly (equal CSS specificity,
+     so source order alone isn't a reliable enough guarantee to leave
+     implicit) -- a box that's both an ISSUE-005 approx-start box and a
+     selected link's endpoint must still read as solid here, or the "solid,
+     not dashed" distinction this class exists for silently stops applying
+     (council review finding). */
+  stroke-dasharray: none;
+}
 #timeline .timeline-row:hover .timeline-bar {
   opacity: 0.85;
 }
@@ -189,6 +203,18 @@ header .summary { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 1rem
   background: var(--bg);
   color: var(--fg);
   cursor: pointer;
+}
+/* Phase 5: mirrors .box-item.selected's treatment (background + bold +
+   leading checkmark, not color alone) so a link selected via the Sankey
+   diagram or elsewhere is visibly marked here too. */
+#alluvial-list button.selected {
+  background: var(--selected-bg);
+  font-weight: 600;
+}
+#alluvial-list button.selected::before {
+  content: "\2713 ";
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .panels {

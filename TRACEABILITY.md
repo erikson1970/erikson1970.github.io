@@ -5,7 +5,7 @@ council review (see `AGENTS.md` § Milestone review process). Not a substitute f
 `ISSUES.md` — this tracks *closure of stated requirements*, `ISSUES.md` tracks
 *defects and deferred work*.
 
-Status values: `Met`, `Partial`, `Not started`.
+Status values: `Met`, `Partial`, `Not started`, `Deferred` (explicitly out of scope for the milestone that recorded it, not merely unstarted — see M6-6).
 
 **Path note:** Milestones 0–2 below predate the Milestone 3 restructure and
 refer to `index.html`, `css/`, `js/`, `data/`, `source/`, `tools/`, and
@@ -277,6 +277,105 @@ Milestone 5 landed as 2 commits, back from Milestone 4's 3. Milestone
 approved to merge to `main`. See `ISSUES.md` § Milestone council reviews for
 the full write-up (also backfilled there: a Milestone 4 section that should
 have existed already but didn't, caught during this review).
+
+## Milestone 6 — Cross-panel selection sync (Phase 5)
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M6-1 | Selecting a box anywhere (box list, Sankey node, or timeline bar) sets the same shared `selectedBoxId`, reflected in every panel (inspector, box list, timeline bar outline, Sankey node outline) | IMPLEMENTATION_PLAN.md Phase 5: "Selecting one entity anywhere should update every panel" | Partial | `js/app.js`'s `store.subscribe` callback re-runs `renderList`/`renderInspector`/`renderTimelineView`/`renderSankeySelection` on every state change; `js/sankey.js`'s `applySankeySelection` outlines the matching node via `Plotly.restyle`. Code-reviewed against the identical, already-verified pattern from Milestones 4/5; no browser in this environment to confirm the actual rendered outline, same caveat as M5-3/M5-7 |
+| M6-2 | Selecting a link anywhere (alluvial-list button, Sankey link) sets shared `selectedLinkId`, reflected in inspector, alluvial-list `.selected`/`aria-pressed`, Sankey link color + endpoint node outline, and the timeline's two endpoint boxes (`.link-endpoint`) | Same | Partial | `js/app.js`'s `renderAlluvialListSelection`/`renderTimelineView` (resolves `data.linksById.get(selectedLinkId)` to a `Set` of endpoint `box_id`s, passed to `renderTimeline` as `state.linkHighlightBoxIds`); `js/sankey.js`'s `computeSankeyHighlight` (outlines the selected link's two endpoint nodes, added during council reconciliation — see M6-7). Same DOM-rendering caveat as M6-1 |
+| M6-3 | Sankey selection sync doesn't re-register the `plotly_click` handler on every selection change | Avoids a real bug class: N re-renders would fire a click N times | Met | `applySankeySelection` uses `Plotly.restyle` (updates trace styling only), never `Plotly.newPlot`; the click handler stays the one bound once in `renderSankey`. Confirmed by code inspection — `renderSankey`/`applySankeySelection` are separate exported functions, the latter never calling the former |
+| M6-4 | The selection→style computation is a pure, Node-testable function, matching the existing `buildSankeyFigure`/`buildTimelineLayout` split | Project convention (see M5-1's evidence) | Met | `computeSankeyHighlight(links, boxIds, state, colors)` in `js/sankey.js` has no Plotly/DOM dependency; `applySankeySelection` is now a thin wrapper reading CSS custom properties and calling `Plotly.restyle`. Verified by new committed `js/sankey.test.mjs` (run with `node js/sankey.test.mjs`) — 23 assertions, all passing, also covering `buildSankeyFigure` (Phase 3, previously untested) |
+| M6-5 | A `box_id`/`link_id` not present in the Sankey's 7-link subset (e.g. selected via the box list) highlights nothing, rather than throwing or mis-highlighting | Correctness / defensive handling | Met | `js/sankey.test.mjs`: "unknown selectedBoxId/selectedLinkId highlights nothing" assertions pass against real `data/links.json` |
+| M6-6 | Deep-link URL query params (`?box=BYZANTINE&year=537`, IMPLEMENTATION_PLAN.md Phase 5's own example) | IMPLEMENTATION_PLAN.md Phase 5, explicitly framed there as "Possible future deep link" | Deferred | Explicit scope decision, not an oversight: the plan's own wording marks it as a future item, not a Phase 5 acceptance criterion. Not implemented this milestone |
+| M6-7 | New selection UI doesn't use color as the only cue | AGENTS.md § Accessibility ("color isn't the sole encoding") | Met | `#alluvial-list button.selected` mirrors `.box-item.selected`'s existing treatment: background + bold + a leading checkmark (`::before`), not a color change alone; the timeline's `.link-endpoint` stroke is a distinct outline from `.approx-start`'s dashed one, and explicitly resets `stroke-dasharray` so the two cues stay distinguishable even on a box that's both. Originally missed for the Sankey diagram itself — a selected link's ribbon was color-only (`computeSankeyHighlight`'s `linkColor`, no other channel on a Plotly Sankey link) — flagged as a council-review gatekeeper finding and fixed during reconciliation: a selected link now also outlines its two endpoint nodes via `node.line` (the same mechanism a selected box already used), verified by `js/sankey.test.mjs`'s "endpoint nodes are outlined" assertions |
+| M6-8 | Semantic-zoom timescale requirement folded into a development phase and recorded in traceability | User instruction, 2026-09-07: "fold that into one of the development phases... add the requirement to our traceability file" | Met | `docs/IMPLEMENTATION_PLAN.md` new "Phase 5.5" section (ordered before Phase 6); `TRACEABILITY.md` "Planned — Phase 5.5" section below, TS-1..TS-10 — documentation only, not implemented (see that section's own Status column) |
+| M6-9 | No production backend/DB/auth/API keys introduced | AGENTS.md § Project intent | Met | This milestone changed only static JS/CSS/HTML/Markdown; no new dependency, network call, or CDN source beyond the two already in use (`cdn.plot.ly`, `cdnjs.cloudflare.com/.../d3`) |
+
+### Milestone 6 council review
+
+Reviewed against commit `6e5681a` (branch `feature/shared-interaction`),
+three lenses:
+
+| Reviewer | Verdict |
+|---|---|
+| Correctness & data-fidelity | PASS |
+| Accessibility & UX | PASS_WITH_MINOR_ISSUES |
+| Architecture & docs/process | PASS_WITH_MINOR_ISSUES |
+
+Two gatekeeper findings, both fixed inline before merge:
+- **Sankey selected-link was color-only** (accessibility gatekeeper): with
+  a link selected, `computeSankeyHighlight()` colored its ribbon `accent`
+  but forced every node's outline to 0 width — a pure color-only encoding,
+  violating AGENTS.md's "color isn't the sole encoding" (and M6-7's table
+  row above had claimed "Met" without disclosing the gap). Fixed by having
+  `computeSankeyHighlight()` also outline the selected link's two endpoint
+  nodes via `node.line`, the same mechanism a selected box already used.
+  `js/sankey.test.mjs` gained two assertions confirming exactly those two
+  nodes (and nothing else) get outlined.
+- **`ISSUES.md` missing a Milestone 6 note** (architecture gatekeeper):
+  both `js/sankey.test.mjs`'s header comment and M6-4's evidence above
+  point at `ISSUES.md` for ISSUE-009's partial resolution, but ISSUES.md
+  itself hadn't been touched — breaking the pattern set at Milestones 4/5
+  of annotating an issue the moment new test coverage lands. Fixed by
+  adding a "Note (Milestone 6)" to ISSUE-009 (see `ISSUES.md`).
+
+Also fixed inline (minor, not gatekeepers):
+- **Dashed/solid CSS comment inaccuracy** (accessibility finding):
+  `.timeline-bar.link-endpoint`'s comment claimed a solid stroke
+  ("not dashed like `.approx-start`") but never reset
+  `stroke-dasharray`, so a box that was both `.approx-start` and
+  `.link-endpoint` still rendered dashed. Added `stroke-dasharray: none;`
+  to the rule so the comment's claim is actually true.
+- **Status vocabulary didn't list `Deferred`** (architecture finding):
+  the new value used at M6-6 wasn't declared in this file's own
+  status-vocabulary line. Added it, with a parenthetical distinguishing it
+  from `Not started`.
+- **`js/README.md` didn't mention `sankey.test.mjs`** (architecture
+  finding): the parallel `timeline.js` paragraph names its test file
+  explicitly; the `sankey.js` paragraph didn't. Added a sentence naming
+  `computeSankeyHighlight()` and the test file's run command.
+
+Accepted as documented, not further changed (correctness lens, all
+minor): (1) `applySankeySelection()`'s `Plotly.restyle` calls aren't
+awaited/queued — two rapid selections could in principle resolve out of
+order, transiently showing a stale highlight; noted in a code comment
+rather than adding cancellation/queueing machinery, since the store
+re-renders full current state on every `set()` and the gap self-corrects
+on the very next change. (2) A pre-existing asymmetry (toggling a box off
+in the box list doesn't toggle other panels' display off the same way) is
+out of scope for this milestone, left as-is. (3) ISSUE-005's empty-years
+guard remains untested against a real empty-subset case — low-priority,
+left untested.
+
+No new issue filed this milestone. `ISSUE-009` gained a Milestone 6 note
+(second module with committed coverage); `ISSUE-010`/`ISSUE-003` unaffected.
+Milestone approved to merge to `main`. See `ISSUES.md` § Milestone council
+reviews for the corresponding entry there.
+
+## Planned — Phase 5.5 (semantic zoom time scale)
+
+Requirement captured 2026-09-07 (user-authored `docs/timescaleRequirement.md`)
+ahead of implementation — not yet started. Folded into
+`docs/IMPLEMENTATION_PLAN.md` as a new "Phase 5.5", ordered before Phase 6
+since population knot points must sit on the same time scale, and noted as
+revisiting Phase 3's Sankey and Phase 4's timeline x-positioning (both
+currently plain linear). Recorded here now, ahead of any implementation, so
+the requirement is tracked in this file rather than living only in the
+standalone doc.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| TS-1 | Nonlinear "semantic zoom" year→x mapping: `p = 1 / (1 + (M/3000) * 2^s)`, `x = 1 - (a/M)^p` | docs/timescaleRequirement.md § Core Mapping | Not started | — |
+| TS-2 | Boundary conditions: `yearToX(tMin) == 0`, `yearToX(tMax) == 1` | docs/timescaleRequirement.md § Validation | Not started | — |
+| TS-3 | Monotonic for all `t1 < t2`, any valid `M > 0`, `s in [-2, 2]` | docs/timescaleRequirement.md § Validation | Not started | — |
+| TS-4 | Inverse transform (`xToYear`) round-trips within float tolerance | docs/timescaleRequirement.md § Implementation Guidance / Validation | Not started | — |
+| TS-5 | Reusable `semanticTimeScale({tMin, tMax, scaler})` module, not baked into one view's rendering code | docs/timescaleRequirement.md § Implementation Guidance | Not started | — |
+| TS-6 | Shared scale: every time-based element in a view (box start/end, SEAIs, event markers, succession transitions, Sankey/alluvial node x, population knot points, ticks) uses the same transform — no mixed linear/semantic placement within one view | docs/timescaleRequirement.md § Shared Scale | Not started | — |
+| TS-7 | Coordinate stability: mapping depends only on `[tMin, tMax, s]`, never on SEAI/box/population filtering or event density | docs/timescaleRequirement.md § Coordinate Stability | Not started | — |
+| TS-8 | User-adjustable slider, range `[-2, 2]`, default `0`, labeled for effect (e.g. "Ancient detail ↔ Recent detail") — raw exponent not exposed | docs/timescaleRequirement.md § User Control | Not started | — |
+| TS-9 | Ticks generated in calendar time first, then transformed (not evenly spaced screen ticks reverse-mapped); density adapts to zoom level | docs/timescaleRequirement.md § Tick Generation | Not started | — |
+| TS-10 | Updates interactively (slider drag, zoom) without a full page reload; cheap enough to recompute continuously during drag | docs/timescaleRequirement.md § Performance | Not started | — |
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 

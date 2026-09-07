@@ -93,9 +93,11 @@ export function buildSankeyFigure(links, boxesById) {
  * Clicking a node calls `onSelectBox(boxId)`; clicking a link calls
  * `onSelectLink(link)` with the matching row from data/links.json.
  *
- * Returns the promise from `Plotly.newPlot` (awaited by the caller) so an
- * asynchronous Plotly failure -- not just a synchronous throw -- is caught
- * by js/app.js's try/catch around this call, instead of becoming an
+ * Resolves to `{ boxIds }` (the same array buildSankeyFigure computed,
+ * needed by applySankeySelection below to map a selected box_id back to a
+ * node index) once `Plotly.newPlot` resolves -- so an asynchronous Plotly
+ * failure -- not just a synchronous throw -- is still caught by
+ * js/app.js's try/catch around this call, instead of becoming an
  * unhandled promise rejection that bypasses the intended fallback message.
  */
 export async function renderSankey(container, { links, boxesById }, { onSelectBox, onSelectLink }) {
@@ -130,4 +132,66 @@ export async function renderSankey(container, { links, boxesById }, { onSelectBo
       if (boxId) onSelectBox(boxId);
     }
   });
+
+  return { boxIds };
+}
+
+/**
+ * Phase 5 (docs/IMPLEMENTATION_PLAN.md): pure computation of the
+ * `Plotly.restyle` arrays for `applySankeySelection` below -- split out
+ * (same reasoning as buildSankeyFigure/renderSankey and
+ * js/timeline.js's buildTimelineLayout/renderTimeline) so the actual
+ * selection→style logic is Node-testable without a browser/Plotly, even
+ * though applying it still needs both.
+ *
+ * Node fill stays the box's own color_hex (that's meaningful data, not a
+ * selection cue) -- selection instead adds a `node.line` outline, the same
+ * "don't just recolor" reasoning as .box-item.selected's checkmark and
+ * .timeline-bar.selected's stroke. Link color is set explicitly for every
+ * link (`muted` normally, `accent` for the selected one) since Plotly's own
+ * default link coloring isn't otherwise selection-aware.
+ *
+ * A selected *link* also outlines its two endpoint nodes (not just the
+ * link's own ribbon color) -- a Sankey trace has no non-color channel on
+ * the link itself (no line/pattern property, unlike node.line), so without
+ * this a selected link would be encoded by color alone, violating
+ * AGENTS.md's "color isn't the sole encoding" (council review finding).
+ */
+export function computeSankeyHighlight(links, boxIds, state, { accent, muted }) {
+  const selectedLink = state.selectedLinkId ? links.find((l) => l.link_id === state.selectedLinkId) : null;
+  const linkEndpointIds = selectedLink ? new Set([selectedLink.source_box_id, selectedLink.target_box_id]) : null;
+  return {
+    nodeLineWidth: boxIds.map((id) => (id === state.selectedBoxId || linkEndpointIds?.has(id) ? 3 : 0)),
+    nodeLineColor: boxIds.map(() => accent),
+    linkColor: links.map((l) => (l.link_id === state.selectedLinkId ? accent : muted)),
+  };
+}
+
+/**
+ * Re-color the already-rendered Sankey trace to reflect a selection made
+ * anywhere (box list, timeline, or the diagram itself) -- via
+ * `Plotly.restyle`, not a full `Plotly.newPlot` re-render, so the
+ * `plotly_click` handler bound once in renderSankey above never gets
+ * double-registered.
+ *
+ * Not awaited/queued: two rapid selections could in principle resolve their
+ * restyle promises out of order, transiently showing a stale highlight
+ * (council review finding). Self-corrects on the very next state change --
+ * the store re-renders full current state on every `set()`, so a stale
+ * frame can't persist -- not worth a request-cancellation mechanism for a
+ * cosmetic, self-healing gap.
+ */
+export function applySankeySelection(container, { links, boxIds }, state) {
+  if (typeof window === "undefined" || !window.Plotly) return;
+  const rootStyle = getComputedStyle(document.documentElement);
+  const accent = rootStyle.getPropertyValue("--accent").trim() || "#2456a8";
+  const muted = rootStyle.getPropertyValue("--muted").trim() || "#666666";
+
+  const { nodeLineWidth, nodeLineColor, linkColor } = computeSankeyHighlight(links, boxIds, state, { accent, muted });
+
+  window.Plotly.restyle(
+    container,
+    { "node.line.width": [nodeLineWidth], "node.line.color": [nodeLineColor], "link.color": [linkColor] },
+    [0]
+  );
 }

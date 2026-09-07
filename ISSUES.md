@@ -94,6 +94,7 @@ _(none yet — see Tabled below)_
 - **Description:** Parallel to ISSUE-006 but for the frontend: the Milestone 2 commit message documents real Node-based runtime verification (against a live local server and a minimal DOM stub), but none of it is a committed, repeatable test file — only prose in the commit message. ISSUE-006's title/scope is explicitly the Python pipeline (`tools/wh_data.py`) and does not cover this. The same gap recurred in Milestone 3: a Node `loadAllData()` run verified the moved `data/*.json` still loads correctly post-move, again only as prose (see `TRACEABILITY.md` M3-4, downgraded to Partial for this reason). Recurred a third time in Milestone 4: a Node fake-DOM harness verified the Sankey/Links integration (data load, box-list render, region-filter narrowing, box- and link-click-to-inspector, the accessible fallback list, and the Plotly-unavailable degradation path), but again only as commit-message/`TRACEABILITY.md` prose, not a committed test file (see `TRACEABILITY.md` M4-6/M4-8).
 - **Deferred until:** whenever `js/` grows complex enough that manual/ad-hoc verification stops being sufficient, or alongside ISSUE-006 if/when a test runner is introduced for either side.
 - **Note (Milestone 5):** Partially resolved rather than recurring a 4th time — `js/timeline.test.mjs` is a committed, repeatable test for `buildTimelineLayout()` (run with `node js/timeline.test.mjs`; a new root `package.json` with `"type": "module"` lets Node load it and `./timeline.js` directly, no scratch-copy workaround needed). `renderTimeline()`'s actual D3/DOM rendering and click-firing are still unverified (no real browser in this environment), and `sankey.js`/`app.js`/`data.js`/`state.js` remain entirely uncovered, so this issue stays open and Tabled rather than moving to Resolved.
+- **Note (Milestone 6):** A second module now has committed coverage — `js/sankey.test.mjs` (run with `node js/sankey.test.mjs`), covering `buildSankeyFigure()` (previously untested, Phase 3) and the new `computeSankeyHighlight()` (Phase 5). `applySankeySelection()`'s actual `Plotly.restyle` call, and `app.js`/`data.js`/`state.js` in full, remain uncovered — still Tabled, not Resolved.
 
 ### ISSUE-010 — Milestone commits land as one (or two) large commits, not the "commit frequently" granularity AGENTS.md describes
 - **Severity:** Minor
@@ -235,3 +236,19 @@ enough). ISSUE-005/ISSUE-003 annotated with this milestone's use of them;
 ISSUE-010 noted as regressed to two commits. This Milestone 4 section was
 also backfilled during this review (see note above). Milestone approved to
 merge to `main`.
+
+### Milestone 6 — Cross-panel selection sync (Phase 5)
+Reviewed against commit `6e5681a` (branch `feature/shared-interaction`),
+three lenses:
+
+| Reviewer | Verdict |
+|---|---|
+| Correctness & data-fidelity | PASS |
+| Accessibility & UX | PASS_WITH_MINOR_ISSUES |
+| Architecture & docs/process | PASS_WITH_MINOR_ISSUES |
+
+Two gatekeeper findings, both fixed inline rather than tabled — see
+`TRACEABILITY.md`'s Milestone 6 council-review note for the full list
+(the Sankey selected-link color-only encoding, and this section's own
+missing Milestone 6 note, backfilled now rather than left broken). No new
+issue filed. Milestone approved to merge to `main`.
