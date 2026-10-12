@@ -33,6 +33,13 @@ python build_page.py site ../index.html
 
 ## Notes
 
+- Three of the five meshes are not in `../stl/` (see `../LICENSES.md`).
+  `run_all.py`, `sizes.py`, `precision.py` and `sampling.py` need them for
+  the A319, B17 and Simple models: obtain the files and save them as
+  `../stl/A319.stl`, `../stl/B17.stl` and
+  `../stl/Simple_Airplane_Model_V2.stl`, or pass only `PD808 KingAir`.
+  `build_page.py` needs none of them.
+
 - `viewer.json` and `artifact_data.json` are large and regenerable, so they
   are git-ignored; `run_all.py` and `page_data.py` recreate them (about three
   minutes for all five aircraft).

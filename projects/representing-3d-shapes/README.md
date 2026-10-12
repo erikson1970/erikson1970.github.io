@@ -10,7 +10,7 @@ Served at `erikson1970.github.io/projects/representing-3d-shapes/`.
 
 ```text
 index.html   the whole page: copy, styles, script and the embedded results
-stl/         the meshes the numbers were scored against (downloadable)
+stl/         the meshes that can be redistributed (downloadable); see LICENSES.md
 scad/        the OpenSCAD scripts behind the "declarative" rows (downloadable)
 tools/       the build-time Python pipeline that generates index.html
 ```
@@ -28,10 +28,10 @@ See `tools/README.md` for how to run it. The ranges quoted in the page's
 prose are written by hand into `tools/page_template.html` from the pipeline's
 output files.
 
-## File provenance
+## File provenance and licences
 
-The scripts in `scad/` were written for this study, and the two King Air
-STLs are renders of the King Air scripts. The A319, B-17, PD-808 and "Simple airplane"
-STLs are third-party models whose source and licence are not yet recorded
-here — see `ISSUES.md` ISSUE-016. Until that is settled, the repository's
-CC0 dedication (`LICENSE.md`) should not be read as covering those four files.
+See `LICENSES.md`. In short: the OpenSCAD scripts and the King Air STLs are
+erikson1970's, under CC BY-SA 4.0; the PD-808 STL is from Thingiverse under
+a Creative Commons Attribution-ShareAlike licence; the A319, B-17 and
+"Simple airplane" meshes are analysed on the page but not hosted, because
+their licence terms could not be confirmed.
