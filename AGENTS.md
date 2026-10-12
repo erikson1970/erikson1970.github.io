@@ -12,7 +12,9 @@ This repo serves `erikson1970.github.io` as a whole:
   static site (its own `index.html`, `css/`, `js/`, `data/`, etc.), reachable
   at `erikson1970.github.io/projects/<name>/`. The first and (for now)
   primary project is `projects/world-history/`, the world-history explorer
-  described throughout the rest of this file.
+  described throughout the rest of this file. A second,
+  `projects/representing-3d-shapes/`, is a single generated page plus
+  downloadable STL/SCAD files (see its own `README.md`).
 - `ISSUES.md` and `TRACEABILITY.md` at the root are shared across the whole
   repo (one continuous history, not split per project) — see "Issue and
   requirement tracking" below.

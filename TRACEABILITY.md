@@ -412,6 +412,30 @@ listener re-renders every panel, not just the ones depending on
 noted as regressed further this milestone (a single commit). Milestone
 approved to merge to `main`.
 
+## Milestone 8 — Second project: Representing 3D shapes
+
+Goal (user request, 2026-10-12): publish the "Epicycle Airframes" study as a
+new project, "Representing 3D shapes: Epicycles vs wires vs mesh", with a
+folder of the STL and SCAD files available to download.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M8-1 | Project lives in its own `projects/<name>/` directory and is linked from the root landing page | AGENTS.md § Repository structure | Met | `projects/representing-3d-shapes/` (`index.html`, `stl/`, `scad/`, `README.md`); new `.project-card` in root `index.html` |
+| M8-2 | Page renders and its 3D bench works as a static page | User request | Met | Served with `python3 -m http.server` and captured in headless Chrome 2026-10-12: bench, chart, size table and the Draco overlay on the King Air all drew; inline script passes `node --check`. Not a committed, repeatable test |
+| M8-3 | STL and SCAD files downloadable from the page | User request | Met | "Files" table links six files in `stl/` and four in `scad/` by relative path; every linked file exists in the project directory |
+| M8-4 | No backend, database, auth, API keys or runtime Python | AGENTS.md § Project intent | Met | One static HTML file plus binary/text downloads; external loads are three.js r128 + OrbitControls (cdnjs, jsDelivr) and Google Fonts |
+| M8-5 | Page content reproducible from sources in the repo | Process norm (cf. AGENTS.md § Source of truth, written for world-history) | Not started | Generating pipeline is outside this repo — ISSUE-017 |
+| M8-6 | `AGENTS.md`/`README.md` describe the new project | Process norm (docs must match reality) | Met | Root `README.md` structure tree and project list, `AGENTS.md` § Repository structure, project `README.md` |
+
+### Milestone 8 council review
+
+Reviewed 2026-10-12 inline by the driving session, not by an independent
+council (ISSUE-015): content integrity PASS_WITH_MINOR_ISSUES, static-site
+architecture/constraints PASS, process & documentation consistency
+PASS_WITH_MINOR_ISSUES. No gatekeeper findings; ISSUE-015, ISSUE-016 and
+ISSUE-017 tabled — see `ISSUES.md` § Milestone council reviews. Merged to
+`main` at the site owner's request.
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s

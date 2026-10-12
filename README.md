@@ -9,7 +9,8 @@ Personal site and project host for [erikson1970](https://github.com/erikson1970)
 ├── index.html         landing page (this repo's root)
 ├── css/                landing-page styles only
 └── projects/
-    └── world-history/  World History Explorer — see projects/world-history/README.md
+    ├── world-history/  World History Explorer — see projects/world-history/README.md
+    └── representing-3d-shapes/  Epicycles vs wires vs mesh — see projects/representing-3d-shapes/README.md
 ```
 
 The root is a small, static landing page — no framework, no backend, no
@@ -29,3 +30,7 @@ split per project. See `AGENTS.md` for the full development workflow
   static visualization of world history built from the ChartOrigin
   *Timeline of World History* poster. See
   `projects/world-history/README.md` for details.
+- **[Representing 3D shapes: Epicycles vs wires vs mesh](projects/representing-3d-shapes/)** —
+  five aircraft described as 3D Fourier wireframes, compressed meshes and
+  OpenSCAD scripts, compared at the same accuracy. See
+  `projects/representing-3d-shapes/README.md` for details.
