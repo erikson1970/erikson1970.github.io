@@ -146,9 +146,11 @@ explicit request to publish, with the three lenses checked by the driving
 session itself rather than by independent reviewers. An independent pass
 over the new project is still owed.
 
+## Resolved
+
 ### ISSUE-016 — Third-party STL provenance and licence not recorded
 - **Severity:** Minor
-- **Status:** Tabled
+- **Status:** Resolved (2026-10-12, `fix/stl-licences`)
 - **Filed:** Milestone 8 (2026-10-12)
 
 `projects/representing-3d-shapes/stl/` publishes four third-party aircraft
@@ -157,7 +159,15 @@ meshes (`A319.stl`, `B17.stl`, `Piaggio_PD-808_v8.stl`,
 licence recorded, inside a repository whose `LICENSE.md` is a CC0 dedication. Record each one's origin and licence, or replace any that
 may not be redistributed.
 
-## Resolved
+Resolved at the site owner's direction: `A319.stl`, `B17.stl` and
+`Simple_Airplane_Model_V2.stl` removed because their terms could not be
+confirmed; `Piaggio_PD-808_v8.stl` kept with its Thingiverse source and
+CC BY-SA licence recorded; the owner's OpenSCAD scripts and King Air STLs
+marked CC BY-SA 4.0. All recorded in
+`projects/representing-3d-shapes/LICENSES.md`. Not done: the three removed
+files are still in the git history (commit `ae6ad0e` onward), and the PD-808
+licence and author were taken from the owner's statement, not read from the
+Thingiverse page (automated access is blocked).
 
 ### ISSUE-017 — `projects/representing-3d-shapes/index.html` is not reproducible from this repo
 - **Severity:** Minor
