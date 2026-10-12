@@ -426,6 +426,7 @@ folder of the STL and SCAD files available to download.
 | M8-4 | No backend, database, auth, API keys or runtime Python | AGENTS.md § Project intent | Met | One static HTML file plus binary/text downloads; external loads are three.js r128 + OrbitControls (cdnjs, jsDelivr) and Google Fonts |
 | M8-5 | Page content reproducible from sources in the repo | Process norm (cf. AGENTS.md § Source of truth, written for world-history) | Not started | Generating pipeline is outside this repo — ISSUE-017 |
 | M8-6 | `AGENTS.md`/`README.md` describe the new project | Process norm (docs must match reality) | Met | Root `README.md` structure tree and project list, `AGENTS.md` § Repository structure, project `README.md` |
+| M8-7 | Bench extended: up to 200 loops and 3,000 harmonics, a slice-loop variant that forces a 90° crossing loop through every saddle and extremum, colour-by-time, sampling-speed and uses sections | User request (2026-10-12 follow-up) | Met | Regenerated `projects/representing-3d-shapes/index.html` on `feature/crossing-rule`; served locally and captured in headless Chrome with the crossing variant on the King Air and colour-by-time on the A319 spiral; inline script passes `node --check`. Same caveats as M8-2 and M8-5 |
 
 ### Milestone 8 council review
 
