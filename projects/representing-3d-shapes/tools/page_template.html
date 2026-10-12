@@ -1,0 +1,555 @@
+<title>Epicycle Airframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,600;112,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a drafting-sheet report. Live 3D bench on top, evidence below in one 72ch column, wide figures break out. */
+:root{
+  --paper:#eef1f2; --sheet:#f8fafa; --ink:#1d2b3a; --muted:#5b6b78; --rule:#c9d3d8;
+  --wire:#24476b; --accent:#c4741a; --ghost:#9aaab4;
+  --c1:#24476b; --c2:#7a8fa3; --c3:#b3541e; --c4:#d99a3a; --c5:#2f7d6d; --c6:#7b4d9e; --c7:#a5a0c4; --c8:#b0306a;
+  --display:"Archivo","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#111a24; --sheet:#16212d; --ink:#dfe7ee; --muted:#93a4b3; --rule:#2c3a48;
+  --wire:#8cc2f0; --accent:#e9a24a; --ghost:#4d5f70;
+  --c1:#8cc2f0; --c2:#6f8396; --c3:#ef8a52; --c4:#e9c06a; --c5:#5fc2ab; --c6:#b48ce0; --c7:#8d88b3; --c8:#f07ab0;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111a24; --sheet:#16212d; --ink:#dfe7ee; --muted:#93a4b3; --rule:#2c3a48;
+  --wire:#8cc2f0; --accent:#e9a24a; --ghost:#4d5f70;
+  --c1:#8cc2f0; --c2:#6f8396; --c3:#ef8a52; --c4:#e9c06a; --c5:#5fc2ab; --c6:#b48ce0; --c7:#8d88b3; --c8:#f07ab0;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.6 var(--body);padding-inline:clamp(16px,4vw,48px);padding-block:32px 64px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+.col{max-width:72ch}
+h1,h2,h3{font-family:var(--display);font-stretch:112%;text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(2.2rem,5vw,3.4rem);font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.55rem;font-weight:800}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+.eyebrow{font:500 .72rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--ink);max-width:66ch}
+header{display:flex;flex-direction:column;gap:14px}
+section{display:flex;flex-direction:column;gap:18px}
+.mono,code{font-family:var(--mono);font-size:.88em}
+.muted{color:var(--muted)}
+
+/* bench */
+.bench{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:0;border:1px solid var(--rule);background:var(--sheet);border-radius:4px;overflow:hidden}
+@media (max-width:860px){.bench{grid-template-columns:1fr}}
+#stage{position:relative;min-height:440px;aspect-ratio:4/3;max-width:100%;background:
+  linear-gradient(var(--rule) 1px,transparent 1px) 0 0/40px 40px,
+  linear-gradient(90deg,var(--rule) 1px,transparent 1px) 0 0/40px 40px;background-color:var(--sheet)}
+#stage canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block}
+#stage .hint{position:absolute;left:12px;bottom:10px;font:400 .72rem var(--mono);color:var(--muted);pointer-events:none}
+.panel{border-left:1px solid var(--rule);padding:18px;display:flex;flex-direction:column;gap:18px;min-width:0}
+@media (max-width:860px){.panel{border-left:0;border-top:1px solid var(--rule)}}
+.group{display:flex;flex-direction:column;gap:8px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:500 .8rem var(--body);color:var(--ink);background:transparent;border:1px solid var(--rule);border-radius:3px;padding:6px 10px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.seg button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.methods button{flex:1 1 100%;text-align:left}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.readout{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font:400 .82rem var(--mono);font-variant-numeric:tabular-nums}
+.readout dt{color:var(--muted)} .readout dd{margin:0;text-align:right}
+.toggles{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem}
+.toggles label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.mnote{font-size:.82rem;color:var(--muted);line-height:1.5}
+.tbar{display:flex;align-items:center;gap:8px;font:400 .72rem var(--mono);color:var(--muted)}
+.tbar i{flex:1;height:8px;border-radius:2px}
+
+/* figures */
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+figcaption{font-size:.85rem;color:var(--muted);max-width:72ch}
+.chartbox{overflow-x:auto;border:1px solid var(--rule);background:var(--sheet);border-radius:4px;padding:8px}
+svg text{fill:var(--muted);font:11px var(--mono)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.8rem}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:18px;height:3px;display:inline-block;border-radius:2px}
+.legend i.dash{background:repeating-linear-gradient(90deg,currentColor 0 5px,transparent 5px 8px)!important}
+
+table{border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums;width:100%;min-width:720px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--rule);text-align:right;vertical-align:top}
+th:first-child,td:first-child{text-align:left}
+thead th{font:500 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+td small{display:block;color:var(--muted);font-family:var(--mono);font-size:.72rem}
+tr.grp td{font:600 .75rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border-bottom:0;padding-top:18px}
+tr.best td:first-child{font-weight:600}
+.tablebox{overflow-x:auto}
+
+.bars{display:flex;flex-direction:column;gap:6px}
+.bar{display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr) 84px;gap:10px;align-items:center;font-size:.82rem}
+.bar .track{height:12px;background:transparent;position:relative}
+.bar .fill{height:100%;border-radius:2px}
+.bar .v{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:560px){.bar{grid-template-columns:minmax(0,1fr) 70px}.bar .track{grid-column:1/-1;grid-row:2}}
+
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:28px}
+.finding{display:flex;flex-direction:column;gap:8px;min-width:0}
+.finding .k{font:500 .72rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.finding p{font-size:.93rem}
+details{border-top:1px solid var(--rule);padding-top:12px}
+summary{cursor:pointer;font-weight:600}
+a{color:var(--wire)}
+pre{overflow-x:auto;background:var(--sheet);border:1px solid var(--rule);padding:14px;border-radius:4px;font:12px/1.5 var(--mono)}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">3D Fourier wireframes · five aircraft · ε = 1% of bounding-box diagonal</span>
+  <h1>Epicycle Airframes</h1>
+  <p class="lede">Three ways to turn a mesh into closed 3D curves whose x, y and z are each a Fourier series. Every term is a tilted ellipse turning at k revolutions per period, so a truncated series is a chain of 3D epicycles. The question is how few coefficients reach a given fraction of the airframe, and how that compares with storing the shape as a mesh or as a CAD script.</p>
+</header>
+
+<section aria-labelledby="bench-h">
+  <h2 id="bench-h">The bench</h2>
+  <div class="bench">
+    <div id="stage" role="img" aria-label="3D view of the selected aircraft wireframe"><span class="hint">drag to orbit · scroll or pinch to zoom</span></div>
+    <div class="panel">
+      <div class="group"><span class="eyebrow">Aircraft</span><div class="seg" id="models"></div></div>
+      <div class="group"><span class="eyebrow">Construction</span><div class="seg methods" id="methods"></div></div>
+      <div class="group">
+        <label class="eyebrow" for="n" id="nlabel">Harmonics</label>
+        <input type="range" id="n" min="0" max="10" step="1" value="5">
+      </div>
+      <div class="group"><span class="eyebrow">Draco mesh overlay</span><div class="seg" id="dracos"></div></div>
+      <dl class="readout" id="readout"></dl>
+      <div class="toggles">
+        <label><input type="checkbox" id="wire" checked> Wire</label>
+        <label><input type="checkbox" id="ghost" checked> Surface</label>
+        <label><input type="checkbox" id="anim"> Epicycles</label>
+        <label><input type="checkbox" id="tcol"> Colour by time</label>
+      </div>
+      <div class="tbar" id="tbar" hidden><span>t = 0</span><i id="tgrad"></i><span>1 period</span></div>
+      <p class="mnote" id="mnote"></p>
+    </div>
+  </div>
+  <p class="mnote col">Colour by time paints each curve from blue at t = 0 to red at the end of its period, so the order in which a single curve visits the airframe can be read off. With separate loops every loop runs through the whole scale once.</p>
+</section>
+
+<section aria-labelledby="cov-h">
+  <h2 id="cov-h">Coverage per coefficient</h2>
+  <figure>
+    <div class="chartbox"><svg id="chart" viewBox="0 0 900 380" width="100%" style="min-width:620px" aria-label="Coverage versus number of Fourier parameters"></svg></div>
+    <div class="legend" id="legend"></div>
+    <figcaption>Fraction of the skin within ε of the wire, against real parameters (6 per harmonic plus 3 for the centre). Separate-chain curves add loops in greedy order; single-curve lines truncate one series at increasing N. The orange tick marks what the bench is showing.</figcaption>
+  </figure>
+</section>
+
+<section aria-labelledby="size-h">
+  <h2 id="size-h">Bytes against other descriptions</h2>
+  <p class="col">Same yardstick everywhere: a surface counts as described where it lies within ε of the representation. Meshes and the CAD script describe a surface, so they get two numbers, recall (real skin near the model) and precision (model near the real skin). Wires get coverage and on-skin fraction. Wire coefficients are quantized and gzipped; quantization noise adds up across harmonics, so long single curves need a finer step than short loops. The slice-loop wire is listed at four coefficient encodings, from raw float32 down to gzipped fixed-point.</p>
+  <figure>
+    <div class="bars" id="bars"></div>
+    <figcaption id="barcap"></figcaption>
+  </figure>
+  <div class="tablebox"><table id="sizes"></table></div>
+</section>
+
+<section aria-labelledby="find-h">
+  <h2 id="find-h">What came out</h2>
+  <div class="findings">
+    <div class="finding"><span class="k">1 · surface walk</span><h3>Cheap to trace, expensive to encode</h3>
+      <p>An unbiased walk needs 39–64 bbox-diagonals of wire to reach 90%. Steering toward uncovered skin, with a jump to the nearest bare patch when stuck, cuts that to 19–24, close to the ideal lawnmower length of area ÷ 2ε. Either way the path is broadband, so 90% coverage costs 4,000–12,000 parameters, and it stays on the skin only because every short step is kept.</p></div>
+    <div class="finding"><span class="k">2 · plane-dominant spirals</span><h3>A carrier with sidebands</h3>
+      <p>Each sweep is one helical turn per slice, so its spectrum sits on a carrier at the turn count with sidebands from the cross-section shape, like AM. Following one blob per slice caps coverage at 75–87%: engines, stabilizers and wingtips fall off whichever blob is largest. The morph between dissimilar sections also lifts 5–9% of the wire off the skin.</p></div>
+    <div class="finding"><span class="k">3 · per-blob slice loops</span><h3>The clear winner</h3>
+      <p>Every cross-section blob becomes its own short chain, and most need only 1–3 harmonics, often a single tilted ellipse. 90% coverage takes 1,300–1,800 parameters, 95% about 1,500–2,100, with the whole wire on the skin. Splicing the same loops into one continuous curve costs roughly the same at 85–90% but tops out near 96%.</p></div>
+    <div class="finding"><span class="k">spacing</span><h3>Pitch sets the spacing, harmonics set the fidelity</h3>
+      <p>Slices and spiral turns sit 2ε apart because a wire paints a band 2ε wide. More coefficients make a curve follow its own path more closely; they do not move the slices together. To tighten, slice at a smaller pitch. For loops the cost grows with the loop count: 200 loops, drawing on planes halfway between, take 4,100–7,500 parameters and cover 95–99% of the skin at ε/2. For a spiral, halving the pitch doubles the turns, and the carrier frequency with them, so it needs about twice the harmonics.</p></div>
+    <div class="finding"><span class="k">crossing rule</span><h3>Ties the rings together, at a price</h3>
+      <p>Sweeping a slice plane along each axis finds 33–120 points where the section changes topology: blobs appear or vanish at extrema and merge or split at saddles. Forcing a 90° crossing loop through each takes 16–40 loops and reaches only 55–77% coverage, because crossings are long outlines that need many harmonics. 95% then costs 18–56% more parameters than plain slicing. What the rule buys is structure: the wire set at 95% falls from 31–44 separate rings to 1–7 connected pieces. Offered the same crossings without the rule, the greedy picker takes 11–38% of them and saves at most 1%.</p></div>
+    <div class="finding"><span class="k">crossings, one chain</span><h3>Free once the loops are spliced</h3>
+      <p>Joining the crossing-rule loops into a single series changes the sums. Crossings touch the rings they cross, so the out-and-back bridges shrink from 1.4–1.7 bbox-diagonals of doubled wire to 0.1–0.5. The curve reaches 90% with about 1,200–1,800 parameters, the same as the plain one-chain curve or fewer on every aircraft. The wire is 17–48% longer and coverage still tops out near 95%. Being one series, it samples at inverse-FFT speed.</p></div>
+    <div class="finding"><span class="k">time locality</span><h3>Nearby times are nearby places</h3>
+      <p>Points within 1% of the period of each other sit in a patch whose radius of gyration is 3–6% of the bbox diagonal, against about 20% for points taken from anywhere on the curve. That holds for every single-curve construction; 1% of the period is roughly one fuselage ring. The plain one-chain curve is the most local, 6–8% across a 5% window. Crossings stretch that to 10–15%, since each one runs the length of a wing or the fuselage. A range of times therefore works as a rough address for a region of the airframe.</p></div>
+    <div class="finding"><span class="k">locality, reversed</span><h3>Nearby places are not nearby times</h3>
+      <p>The converse fails. Take each point's neighbours within 2ε on the skin and find the one farthest away in time. On the plain one-chain curve 30–45% of points have a neighbour more than 5% of the period away. With crossings it is 63–88%, on the steered walk 68–87% and on the spirals 86–96%, where the typical gap is a third of the period. A curve is one-dimensional and the skin is two-dimensional, so no continuous covering curve can keep every neighbour close in time. A time range addresses a patch, but a patch maps to several separate time ranges.</p></div>
+    <div class="finding"><span class="k">sampling</span><h3>Fast when the times are evenly spaced</h3>
+      <p>Any time t gives a point on the wire, and the wire lies on the skin. Drawing 100,000 points in NumPy, the mesh gives 2.6–5.0 million points a second and the slice loops 5–8 million, since most loops are one to three harmonics. Every loop has its own harmonic count, set by how complicated its section is: 38–57% are a single ellipse and the longest need 18–33, so sampling a loop set is one small transform per loop. One long series at random times is slow, about 0.25 million a second at 300 harmonics and 0.03 million at 3,000, because every point sums every harmonic. At evenly spaced times one inverse FFT returns 25–49 million a second whatever the harmonic count. The points fall along the wire, not evenly over the area.</p></div>
+    <div class="finding"><span class="k">tilted planes</span><h3>No consistent gain</h3>
+      <p>Offering the greedy picker 24 plane orientations instead of three axes barely changed the parameter count at 90%: 2% lower on the B-17 and 7% lower on the King Air, but 2–24% higher on the other three. Airframes are built from axis-aligned parts, and greedy cost-per-gain favours many cheap ellipses. Tilt should matter for organic shapes, where a seahorse curl has no preferred axis.</p></div>
+    <div class="finding"><span class="k">float16</span><h3>Half the bytes, same coverage</h3>
+      <p>Storing each coefficient as float16 instead of float32 halves the slice-loop wire, from 6.1–8.4 KB to 3.1–4.2 KB, and coverage moves by at most 0.1 point. Gzip takes float16 down to 1.8–2.6 KB. Fixed-point with gzip is smaller again at 1.0–1.5 KB, because a half-float still carries precision that a 1% tolerance never uses.</p></div>
+    <div class="finding"><span class="k">sizes</span><h3>Compressed meshes come out smaller</h3>
+      <p>The best wire encoding, at about 95% coverage, is 1.0–1.5 KB. A decimated, Draco-encoded mesh describes the full surface to 99% in 265–451 B, and the fitted 981-byte OpenSCAD A319 (499 B gzipped) reaches 96% recall. The King Air script is 4.9 KB (1.6 KB gzipped) and exact, since its STL is that script's own render. Switch on the Draco overlay in the bench to see what 130–270 triangles look like. The raw STLs are 0.5–6 MB.</p></div>
+    <div class="finding"><span class="k">the caveat</span><h3>A wire is not a surface</h3>
+      <p>Coverage says every covered skin point is near some wire, but turning wires back into a skin needs a lofting step that isn't counted here. ε = 1% is also forgiving. At tighter tolerances all three families grow, and the decimated mesh's advantage is likely to widen because its error falls with the square of edge length.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="uses-h">
+  <h2 id="uses-h">Where this could be useful</h2>
+  <p class="col">Ideas that follow from the measurements. None of them has been built or tested here.</p>
+  <div class="findings">
+    <div class="finding"><span class="k">wire forming</span><h3>One uncut toolpath</h3>
+      <p>A single closed series is a path a wire bender or a freeform extruder can follow without lifting. Truncating the series caps the curvature, so the tightest bend can be set by choosing N. The spliced-loop curve walks every bridge twice, which a real wire would double up. The spiral has no bridges and behaves like vase-mode printing or filament winding.</p></div>
+    <div class="finding"><span class="k">frames</span><h3>Ribs and stringers</h3>
+      <p>Slice loops are the formers and ribs of an airframe; crossing loops are its stringers. Rings alone are loose parts. The crossing rule turns them into one frame with a joint wherever two loops meet, and the critical points say where the joints matter most.</p></div>
+    <div class="finding"><span class="k">antenna models</span><h3>A wire grid in a kilobyte</h3>
+      <p>Method-of-moments codes such as NEC model a conducting body as a grid of wires, running both ways so current can flow in either direction, spaced near a tenth of a wavelength. Slice loops plus crossings are that grid, with the pitch as the one setting to match to frequency.</p></div>
+    <div class="finding"><span class="k">level of detail</span><h3>Any prefix is a model</h3>
+      <p>Harmonics are ordered by frequency and loops by coverage gained, so the first part of the file is already a coarser aircraft. The sliders in the bench are that truncation. It suits streaming, previews and matching detail to distance. Time locality adds a second axis: a block of consecutive samples from a single chain is one patch of the aircraft, so regions can be drawn or sent separately. Going the other way, from a place to its samples, needs a small index of time ranges.</p></div>
+    <div class="finding"><span class="k">analytic geometry</span><h3>Tangents and normals for free</h3>
+      <p>Tangent, curvature and length come straight from the coefficients. On a slice loop the outward normal is the tangent crossed with the slice-plane normal, enough to drop points that face away from a viewer. Telling whether another part of the aircraft is in the way still needs a surface, which a wire does not have.</p></div>
+    <div class="finding"><span class="k">signatures and paths</span><h3>Area curves and scan routes</h3>
+      <p>The first harmonic of each fuselage slice is an ellipse, and its area along the body is the cross-section area distribution. Harmonic magnitudes do not change when a loop is re-timed, which makes them usable for matching shapes. The steered walk and the spirals are also coverage routes for a scanner or spray head, with ε as the footprint.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="files-h">
+  <h2 id="files-h">Files</h2>
+  <p class="col">The meshes every number on this page was scored against, and the OpenSCAD scripts behind the declarative rows.</p>
+  <div class="tablebox"><table><thead><tr><th>Aircraft</th><th>STL mesh</th><th>OpenSCAD script</th></tr></thead><tbody><tr><td>A319</td><td><a href="{{BASE}}stl/A319.stl">A319.stl</a><small>1.33 MB</small></td><td><a href="{{BASE}}scad/a319.scad">a319.scad</a><small>981 B</small></td></tr><tr><td>B-17</td><td><a href="{{BASE}}stl/B17.stl">B17.stl</a><small>551 KB</small></td><td><a href="{{BASE}}scad/B17_Simple.scad">B17_Simple.scad</a><small>3.4 KB</small></td></tr><tr><td>PD-808</td><td><a href="{{BASE}}stl/Piaggio_PD-808_v8.stl">Piaggio_PD-808_v8.stl</a><small>6.07 MB</small></td><td>–</td></tr><tr><td>Simple jet</td><td><a href="{{BASE}}stl/Simple_Airplane_Model_V2.stl">Simple_Airplane_Model_V2.stl</a><small>2.79 MB</small></td><td>–</td></tr><tr><td>King Air 350</td><td><a href="{{BASE}}stl/king_air_350_detailed.stl">king_air_350_detailed.stl</a><small>459 KB</small></td><td><a href="{{BASE}}scad/king_air_350_detailed.scad">king_air_350_detailed.scad</a><small>4.9 KB</small></td></tr><tr><td>King Air 350, simple (not analysed)</td><td><a href="{{BASE}}stl/kingAir_350_Simple.stl">kingAir_350_Simple.stl</a><small>68 KB</small></td><td><a href="{{BASE}}scad/kingAir_350.scad">kingAir_350.scad</a><small>3.9 KB</small></td></tr></tbody></table></div>
+</section>
+
+<section aria-labelledby="meth-h">
+  <h2 id="meth-h">Method</h2>
+  <div class="col"><ul>
+    <li>Each mesh rotated to X = fuselage, Y = span, Z = up, centred, and scaled so the bounding-box diagonal is 1. ε = 0.01.</li>
+    <li>Coverage uses 30,000 area-uniform skin samples. The on-skin fraction is measured against a 200,000-point cloud.</li>
+    <li>Curves are resampled by arc length, then each coordinate goes through an FFT. Harmonic k contributes A<sub>k</sub> cos kt + B<sub>k</sub> sin kt with A<sub>k</sub>, B<sub>k</sub> ∈ ℝ³.</li>
+    <li>Slice loops use the smallest N whose reconstruction stays within ε/2 of the section. Greedy selection maximizes newly covered skin per parameter.</li>
+    <li>The spliced variant joins loops at their closest point pair with an out-and-back bridge, then refits one series.</li>
+    <li>Tighter spacing: once coverage at ε passes 97% the loop sets carry on to 200 loops, adding candidates from planes halfway between the first set and scoring them against ε/2.</li>
+    <li>Crossing rule: planes sweep X, Y and Z at the 2ε pitch and solid cross-section regions are matched between neighbouring slices by overlap. A region with no partner marks an extremum; two regions sharing a partner mark a saddle. Each such point gets candidate loops from the two planes through it that contain the sweep axis. Crossings are taken, best coverage per parameter first, until every point has one, and the usual greedy selection continues from there. Pieces are counted by joining loops that pass within ε of each other.</li>
+    <li>Time locality: each single curve is resampled to 4,096 points by arc length. The figure is the radius of gyration of the points inside a window of 1% or 5% of the period, median over windows, compared with the radius of gyration of the whole curve. The reverse measure takes, for each of those points, the largest time gap to any other point within 2ε. Bridge wire is the spliced curve's length minus the summed length of its loops.</li>
+    <li>Sampling speed: 100,000 points per draw, NumPy on one core, best of three. The mesh draw is trimesh's area-weighted sampler. Loop draws pick a loop in proportion to its length. Timings are for this machine and only their ratios carry over.</li>
+    <li>Wire encodings: float32 and float16 store each coefficient directly, plus one byte per chain for its harmonic count. Fixed-point rounds every coefficient to a multiple of one step, the coarsest of ε, ε/2, ε/4 and so on that loses under half a point of coverage and of on-skin fraction, then gzips.</li>
+    <li>Mesh baselines: STL as supplied, GLB from trimesh, Draco at the lowest quantization that holds the target fidelity. The decimated rows use MeshLab's quadric edge collapse on both the supplied mesh and a 0.003-pitch voxel remesh, keep whichever reaches fewer faces, then Draco. The bench overlay draws the vertices and faces exactly as the Draco decoder returns them.</li>
+    <li>The OpenSCAD A319 is hand-built from about 40 measured parameters, then nudged by coordinate search against the same metric. Rendered with OpenSCAD itself it scores 95.7% recall and 93.3% precision. The B-17 script was written separately and never fitted to this mesh, so its score shows only what an unfitted script gets. The King Air mesh is the direct output of its script, a hollow shell with window cut-outs, so that script scores 100% on both.</li>
+  </ul></div>
+  <details><summary>The 981-byte A319 (a319.scad)</summary>
+<pre>// A319, parametric. X=fuselage (nose +X), Y=span, Z=up, bbox diagonal = 1.
+$fn=32;
+module af(xl,xt,y,z,t){translate([(xl+xt)/2,y,z])scale([(xl-xt)/2,t,t/2])sphere(1);}
+module vaf(xl,xt,z,y,t){translate([(xl+xt)/2,y,z])scale([(xl-xt)/2,t/2,t])sphere(1);}
+module surf(r,t){hull(){af(r[0],r[1],r[2],r[3],r[4]);af(t[0],t[1],t[2],t[3],t[4]);}}
+F=[-0.332,0.3275,-0.051,0.042,0.063,0.1405,0.026];
+module fus(){hull(){
+ translate([F[1]-F[4],0,F[2]])scale([F[4],F[3],F[3]])sphere(1);
+ translate([F[0]+F[5],0,F[2]])rotate([0,90,0])cylinder(r=F[3],h=0.01);
+ translate([F[0],0,F[2]+F[6]])scale([0.005,F[3]/4,F[3]/4])sphere(1);}}
+union(){
+ fus();
+ for(s=[1,-1])mirror([0,s&lt;0?1:0,0]){
+  surf([0.105,-0.012,0.0415,-0.066,0.022],[-0.045,-0.077,0.344,-0.04,0.012]);
+  surf([-0.245,-0.335,0,-0.03,0.0085],[-0.294,-0.324,0.136,-0.022,0.004]);
+  translate([0.039,0.117,-0.0915])rotate([0,90,0])cylinder(r=0.022,h=0.103);}
+ hull(){vaf(-0.206,-0.338,-0.012,0,0.012);vaf(-0.294,-0.332,0.115,0,0.01);}
+}
+</pre></details>
+</section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const D = /*DATA*/null;
+const MODELS = {A319:"A319", B17:"B-17", PD808:"PD-808", Simple:"Simple jet", KingAir:"King Air 350"};
+const METHODS = {
+  walk_biased:{label:"1 · Surface walk (biased)", kind:"curve", note:"Coverage-steered walk on the skin until 90%, closed by a jump back to the start. Slider truncates one Fourier series."},
+  spiral_XYZ:{label:"2 · Spirals: YZ + XZ + XY sweeps", kind:"curve", note:"Three out-and-back helices (along X, Y, Z), largest blob per slice, spliced into one closed curve."},
+  blobs_axis:{label:"3 · Slice loops, separate chains", kind:"loops", set:"loops", note:"Each cross-section blob is its own epicycle chain. Slider adds loops in greedy order of coverage gained per parameter. Past about 97% the extra loops come from planes halfway between and are picked against ε/2, which tightens the spacing."},
+  blobs_crit:{label:"3 · Slice loops + crossings at saddles and extrema", kind:"loops", set:"loops_crit", note:"Dots mark where a sweeping slice changes topology: extrema (orange) and saddles (purple). A 90° crossing loop (pink) is forced through each one first, then the greedy picker fills in."},
+  crit_spliced:{label:"3 · Loops + crossings, one chain", kind:"curve", note:"The crossing-rule loops joined into one continuous curve and refit as a single series. Crossings touch the rings they cross, so almost no bridge wire is needed."},
+  blobs_spliced:{label:"3 · Slice loops, one chain", kind:"curve", note:"The same loops joined at their closest points into one continuous curve, refit as a single series."}
+};
+let state = {model:"A319", method:"blobs_axis", idx:null, draco:"off"};
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+// ---------- Fourier synthesis
+function synth(c, N, npts){
+  const out = new Float32Array(npts*3), A=c.A, B=c.B, r0=c.r0;
+  for(let j=0;j<npts;j++){
+    const t = 2*Math.PI*j/npts; let x=r0[0], y=r0[1], z=r0[2];
+    const c1=Math.cos(t), s1=Math.sin(t); let ck=c1, sk=s1;
+    for(let k=0;k<N;k++){
+      const a=A[k], b=B[k];
+      x+=a[0]*ck+b[0]*sk; y+=a[1]*ck+b[1]*sk; z+=a[2]*ck+b[2]*sk;
+      const cn=ck*c1-sk*s1; sk=sk*c1+ck*s1; ck=cn;
+    }
+    out[3*j]=x; out[3*j+1]=y; out[3*j+2]=z;
+  }
+  return out;
+}
+
+// ---------- three.js
+const stage = $("stage");
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
+stage.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 0.01, 20);
+camera.up.set(0,0,1); camera.position.set(0.95,-1.15,0.75);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.target.set(0,0,-0.02);
+const mats = {
+  wire:new THREE.LineBasicMaterial({vertexColors:true, transparent:true, opacity:.9}),
+  crit:new THREE.PointsMaterial({vertexColors:true, size:0.014, transparent:true, opacity:.95}),
+  ghost:new THREE.PointsMaterial({color:0x000000, size:0.0045, transparent:true, opacity:.55}),
+  arm:new THREE.LineBasicMaterial({color:0x000000, transparent:true, opacity:.9}),
+  ell:new THREE.LineBasicMaterial({color:0x000000, transparent:true, opacity:.35}),
+  dface:new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:.2, side:THREE.DoubleSide, depthWrite:false}),
+  dedge:new THREE.LineBasicMaterial({color:0x000000, transparent:true, opacity:.85}),
+};
+function recolor(){
+  mats.ghost.color.set(css("--ghost")); if(current) build();
+  mats.arm.color.set(css("--accent")); mats.ell.color.set(css("--accent"));
+  mats.dface.color.set(css("--c3")); mats.dedge.color.set(css("--c3"));
+  drawChart();
+}
+let ghostObj=null, wireObj=null, armObj=null, ellObj=null, critObj=null, current=null;
+// colour along one period of the series: blue at t = 0 through green and yellow to red at the end
+const dark=()=>matchMedia("(prefers-color-scheme: dark)").matches ? document.documentElement.dataset.theme!=="light" : document.documentElement.dataset.theme==="dark";
+function tcolor(u){ return new THREE.Color().setHSL(0.68*(1-u), 0.9, dark()?0.6:0.45); }
+function paint(n, col){ // n vertices, col(j) -> THREE.Color
+  const a=new Float32Array(3*n); for(let j=0;j<n;j++){const c=col(j); a[3*j]=c.r; a[3*j+1]=c.g; a[3*j+2]=c.b;} return new THREE.BufferAttribute(a,3); }
+function resize(){
+  const w=stage.clientWidth, h=stage.clientHeight;
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+
+function setGhost(){
+  if(ghostObj){scene.remove(ghostObj); ghostObj.geometry.dispose();}
+  const g=new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(D[state.model].ghost.flat(),3));
+  ghostObj=new THREE.Points(g, mats.ghost); ghostObj.visible=$("ghost").checked; scene.add(ghostObj);
+}
+
+// the decimated mesh, drawn exactly as the Draco decoder returns it
+let dracoObj=null;
+function setDraco(){
+  if(dracoObj){scene.remove(dracoObj); dracoObj.traverse(o=>o.geometry&&o.geometry.dispose()); dracoObj=null;}
+  const z=D[state.model].draco;
+  $("dracos").innerHTML=[["off","Off"],["hi",`99% · ${fmtB(z.hi.bytes)}`],["scad",`96% · ${fmtB(z.scad.bytes)}`]]
+    .map(([k,l])=>`<button id="d-${k}" aria-pressed="${k===state.draco}" data-d="${k}">${l}</button>`).join("");
+  if(state.draco==="off") return;
+  const d=z[state.draco], g=new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(d.v.flat(),3)); g.setIndex(d.f.flat());
+  dracoObj=new THREE.Group();
+  dracoObj.add(new THREE.Mesh(g, mats.dface)); dracoObj.add(new THREE.LineSegments(new THREE.WireframeGeometry(g), mats.dedge));
+  scene.add(dracoObj);
+}
+
+// slider stops: single curves use the sweep grid (computed coverage), loops use count
+function stops(){
+  const m=D[state.model];
+  if(METHODS[state.method].kind==="loops"){
+    const g=m.greedy[state.method]; return m[METHODS[state.method].set].map((_,i)=>({n:i+1, params:g[i+1][0], cov:g[i+1][1], cov2:g[i+1][2]}));
+  }
+  const H=m.curves[state.method].A.length;
+  return m.sweeps[state.method].filter(r=>r[0]<=H).map(r=>({n:r[0], params:r[1], cov:r[2], on:r[3]}));
+}
+
+function build(){
+  const m=D[state.model], S=stops();
+  if(state.idx===null || state.idx>=S.length) state.idx = METHODS[state.method].kind==="loops" ? m.n95[state.method]-1 : Math.min(S.length-1, 7);
+  const byT=$("tcol").checked, cWire=new THREE.Color(css("--wire")), cX=new THREE.Color(css("--c8"));
+  $("tbar").hidden=!byT;
+  if(byT) $("tgrad").style.background="linear-gradient(90deg,"+[0,.25,.5,.75,1].map(u=>"#"+tcolor(u).getHexString()).join(",")+")";
+  if(critObj){scene.remove(critObj); critObj.geometry.dispose(); critObj=null;}
+  if(state.method==="blobs_crit"){
+    const e=m.events, cg=new THREE.BufferGeometry(), cE=new THREE.Color(css("--accent")), cS=new THREE.Color(css("--c6"));
+    cg.setAttribute("position", new THREE.Float32BufferAttribute(e.flatMap(p=>p.slice(0,3)),3));
+    cg.setAttribute("color", paint(e.length, j=>e[j][3]?cS:cE));
+    critObj=new THREE.Points(cg, mats.crit); scene.add(critObj);
+  }
+  const s=S[state.idx];
+  if(wireObj){scene.remove(wireObj); wireObj.geometry.dispose();}
+  const g=new THREE.BufferGeometry();
+  let pos;
+  if(METHODS[state.method].kind==="loops"){
+    const segs=[], cols=[], LS=m[METHODS[state.method].set].slice(0,s.n);
+    LS.forEach(L=>{
+      const n=Math.max(64,16*L.A.length), p=synth(L,L.A.length,n);
+      for(let j=0;j<n;j++){const k=(j+1)%n; segs.push(p[3*j],p[3*j+1],p[3*j+2],p[3*k],p[3*k+1],p[3*k+2]);
+        cols.push(byT?tcolor(j/n):L.x?cX:cWire, byT?tcolor((j+1)/n):L.x?cX:cWire);}
+    });
+    pos=new Float32Array(segs); g.setAttribute("position", new THREE.BufferAttribute(pos,3));
+    g.setAttribute("color", paint(cols.length, j=>cols[j]));
+    wireObj=new THREE.LineSegments(g, mats.wire);
+    current={kind:"loops", loops:LS};
+  } else {
+    const c=m.curves[state.method], npts=Math.max(3000, 10*s.n);
+    pos=synth(c,s.n,npts); const closed=new Float32Array(pos.length+3); closed.set(pos); closed.set(pos.subarray(0,3),pos.length);
+    g.setAttribute("position", new THREE.BufferAttribute(closed,3));
+    g.setAttribute("color", paint(npts+1, j=>byT?tcolor(j/npts):cWire));
+    wireObj=new THREE.Line(g, mats.wire);
+    current={kind:"curve", c, N:s.n, npts};
+  }
+  wireObj.visible=$("wire").checked; scene.add(wireObj);
+  buildArms();
+  // controls + readout
+  const r=$("n"); r.max=S.length-1; r.value=state.idx;
+  $("nlabel").textContent = METHODS[state.method].kind==="loops" ? `Loops: ${s.n} of ${S.length}` : `Harmonics: N = ${s.n}`;
+  const rows=[["parameters", s.params.toLocaleString()],["float32 size", fmtB(4*s.params)],["float16 size", fmtB(2*s.params)],["coverage", (100*s.cov).toFixed(1)+"%"]];
+  if(s.on!==undefined) rows.push(["on skin", (100*s.on).toFixed(1)+"%"]);
+  else rows.push(["within ε/2", (100*s.cov2).toFixed(1)+"%"],["on skin", (100*m.stats[state.method].onsurf).toFixed(1)+"%"]);
+  if(state.draco!=="off"){const d=m.draco[state.draco];
+    rows.push(["draco mesh", `${d.faces} faces · ${d.q}-bit`],["mesh size", fmtB(d.bytes)],["recall / precision", `${pct(d.rp[0])} / ${pct(d.rp[1])}%`]);}
+  $("readout").innerHTML = rows.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("");
+  $("mnote").textContent = METHODS[state.method].note;
+  state.marker=s.params; drawChart();
+}
+
+// ---------- epicycle animation
+const MAXARMS=48, ESEG=40;
+function buildArms(){
+  [armObj,ellObj].forEach(o=>{if(o){scene.remove(o);o.geometry.dispose();}});
+  armObj=ellObj=null;
+  if(!$("anim").checked) {if(wireObj) wireObj.geometry.setDrawRange(0,Infinity); return;}
+  let nArms=0, nEll=0;
+  if(current.kind==="curve"){nArms=Math.min(MAXARMS,current.N)+1; nEll=Math.min(MAXARMS,current.N);}
+  else current.loops.forEach(L=>{nArms+=L.A.length; nEll+=L.A.length;});
+  const ga=new THREE.BufferGeometry(); ga.setAttribute("position", new THREE.BufferAttribute(new Float32Array(nArms*6),3));
+  const ge=new THREE.BufferGeometry(); ge.setAttribute("position", new THREE.BufferAttribute(new Float32Array(nEll*ESEG*6),3));
+  armObj=new THREE.LineSegments(ga, mats.arm); ellObj=new THREE.LineSegments(ge, mats.ell);
+  scene.add(armObj); scene.add(ellObj);
+}
+function chain(c, N, t, tail, aBuf, eBuf, ai, ei, maxArms){
+  let p=[c.r0[0],c.r0[1],c.r0[2]];
+  const shown=Math.min(N,maxArms);
+  for(let k=0;k<shown;k++){
+    const a=c.A[k], b=c.B[k], K=k+1, ck=Math.cos(K*t), sk=Math.sin(K*t);
+    for(let s=0;s<ESEG;s++){
+      const u0=2*Math.PI*s/ESEG, u1=2*Math.PI*(s+1)/ESEG;
+      for(const u of [u0,u1]){const cu=Math.cos(u), su=Math.sin(u);
+        eBuf[ei++]=p[0]+a[0]*cu+b[0]*su; eBuf[ei++]=p[1]+a[1]*cu+b[1]*su; eBuf[ei++]=p[2]+a[2]*cu+b[2]*su;}
+    }
+    const q=[p[0]+a[0]*ck+b[0]*sk, p[1]+a[1]*ck+b[1]*sk, p[2]+a[2]*ck+b[2]*sk];
+    aBuf.set(p,ai); aBuf.set(q,ai+3); ai+=6; p=q;
+  }
+  if(tail){ // remaining harmonics folded into one arm
+    let q=p.slice();
+    for(let k=shown;k<N;k++){const a=c.A[k], b=c.B[k], K=k+1, ck=Math.cos(K*t), sk=Math.sin(K*t);
+      q[0]+=a[0]*ck+b[0]*sk; q[1]+=a[1]*ck+b[1]*sk; q[2]+=a[2]*ck+b[2]*sk;}
+    aBuf.set(p,ai); aBuf.set(q,ai+3); ai+=6;
+  }
+  return [ai,ei];
+}
+const PERIOD=24000; let t0=performance.now();
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function animate(now){
+  requestAnimationFrame(animate);
+  controls.update();
+  if(armObj && current){
+    const ph=((now-t0)%PERIOD)/PERIOD, t=2*Math.PI*ph;
+    const aBuf=armObj.geometry.attributes.position.array, eBuf=ellObj.geometry.attributes.position.array;
+    if(current.kind==="curve"){
+      chain(current.c,current.N,t,true,aBuf,eBuf,0,0,MAXARMS);
+      wireObj.geometry.setDrawRange(0, Math.max(2,Math.floor(ph*(current.npts+1))));
+    } else {
+      let ai=0, ei=0; const tt=t*4; // loops are short: run them faster
+      current.loops.forEach(L=>{[ai,ei]=chain(L,L.A.length,tt,false,aBuf,eBuf,ai,ei,99);});
+    }
+    armObj.geometry.attributes.position.needsUpdate=true; ellObj.geometry.attributes.position.needsUpdate=true;
+  }
+  renderer.render(scene,camera);
+}
+
+// ---------- chart
+const SER = [
+  {k:"walk_pure", label:"Walk, unbiased", col:"--c2", dash:true},
+  {k:"walk_biased", label:"Walk, biased", col:"--c1"},
+  {k:"spiral_XY", label:"Spirals YZ+XZ", col:"--c4", dash:true},
+  {k:"spiral_XYZ", label:"Spirals YZ+XZ+XY", col:"--c3"},
+  {k:"blobs_spliced", label:"Slice loops, one chain", col:"--c6"},
+  {k:"blobs_axis", label:"Slice loops, axis planes", col:"--c5", greedy:true},
+  {k:"blobs_tilted", label:"Slice loops, 24 tilts", col:"--c7", greedy:true, dash:true},
+  {k:"blobs_crit", label:"Slice loops + crossings", col:"--c8", greedy:true},
+  {k:"crit_spliced", label:"Loops + crossings, one chain", col:"--c8", dash:true},
+];
+function drawChart(){
+  const svg=$("chart"), m=D[state.model], W=900, H=380, L=56, R=16, T=14, Bm=40;
+  const x0=Math.log10(50), x1=Math.log10(20000);
+  const X=v=>L+(Math.log10(Math.max(50,v))-x0)/(x1-x0)*(W-L-R), Y=v=>T+(1-v)*(H-T-Bm);
+  let s="";
+  for(const v of [0,.2,.4,.6,.8,.9,1]){const y=Y(v);
+    s+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="${css("--rule")}" stroke-width="${v===.9||v===.8?1.2:.6}"/><text x="${L-8}" y="${y+4}" text-anchor="end">${Math.round(v*100)}%</text>`;}
+  for(const v of [50,100,200,500,1000,2000,5000,10000,20000]){const x=X(v);
+    s+=`<line x1="${x}" x2="${x}" y1="${T}" y2="${H-Bm}" stroke="${css("--rule")}" stroke-width=".6"/><text x="${x}" y="${H-Bm+16}" text-anchor="middle">${v>=1000?v/1000+"k":v}</text>`;}
+  s+=`<text x="${(W+L)/2}" y="${H-6}" text-anchor="middle">real parameters (log scale)</text>`;
+  for(const se of SER){
+    let pts = se.greedy ? m.greedy[se.k].filter(p=>p[0]>0).map(p=>[p[0],p[1]]) : m.sweeps[se.k].map(r=>[r[1],r[2]]);
+    pts=pts.filter(p=>p[0]<=20000);
+    const d=pts.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)).join("");
+    s+=`<path d="${d}" fill="none" stroke="${css(se.col)}" stroke-width="2" ${se.dash?'stroke-dasharray="5 4"':""}/>`;
+  }
+  if(state.marker){const x=X(state.marker); s+=`<line x1="${x}" x2="${x}" y1="${T}" y2="${H-Bm}" stroke="${css("--accent")}" stroke-width="2"/>`;}
+  svg.innerHTML=s;
+  $("legend").innerHTML=SER.map(se=>`<span style="color:${css(se.col)}"><i class="${se.dash?"dash":""}" style="background:${css(se.col)}"></i><span style="color:${css("--ink")}">${se.label}</span></span>`).join("");
+  drawSizes();
+}
+
+// ---------- sizes
+function fmtB(b){ if(b==null) return "–"; if(b>=1e6) return (b/1e6).toFixed(2)+" MB"; if(b>=1e4) return Math.round(b/1e3)+" KB"; if(b>=1e3) return (b/1e3).toFixed(1)+" KB"; return b+" B"; }
+const pct=v=>(100*v).toFixed(1);
+function rows(n){
+  const z=D[n].sizes, p=D[n].prec, b=p.blobs_axis, sc=D[n].scad;
+  const wr=k=>p[k]?[p[k].fixed.gz, `${pct(p[k].fixed.cov)}% coverage`]:[null,"never reaches 85%"];
+  const R=[
+    ["grp","Empirical meshes"],
+    ["STL, binary (as supplied)", z.stl, "exact", "--c2"],
+    ["STL, gzip -9", z.stl_gz, "exact", "--c2"],
+    ["GLB (glTF binary)", z.glb, "exact", "--c2"],
+    ["Draco, full mesh", z.draco_hi.bytes, `${z.draco_hi.q}-bit · ${pct(z.draco_hi.rp[0])}% / ${pct(z.draco_hi.rp[1])}%`, "--c2"],
+    ["Decimate + Draco", z.decim_draco_hi.bytes, `${z.decim_draco_hi.faces} faces · ${pct(z.decim_draco_hi.rp[0])}% / ${pct(z.decim_draco_hi.rp[1])}%`, "--c3"],
+    ["…decimated to CAD-script quality", z.decim_draco_scad.bytes, `${z.decim_draco_scad.faces} faces · ${pct(z.decim_draco_scad.rp[0])}% / ${pct(z.decim_draco_scad.rp[1])}%`, "--c3"],
+    ["grp","Declarative"],
+    ["OpenSCAD script (text)", sc?sc.bytes:null, sc?sc.note:"no script", "--c4"],
+    ["OpenSCAD script, gzip -9", sc?sc.gz:null, sc?sc.note:"no script", "--c4"],
+    ["grp","Slice-loop wire, by coefficient encoding"],
+    ["float32", b.f32.bytes, `${pct(b.f32.cov)}% coverage`, "--c5"],
+    ["float16", b.f16.bytes, `${pct(b.f16.cov)}% coverage`, "--c5"],
+    ["float16, gzip -9", b.f16.gz, `${pct(b.f16.cov)}% coverage`, "--c5"],
+    ["Fixed-point, gzip -9", b.fixed.gz, `${pct(b.fixed.cov)}% · step ε/${Math.round(0.01/b.fixed.step)}`, "--c5"],
+    ["grp","Other wires (fixed-point, gzip -9)"],
+    ["Slice loops + crossings", ...wr("blobs_crit"), "--c8"],
+    ["Loops + crossings, one chain", ...wr("crit_spliced"), "--c8"],
+    ["Slice loops, one chain", ...wr("blobs_spliced"), "--c6"],
+    ["Surface walk, biased", ...wr("walk_biased"), "--c1"],
+    ["Spirals YZ+XZ+XY", ...wr("spiral_XYZ"), "--c3"],
+  ];
+  return R;
+}
+function drawSizes(){
+  const names=Object.keys(MODELS);
+  let h=`<thead><tr><th>Representation</th>${names.map(n=>`<th>${MODELS[n]}</th>`).join("")}</tr></thead><tbody>`;
+  rows("A319").forEach((r,i)=>{
+    if(r[0]==="grp"){h+=`<tr class="grp"><td colspan="${names.length+1}">${r[1]}</td></tr>`;return;}
+    h+=`<tr><td>${r[0]}</td>${names.map(n=>{const q=rows(n)[i];return `<td>${fmtB(q[1])}<small>${q[2]}</small></td>`;}).join("")}</tr>`;
+  });
+  $("sizes").innerHTML=h+"</tbody>";
+  const R=rows(state.model).filter(r=>r[0]!=="grp"&&r[1]!=null), lo=Math.log10(200), hi=Math.log10(7e6);
+  $("bars").innerHTML=R.map(r=>`<div class="bar"><span>${r[0]}</span><div class="track"><div class="fill" style="width:${Math.max(1,(Math.log10(r[1])-lo)/(hi-lo)*100)}%;background:${css(r[3])}"></div></div><span class="v">${fmtB(r[1])}</span></div>`).join("");
+  $("barcap").textContent=`${MODELS[state.model]}, log scale from 200 B to 7 MB. Meshes are scored as recall / precision at ε; wires as coverage. Slice-loop rows are at about 95% coverage, the other wires at 85%.`;
+}
+
+// ---------- UI
+$("models").innerHTML=Object.entries(MODELS).map(([k,v])=>`<button id="m-${k}" aria-pressed="${k===state.model}" data-m="${k}">${v}</button>`).join("");
+$("methods").innerHTML=Object.entries(METHODS).map(([k,v])=>`<button id="x-${k}" aria-pressed="${k===state.method}" data-x="${k}">${v.label}</button>`).join("");
+$("models").onclick=e=>{const b=e.target.closest("button"); if(!b) return; state.model=b.dataset.m; state.idx=null;
+  document.querySelectorAll("#models button").forEach(x=>x.setAttribute("aria-pressed", x===b)); setGhost(); setDraco(); build();};
+$("methods").onclick=e=>{const b=e.target.closest("button"); if(!b) return; state.method=b.dataset.x; state.idx=null;
+  document.querySelectorAll("#methods button").forEach(x=>x.setAttribute("aria-pressed", x===b)); build();};
+$("n").oninput=e=>{state.idx=+e.target.value; build();};
+$("ghost").onchange=e=>{ghostObj.visible=e.target.checked;};
+$("wire").onchange=e=>{wireObj.visible=e.target.checked;};
+$("dracos").onclick=e=>{const b=e.target.closest("button"); if(!b) return; state.draco=b.dataset.d; setDraco(); build();};
+$("anim").onchange=()=>{t0=performance.now(); buildArms();};
+$("tcol").onchange=build;
+if(!reduce) $("anim").checked=true;
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",recolor);
+new MutationObserver(recolor).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+resize(); setGhost(); setDraco(); build(); recolor(); requestAnimationFrame(animate);
+</script>
+

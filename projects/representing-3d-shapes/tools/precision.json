@@ -1,0 +1,824 @@
+{
+ "A319": {
+  "blobs_axis": {
+   "params": 1509,
+   "chains": 75,
+   "f64": {
+    "bytes": 12147,
+    "gz": 3506,
+    "cov": 0.9524,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 6111,
+    "gz": 2720,
+    "cov": 0.9524,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 3093,
+    "gz": 1967,
+    "cov": 0.9523,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.00125,
+    "bytes": 3093,
+    "gz": 1112,
+    "cov": 0.9505,
+    "onsurf": 1.0
+   }
+  },
+  "blobs_crit": {
+   "params": 1974,
+   "chains": 64,
+   "f64": {
+    "bytes": 15856,
+    "gz": 3694,
+    "cov": 0.9512,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 7960,
+    "gz": 2972,
+    "cov": 0.9512,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 4012,
+    "gz": 2219,
+    "cov": 0.9511,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.00125,
+    "bytes": 4012,
+    "gz": 1206,
+    "cov": 0.9478,
+    "onsurf": 1.0
+   }
+  },
+  "blobs_spliced": {
+   "params": 1203,
+   "chains": 1,
+   "f64": {
+    "bytes": 9626,
+    "gz": 2402,
+    "cov": 0.8764,
+    "onsurf": 0.9997
+   },
+   "f32": {
+    "bytes": 4814,
+    "gz": 2009,
+    "cov": 0.8764,
+    "onsurf": 0.9997
+   },
+   "f16": {
+    "bytes": 2408,
+    "gz": 1596,
+    "cov": 0.8766,
+    "onsurf": 0.9997
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 2408,
+    "gz": 1310,
+    "cov": 0.8739,
+    "onsurf": 1.0
+   }
+  },
+  "crit_spliced": {
+   "params": 903,
+   "chains": 1,
+   "f64": {
+    "bytes": 7226,
+    "gz": 2118,
+    "cov": 0.8594,
+    "onsurf": 0.9936
+   },
+   "f32": {
+    "bytes": 3614,
+    "gz": 1731,
+    "cov": 0.8594,
+    "onsurf": 0.9936
+   },
+   "f16": {
+    "bytes": 1808,
+    "gz": 1322,
+    "cov": 0.8593,
+    "onsurf": 0.9936
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 1808,
+    "gz": 1088,
+    "cov": 0.8556,
+    "onsurf": 0.994
+   }
+  },
+  "walk_biased": {
+   "params": 1803,
+   "chains": 1,
+   "f64": {
+    "bytes": 14426,
+    "gz": 3046,
+    "cov": 0.8594,
+    "onsurf": 0.9964
+   },
+   "f32": {
+    "bytes": 7214,
+    "gz": 2621,
+    "cov": 0.8594,
+    "onsurf": 0.9964
+   },
+   "f16": {
+    "bytes": 3608,
+    "gz": 2108,
+    "cov": 0.8589,
+    "onsurf": 0.9964
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 3608,
+    "gz": 1697,
+    "cov": 0.8585,
+    "onsurf": 0.9964
+   }
+  }
+ },
+ "B17": {
+  "blobs_axis": {
+   "params": 1980,
+   "chains": 82,
+   "f64": {
+    "bytes": 15922,
+    "gz": 3222,
+    "cov": 0.9654,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 8002,
+    "gz": 2537,
+    "cov": 0.9654,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 4042,
+    "gz": 1846,
+    "cov": 0.9655,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.00125,
+    "bytes": 4042,
+    "gz": 1007,
+    "cov": 0.9639,
+    "onsurf": 1.0
+   }
+  },
+  "blobs_crit": {
+   "params": 2334,
+   "chains": 72,
+   "f64": {
+    "bytes": 18744,
+    "gz": 4109,
+    "cov": 0.9506,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 9408,
+    "gz": 3319,
+    "cov": 0.9506,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 4740,
+    "gz": 2508,
+    "cov": 0.9506,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.00125,
+    "bytes": 4740,
+    "gz": 1363,
+    "cov": 0.9487,
+    "onsurf": 1.0
+   }
+  },
+  "blobs_spliced": {
+   "params": 1203,
+   "chains": 1,
+   "f64": {
+    "bytes": 9626,
+    "gz": 2398,
+    "cov": 0.9021,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 4814,
+    "gz": 2018,
+    "cov": 0.9021,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 2408,
+    "gz": 1584,
+    "cov": 0.9021,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 2408,
+    "gz": 1301,
+    "cov": 0.8988,
+    "onsurf": 1.0
+   }
+  },
+  "crit_spliced": {
+   "params": 1203,
+   "chains": 1,
+   "f64": {
+    "bytes": 9626,
+    "gz": 2556,
+    "cov": 0.9196,
+    "onsurf": 0.9993
+   },
+   "f32": {
+    "bytes": 4814,
+    "gz": 2094,
+    "cov": 0.9196,
+    "onsurf": 0.9993
+   },
+   "f16": {
+    "bytes": 2408,
+    "gz": 1675,
+    "cov": 0.9196,
+    "onsurf": 0.9993
+   },
+   "fixed": {
+    "step": 0.0003125,
+    "bytes": 2408,
+    "gz": 1191,
+    "cov": 0.9174,
+    "onsurf": 0.999
+   }
+  },
+  "walk_biased": {
+   "params": 1803,
+   "chains": 1,
+   "f64": {
+    "bytes": 14426,
+    "gz": 3005,
+    "cov": 0.8731,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 7214,
+    "gz": 2541,
+    "cov": 0.8731,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 3608,
+    "gz": 2045,
+    "cov": 0.8728,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.0003125,
+    "bytes": 3608,
+    "gz": 1357,
+    "cov": 0.8707,
+    "onsurf": 1.0
+   }
+  }
+ },
+ "PD808": {
+  "blobs_axis": {
+   "params": 2085,
+   "chains": 71,
+   "f64": {
+    "bytes": 16751,
+    "gz": 4199,
+    "cov": 0.9583,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 8411,
+    "gz": 3417,
+    "cov": 0.9583,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 4241,
+    "gz": 2553,
+    "cov": 0.958,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.000625,
+    "bytes": 4241,
+    "gz": 1522,
+    "cov": 0.9566,
+    "onsurf": 1.0
+   }
+  },
+  "blobs_crit": {
+   "params": 3114,
+   "chains": 72,
+   "f64": {
+    "bytes": 24984,
+    "gz": 5591,
+    "cov": 0.9528,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 12528,
+    "gz": 4658,
+    "cov": 0.9528,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 6300,
+    "gz": 3583,
+    "cov": 0.9528,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.00125,
+    "bytes": 6300,
+    "gz": 1628,
+    "cov": 0.9487,
+    "onsurf": 1.0
+   }
+  },
+  "blobs_spliced": {
+   "params": 1803,
+   "chains": 1,
+   "f64": {
+    "bytes": 14426,
+    "gz": 3019,
+    "cov": 0.9202,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 7214,
+    "gz": 2576,
+    "cov": 0.9202,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 3608,
+    "gz": 2103,
+    "cov": 0.9203,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 3608,
+    "gz": 1691,
+    "cov": 0.9168,
+    "onsurf": 1.0
+   }
+  },
+  "crit_spliced": {
+   "params": 1203,
+   "chains": 1,
+   "f64": {
+    "bytes": 9626,
+    "gz": 2646,
+    "cov": 0.8614,
+    "onsurf": 0.9911
+   },
+   "f32": {
+    "bytes": 4814,
+    "gz": 2189,
+    "cov": 0.8614,
+    "onsurf": 0.9911
+   },
+   "f16": {
+    "bytes": 2408,
+    "gz": 1735,
+    "cov": 0.8614,
+    "onsurf": 0.9911
+   },
+   "fixed": {
+    "step": 0.0003125,
+    "bytes": 2408,
+    "gz": 1271,
+    "cov": 0.8622,
+    "onsurf": 0.9901
+   }
+  },
+  "walk_biased": {
+   "params": 2703,
+   "chains": 1,
+   "f64": {
+    "bytes": 21626,
+    "gz": 3978,
+    "cov": 0.8703,
+    "onsurf": 0.9962
+   },
+   "f32": {
+    "bytes": 10814,
+    "gz": 3432,
+    "cov": 0.8703,
+    "onsurf": 0.9962
+   },
+   "f16": {
+    "bytes": 5408,
+    "gz": 2793,
+    "cov": 0.87,
+    "onsurf": 0.9962
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 5408,
+    "gz": 2234,
+    "cov": 0.8672,
+    "onsurf": 0.9961
+   }
+  },
+  "spiral_XYZ": {
+   "params": 4203,
+   "chains": 1,
+   "f64": {
+    "bytes": 33626,
+    "gz": 5088,
+    "cov": 0.8549,
+    "onsurf": 0.9275
+   },
+   "f32": {
+    "bytes": 16814,
+    "gz": 4477,
+    "cov": 0.8549,
+    "onsurf": 0.9275
+   },
+   "f16": {
+    "bytes": 8408,
+    "gz": 3733,
+    "cov": 0.8545,
+    "onsurf": 0.9274
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 8408,
+    "gz": 2887,
+    "cov": 0.859,
+    "onsurf": 0.9277
+   }
+  }
+ },
+ "Simple": {
+  "blobs_axis": {
+   "params": 1749,
+   "chains": 65,
+   "f64": {
+    "bytes": 14057,
+    "gz": 3596,
+    "cov": 0.9516,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 7061,
+    "gz": 2853,
+    "cov": 0.9516,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 3563,
+    "gz": 2106,
+    "cov": 0.9517,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.00125,
+    "bytes": 3563,
+    "gz": 1078,
+    "cov": 0.9469,
+    "onsurf": 1.0
+   }
+  },
+  "blobs_crit": {
+   "params": 2178,
+   "chains": 58,
+   "f64": {
+    "bytes": 17482,
+    "gz": 4146,
+    "cov": 0.9534,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 8770,
+    "gz": 3372,
+    "cov": 0.9534,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 4414,
+    "gz": 2557,
+    "cov": 0.9535,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.00125,
+    "bytes": 4414,
+    "gz": 1246,
+    "cov": 0.951,
+    "onsurf": 1.0
+   }
+  },
+  "blobs_spliced": {
+   "params": 903,
+   "chains": 1,
+   "f64": {
+    "bytes": 7226,
+    "gz": 2036,
+    "cov": 0.8506,
+    "onsurf": 0.9966
+   },
+   "f32": {
+    "bytes": 3614,
+    "gz": 1671,
+    "cov": 0.8506,
+    "onsurf": 0.9966
+   },
+   "f16": {
+    "bytes": 1808,
+    "gz": 1315,
+    "cov": 0.8509,
+    "onsurf": 0.9966
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 1808,
+    "gz": 1081,
+    "cov": 0.8512,
+    "onsurf": 0.9974
+   }
+  },
+  "crit_spliced": {
+   "params": 903,
+   "chains": 1,
+   "f64": {
+    "bytes": 7226,
+    "gz": 2187,
+    "cov": 0.878,
+    "onsurf": 0.9885
+   },
+   "f32": {
+    "bytes": 3614,
+    "gz": 1769,
+    "cov": 0.878,
+    "onsurf": 0.9885
+   },
+   "f16": {
+    "bytes": 1808,
+    "gz": 1377,
+    "cov": 0.878,
+    "onsurf": 0.9885
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 1808,
+    "gz": 1137,
+    "cov": 0.8773,
+    "onsurf": 0.9866
+   }
+  },
+  "walk_biased": {
+   "params": 1803,
+   "chains": 1,
+   "f64": {
+    "bytes": 14426,
+    "gz": 2982,
+    "cov": 0.8762,
+    "onsurf": 0.9945
+   },
+   "f32": {
+    "bytes": 7214,
+    "gz": 2558,
+    "cov": 0.8762,
+    "onsurf": 0.9945
+   },
+   "f16": {
+    "bytes": 3608,
+    "gz": 2061,
+    "cov": 0.876,
+    "onsurf": 0.9945
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 3608,
+    "gz": 1643,
+    "cov": 0.8729,
+    "onsurf": 0.9943
+   }
+  },
+  "spiral_XYZ": {
+   "params": 2703,
+   "chains": 1,
+   "f64": {
+    "bytes": 21626,
+    "gz": 3954,
+    "cov": 0.857,
+    "onsurf": 0.9141
+   },
+   "f32": {
+    "bytes": 10814,
+    "gz": 3435,
+    "cov": 0.857,
+    "onsurf": 0.9141
+   },
+   "f16": {
+    "bytes": 5408,
+    "gz": 2809,
+    "cov": 0.8568,
+    "onsurf": 0.9141
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 5408,
+    "gz": 2235,
+    "cov": 0.8561,
+    "onsurf": 0.913
+   }
+  }
+ },
+ "KingAir": {
+  "blobs_axis": {
+   "params": 1800,
+   "chains": 90,
+   "f64": {
+    "bytes": 14490,
+    "gz": 3492,
+    "cov": 0.9502,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 7290,
+    "gz": 2727,
+    "cov": 0.9502,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 3690,
+    "gz": 1948,
+    "cov": 0.9502,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.00125,
+    "bytes": 3690,
+    "gz": 1051,
+    "cov": 0.947,
+    "onsurf": 1.0
+   }
+  },
+  "blobs_crit": {
+   "params": 2808,
+   "chains": 72,
+   "f64": {
+    "bytes": 22536,
+    "gz": 4733,
+    "cov": 0.9503,
+    "onsurf": 1.0
+   },
+   "f32": {
+    "bytes": 11304,
+    "gz": 3916,
+    "cov": 0.9503,
+    "onsurf": 1.0
+   },
+   "f16": {
+    "bytes": 5688,
+    "gz": 3014,
+    "cov": 0.9504,
+    "onsurf": 1.0
+   },
+   "fixed": {
+    "step": 0.00125,
+    "bytes": 5688,
+    "gz": 1344,
+    "cov": 0.9457,
+    "onsurf": 1.0
+   }
+  },
+  "blobs_spliced": {
+   "params": 1203,
+   "chains": 1,
+   "f64": {
+    "bytes": 9626,
+    "gz": 2388,
+    "cov": 0.8743,
+    "onsurf": 0.9998
+   },
+   "f32": {
+    "bytes": 4814,
+    "gz": 2029,
+    "cov": 0.8743,
+    "onsurf": 0.9998
+   },
+   "f16": {
+    "bytes": 2408,
+    "gz": 1610,
+    "cov": 0.8745,
+    "onsurf": 0.9998
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 2408,
+    "gz": 1342,
+    "cov": 0.8748,
+    "onsurf": 1.0
+   }
+  },
+  "crit_spliced": {
+   "params": 1203,
+   "chains": 1,
+   "f64": {
+    "bytes": 9626,
+    "gz": 2681,
+    "cov": 0.8651,
+    "onsurf": 0.9912
+   },
+   "f32": {
+    "bytes": 4814,
+    "gz": 2231,
+    "cov": 0.8651,
+    "onsurf": 0.9912
+   },
+   "f16": {
+    "bytes": 2408,
+    "gz": 1732,
+    "cov": 0.8649,
+    "onsurf": 0.9912
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 2408,
+    "gz": 1441,
+    "cov": 0.8652,
+    "onsurf": 0.9927
+   }
+  },
+  "walk_biased": {
+   "params": 1803,
+   "chains": 1,
+   "f64": {
+    "bytes": 14426,
+    "gz": 3154,
+    "cov": 0.8684,
+    "onsurf": 0.9875
+   },
+   "f32": {
+    "bytes": 7214,
+    "gz": 2676,
+    "cov": 0.8684,
+    "onsurf": 0.9875
+   },
+   "f16": {
+    "bytes": 3608,
+    "gz": 2169,
+    "cov": 0.8687,
+    "onsurf": 0.9875
+   },
+   "fixed": {
+    "step": 0.0003125,
+    "bytes": 3608,
+    "gz": 1475,
+    "cov": 0.8649,
+    "onsurf": 0.986
+   }
+  },
+  "spiral_XYZ": {
+   "params": 4203,
+   "chains": 1,
+   "f64": {
+    "bytes": 33626,
+    "gz": 5074,
+    "cov": 0.8488,
+    "onsurf": 0.9022
+   },
+   "f32": {
+    "bytes": 16814,
+    "gz": 4435,
+    "cov": 0.8488,
+    "onsurf": 0.9022
+   },
+   "f16": {
+    "bytes": 8408,
+    "gz": 3697,
+    "cov": 0.8489,
+    "onsurf": 0.9022
+   },
+   "fixed": {
+    "step": 0.00015625,
+    "bytes": 8408,
+    "gz": 2856,
+    "cov": 0.8554,
+    "onsurf": 0.8988
+   }
+  }
+ }
+}
