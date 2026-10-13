@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Counterflow Heat Exchanger Lab</title>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.site-crumb{font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:10px 20px 0;max-width:1400px;margin:0 auto;opacity:.8}
+.site-crumb a{color:inherit}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: process-engineering bench. Control rail on the left, live P&ID-style schematic and
+   temperature profile on the right; stacks to one column on phones. */
+:root {
+  --bg: #eceff1;
+  --panel: #f7f9fa;
+  --raised: #ffffff;
+  --ink: #172027;
+  --muted: #5a6873;
+  --line: #cfd6db;
+  --wall: #8e9aa3;
+  --hot: #c2410c;
+  --cold: #1f6fb5;
+  --steel: #38505f;
+  --warn: #9a5a06;
+  --warn-bg: #fbefd9;
+  --ok: #2e7d4f;
+  --ok-bg: #e1f1e7;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161a; --panel: #172026; --raised: #1c262d; --ink: #e2e9ee; --muted: #8e9ca6;
+    --line: #2b363e; --wall: #5d6b75; --hot: #f27a3e; --cold: #5ea9ea; --steel: #9fb6c4;
+    --warn: #e7ad48; --warn-bg: #33270f; --ok: #5cc48f; --ok-bg: #12301f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161a; --panel: #172026; --raised: #1c262d; --ink: #e2e9ee; --muted: #8e9ca6;
+  --line: #2b363e; --wall: #5d6b75; --hot: #f27a3e; --cold: #5ea9ea; --steel: #9fb6c4;
+  --warn: #e7ad48; --warn-bg: #33270f; --ok: #5cc48f; --ok-bg: #12301f; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 40px; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin-bottom: 18px; }
+.eyebrow { margin: 0 0 2px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; text-wrap: balance; }
+.status { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 13px; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.ok { color: var(--ok); background: var(--ok-bg); }
+.pill.busy { color: var(--warn); background: var(--warn-bg); }
+.pill.arr { color: var(--steel); background: var(--raised); border: 1px solid var(--line); }
+.pill.arr.off { color: var(--warn); }
+.pill.busy::before { animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+
+.grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Control rail */
+.rail { display: flex; flex-direction: column; gap: 14px; }
+.group { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 12px; }
+.group h2 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 19px; letter-spacing: .02em; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.group h2 span { font-family: var(--f-body); font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.group.hot { border-top: 3px solid var(--hot); }
+.group.cold { border-top: 3px solid var(--cold); }
+.group.hx { border-top: 3px solid var(--steel); }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: baseline; }
+.ctl .lab, .sel .lab { font-size: 13px; color: var(--muted); }
+.ctl output { font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 500; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 4px 0 0; }
+.ctl .scale { grid-column: 1 / -1; display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); margin-top: -2px; }
+.ctl small { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-family: var(--f-mono); }
+.group.hot input[type=range] { accent-color: var(--hot); }
+.group.cold input[type=range] { accent-color: var(--cold); }
+.group.hx input[type=range] { accent-color: var(--steel); }
+input[type=range]:disabled { opacity: .45; }
+.sel { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+select { font: inherit; font-size: 13px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; max-width: 62%; }
+
+.seg { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--raised); }
+.seg button { flex: 1; font: inherit; font-size: 13px; font-weight: 500; color: var(--muted); background: transparent; border: 0; padding: 6px 4px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--steel); color: var(--bg); }
+.seg button:hover:not([aria-pressed="true"]) { color: var(--ink); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--steel); outline-offset: 2px; }
+
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.presets button { font: inherit; font-size: 12.5px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.presets button:hover { border-color: var(--steel); }
+.note { margin: 0; font-size: 12.5px; color: var(--muted); }
+.warn { margin: 0; font-size: 12.5px; color: var(--warn); background: var(--warn-bg); border-radius: 6px; padding: 6px 8px; }
+
+/* Main column */
+main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; margin-bottom: 6px; }
+.card-head h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; letter-spacing: .02em; }
+canvas { display: block; width: 100%; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; vertical-align: middle; margin-right: 5px; }
+.sw-line { width: 18px; height: 3px; border-radius: 2px; }
+.sw-dash { width: 18px; height: 0; border-top: 2px dashed var(--muted); }
+.ramp { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.ramp .bar { width: 140px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #2c4bd1 0%, #2fa4c4 30%, #e8d35a 55%, #ef8a2d 78%, #d7301f 100%); }
+
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+@media (max-width: 1100px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi { background: var(--panel); padding: 10px 12px; min-width: 0; }
+.kpi .k { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kpi .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 500; margin-top: 2px; white-space: nowrap; }
+.kpi .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.kpi .s { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.kpis-label { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; margin-bottom: 6px; }
+.kpis-label h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; letter-spacing: .02em; }
+.chip { font-size: 12.5px; padding: 3px 9px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); font-weight: 500; }
+
+.notes { font-size: 13px; color: var(--muted); max-width: 75ch; }
+.notes h3 { font-family: var(--f-display); font-weight: 600; font-size: 17px; color: var(--ink); margin: 4px 0 6px; }
+.notes p { margin: 0 0 8px; }
+.notes code { font-family: var(--f-mono); font-size: 12px; color: var(--ink); }
+</style>
+</head>
+<body>
+<nav class="site-crumb" aria-label="Breadcrumb"><a href="../../../">erikson1970</a> / <a href="../">Plant models</a> / <span>Counterflow Heat Exchanger Lab</span></nav>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Tube-in-tube · reversible flows · ε-NTU with a transient finite-volume model</p>
+      <h1>Counterflow Heat Exchanger Lab</h1>
+    </div>
+    <div class="status">
+      <span id="arr" class="pill arr">Counterflow</span>
+      <span id="pill" class="pill ok">Steady</span>
+      <span id="simclock" class="mono muted">t = 0.0 s</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <aside class="rail">
+      <section class="group hot">
+        <h2>Hot stream <span>Inner tube</span></h2>
+        <label class="ctl"><span class="lab">Inlet temperature</span><output id="o_Th_in"></output>
+          <input type="range" id="Th_in" min="30" max="180" step="1"></label>
+        <label class="ctl"><span class="lab">Mass flow</span><output id="o_mh"></output>
+          <input type="range" id="mh" min="-2" max="2" step="0.01" list="zero_tick"><span class="scale" aria-hidden="true"><span>−2</span><span>0</span><span>+2</span></span><small id="n_mh"></small></label>
+        <label class="sel"><span class="lab">Fluid</span><select id="fh"></select></label>
+      </section>
+
+      <section class="group cold">
+        <h2>Cold stream <span>Annulus</span></h2>
+        <label class="ctl"><span class="lab">Inlet temperature</span><output id="o_Tc_in"></output>
+          <input type="range" id="Tc_in" min="0" max="90" step="1"></label>
+        <label class="ctl"><span class="lab">Mass flow</span><output id="o_mc"></output>
+          <input type="range" id="mc" min="-2" max="2" step="0.01" list="zero_tick"><span class="scale" aria-hidden="true"><span>−2</span><span>0</span><span>+2</span></span><small id="n_mc"></small></label>
+        <datalist id="zero_tick"><option value="0"></option></datalist>
+        <label class="sel"><span class="lab">Fluid</span><select id="fc"></select></label>
+      </section>
+
+      <section class="group hx">
+        <h2>Exchanger <span>Size</span></h2>
+        <div class="seg" role="group" aria-label="Calculation mode">
+          <button type="button" id="mode_rate" aria-pressed="true">Rating</button>
+          <button type="button" id="mode_size" aria-pressed="false">Sizing</button>
+        </div>
+        <p class="note" id="mode_note">Set the size (UA). The model calculates the outlet temperatures.</p>
+        <div id="size_ctls" hidden>
+          <label class="sel"><span class="lab">Target</span>
+            <select id="target"><option value="Tc_out">Cold outlet</option><option value="Th_out">Hot outlet</option></select></label>
+          <label class="ctl" style="margin-top:10px"><span class="lab">Target temperature</span><output id="o_targetVal"></output>
+            <input type="range" id="targetVal" min="0" max="100" step="0.5"></label>
+        </div>
+        <label class="ctl"><span class="lab">Conductance UA</span><output id="o_UA"></output>
+          <input type="range" id="UA" min="100" max="20000" step="50"><small id="n_UA"></small></label>
+        <p class="warn" id="size_warn" hidden></p>
+      </section>
+
+      <section class="group">
+        <h2>Simulation <span>Time scale</span></h2>
+        <div class="seg" role="group" aria-label="Simulation speed" id="speed">
+          <button type="button" data-speed="1">1×</button>
+          <button type="button" data-speed="5">5×</button>
+          <button type="button" data-speed="20">20×</button>
+          <button type="button" data-speed="0">Instant</button>
+        </div>
+        <div class="presets" id="presets"></div>
+      </section>
+    </aside>
+
+    <main>
+      <section class="card">
+        <div class="card-head">
+          <h3>Live schematic</h3>
+          <div class="ramp"><span class="mono" id="ramp_lo"></span><span class="bar" aria-hidden="true"></span><span class="mono" id="ramp_hi"></span></div>
+        </div>
+        <canvas id="sch" data-h="300" aria-label="Animated counterflow heat exchanger schematic with live temperature readings"></canvas>
+      </section>
+
+      <section>
+        <div class="kpis-label">
+          <h3>Design point <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:400">steady state</span></h3>
+          <span class="chip" id="cross" hidden></span>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><div class="k">Duty Q</div><div class="v" id="k_q"></div><div class="s" id="k_q_s"></div></div>
+          <div class="kpi"><div class="k">Effectiveness ε</div><div class="v" id="k_eps"></div><div class="s" id="k_eps_s"></div></div>
+          <div class="kpi"><div class="k">NTU</div><div class="v" id="k_ntu"></div><div class="s">UA / C<sub>min</sub></div></div>
+          <div class="kpi"><div class="k">Capacity ratio</div><div class="v" id="k_cr"></div><div class="s" id="k_cr_s"></div></div>
+          <div class="kpi"><div class="k">LMTD</div><div class="v" id="k_lmtd"></div><div class="s">Q = UA · LMTD</div></div>
+          <div class="kpi"><div class="k">Closest approach</div><div class="v" id="k_app"></div><div class="s" id="k_app_s"></div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h3>Temperature along the exchanger</h3>
+          <div class="legend">
+            <span><i class="sw-line" style="background:var(--hot)"></i>Hot, live</span>
+            <span><i class="sw-line" style="background:var(--cold)"></i>Cold, live</span>
+            <span><i class="sw-dash"></i>Steady-state solution</span>
+          </div>
+        </div>
+        <canvas id="chart" data-h="280" aria-label="Temperature profile chart"></canvas>
+      </section>
+
+      <section class="notes">
+        <h3>How the model works</h3>
+        <p><b>Design point:</b> the exact solution of <code>ṁ<sub>h</sub>c<sub>p</sub>·dT<sub>h</sub>/dx = −UA·ΔT</code> and
+          <code>ṁ<sub>c</sub>c<sub>p</sub>·dT<sub>c</sub>/dx = +UA·ΔT</code> with signed flows, so ΔT varies exponentially along the length.
+          Opposite directions give counterflow, <code>ε = (1 − e<sup>−NTU(1−C<sub>r</sub>)</sup>) / (1 − C<sub>r</sub>·e<sup>−NTU(1−C<sub>r</sub>)</sup>)</code>.
+          Same directions give parallel flow, <code>ε = (1 − e<sup>−NTU(1+C<sub>r</sub>)</sup>) / (1 + C<sub>r</sub>)</code>, which can never exceed 1/(1 + C<sub>r</sub>).
+          Sizing mode inverts whichever formula applies.</p>
+        <p><b>Flow sign:</b> positive is each stream's design direction (hot left to right, cold right to left). Negative reverses it.
+          A stream at zero is stagnant. With no wall losses it eventually takes on the other stream's temperature and heat transfer stops.</p>
+        <p><b>Live behaviour:</b> each stream is split into 200 well-mixed cells (2 L of fluid in the tube, 4 L in the annulus),
+          with upwind advection and local exchange <code>UA/N · (T<sub>h</sub> − T<sub>c</sub>)</code>. The wall has no thermal mass and
+          the fluids have constant properties, so the response time is set only by the fluid residence time. The instrument tags (TI) show these live
+          readings, and the dashed lines show where they will settle.</p>
+        <p><b>Area hint:</b> A = UA / U, using U = 1,000 W/m²·K as a typical figure for liquid-to-liquid service.</p>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  const FLUIDS = {
+    water:  { name: 'Water',            cp: 4180, rho: 998 },
+    glycol: { name: '40% glycol–water', cp: 3550, rho: 1055 },
+    oil:    { name: 'Thermal oil',      cp: 2150, rho: 870 },
+  };
+  const N = 200, VOL_H = 0.002, VOL_C = 0.004, U_REF = 1000, UA_MAX = 60000;
+  const PRESETS = [
+    { label: 'Balanced streams',  Th_in: 90,  Tc_in: 15, mh: 0.6, mc: 0.6,  UA: 5000, fh: 'water', fc: 'water' },
+    { label: 'Temperature cross', Th_in: 80,  Tc_in: 10, mh: 1.0, mc: 0.4,  UA: 6000, fh: 'water', fc: 'water' },
+    { label: 'Undersized',        Th_in: 90,  Tc_in: 15, mh: 0.8, mc: 0.8,  UA: 800,  fh: 'water', fc: 'water' },
+    { label: 'Parallel flow',     Th_in: 90,  Tc_in: 15, mh: 0.6, mc: -0.6, UA: 5000, fh: 'water', fc: 'water' },
+    { label: 'Oil cooler',       Th_in: 120, Tc_in: 25, mh: 0.9, mc: 0.35, UA: 3500, fh: 'oil',   fc: 'water' },
+  ];
+  const P = { Th_in: 90, Tc_in: 15, mh: 0.5, mc: 0.8, UA: 4000, fh: 'water', fc: 'water',
+              mode: 'rate', target: 'Tc_out', targetVal: 60, speed: 5 };
+
+  let Th = new Float64Array(N), Tc = new Float64Array(N);
+  let nTh = new Float64Array(N), nTc = new Float64Array(N);
+  let ss = null, sizing = null;
+  let simT = 0, changeT = 0, settledIn = null, rate = 0;
+
+  const $ = id => document.getElementById(id);
+  const fmt = (v, d = 1) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  // ---------- physics ----------
+  function caps() {
+    const fh = FLUIDS[P.fh], fc = FLUIDS[P.fc];
+    return { cph: fh.cp, cpc: fc.cp, rh: fh.rho, rc: fc.rho, Ch: Math.abs(P.mh) * fh.cp, Cc: Math.abs(P.mc) * fc.cp };
+  }
+
+  // Direction along x (+1 = left to right). Positive slider values are the design (counterflow) directions.
+  const STAG = 0.005;
+  const hotStag = () => Math.abs(P.mh) < STAG, coldStag = () => Math.abs(P.mc) < STAG;
+  function dirs() {
+    const dh = P.mh >= 0 ? 1 : -1, dc = P.mc >= 0 ? -1 : 1;
+    return { dh, dc, ih: dh > 0 ? 0 : 1, ic: dc > 0 ? 0 : 1 }; // ih/ic: inlet end (0 = left, 1 = right)
+  }
+  function arrangement() {
+    const hs = hotStag(), cs = coldStag();
+    if (hs && cs) return 'none';
+    if (hs || cs) return 'stagnant';
+    const { dh, dc } = dirs();
+    return dh === dc ? 'parallel' : 'counter';
+  }
+
+  function steady() {
+    const { Ch, Cc } = caps();
+    const { dh, dc, ih, ic } = dirs();
+    const arr = arrangement(), flowing = arr === 'counter' || arr === 'parallel';
+    const th = new Float64Array(N), tc = new Float64Array(N);
+    let ends; // [Th(0), Th(1), Tc(0), Tc(1)]
+    if (arr === 'none') {
+      // nothing moves, so the current state is already steady
+      th.set(Th); tc.set(Tc);
+      ends = [endVal(Th, 0), endVal(Th, 1), endVal(Tc, 0), endVal(Tc, 1)];
+    } else if (arr === 'stagnant') {
+      const T = hotStag() ? P.Tc_in : P.Th_in;
+      th.fill(T); tc.fill(T); ends = [T, T, T, T];
+    } else {
+      // Signed capacity rates: Ah·dTh/dx = −UA·ΔT, Ac·dTc/dx = +UA·ΔT  ⇒  dΔT/dx = −k·ΔT
+      const Ah = dh * Ch, Ac = dc * Cc, k = P.UA * (1 / Ah + 1 / Ac);
+      // Anchor at the end where the exponential decays, so it stays bounded
+      const a = k >= 0 ? 0 : 1;
+      const Qf = s => Math.abs(k) < 1e-9 ? P.UA * s : P.UA * (1 - Math.exp(-k * s)) / k;
+      const G = Qf(1 - 2 * a);
+      // Unknowns Ta = Th(a), Sa = Tc(a); one inlet condition per stream
+      const r1 = ih === a ? [1, 0] : [1 - G / Ah, G / Ah];
+      const r2 = ic === a ? [0, 1] : [G / Ac, 1 - G / Ac];
+      const det = r1[0] * r2[1] - r1[1] * r2[0];
+      const Ta = (P.Th_in * r2[1] - r1[1] * P.Tc_in) / det;
+      const Sa = (r1[0] * P.Tc_in - r2[0] * P.Th_in) / det;
+      const at = x => { const Q = (Ta - Sa) * Qf(x - a); return [Ta - Q / Ah, Sa + Q / Ac]; };
+      for (let i = 0; i < N; i++) [th[i], tc[i]] = at((i + 0.5) / N);
+      const e0 = at(0), e1 = at(1);
+      ends = [e0[0], e1[0], e0[1], e1[1]];
+    }
+    const Th_out = ends[1 - ih], Tc_out = ends[3 - ic];
+    const Cmin = Math.min(Ch, Cc), Cr = Cmin / Math.max(Ch, Cc), NTU = P.UA / Cmin;
+    const q = flowing ? Ch * (P.Th_in - Th_out) : 0;
+    const eps = flowing ? q / (Cmin * (P.Th_in - P.Tc_in)) : 0;
+    const dT0 = ends[0] - ends[2], dT1 = ends[1] - ends[3];
+    const lmtd = Math.abs(dT0 - dT1) < 1e-6 ? dT0 : (dT0 - dT1) / Math.log(dT0 / dT1);
+    return { arr, flowing, Ch, Cc, Cmin, Cr, NTU, eps, q, Th_out, Tc_out, th, tc, ends, dT0, dT1, lmtd };
+  }
+
+  function solveUA() {
+    const arr = arrangement();
+    if (arr !== 'counter' && arr !== 'parallel') return { ok: false, msg: 'Sizing needs flow in both streams. Move both flow sliders away from zero.' };
+    const { Ch, Cc } = caps();
+    const Cmin = Math.min(Ch, Cc), Cr = Cmin / Math.max(Ch, Cc);
+    const q = P.target === 'Tc_out' ? Cc * (P.targetVal - P.Tc_in) : Ch * (P.Th_in - P.targetVal);
+    const eps = q / (Cmin * (P.Th_in - P.Tc_in));
+    const which = P.target === 'Tc_out' ? 'cold outlet' : 'hot outlet';
+    if (eps <= 0) return { ok: false, msg: `The ${which} target equals its inlet, so no exchanger is needed.` };
+    if (eps >= 1) return { ok: false, msg: `Out of reach. This ${which} needs more heat than the inlets can supply (ε would be ${eps.toFixed(2)}). Raise the other stream's flow or relax the target.` };
+    let NTU;
+    if (arr === 'parallel') {
+      const lim = 1 / (1 + Cr);
+      if (eps >= lim) return { ok: false, msg: `Out of reach in parallel flow. Both streams approach the same mixed temperature, so ε can't exceed ${lim.toFixed(2)} (this target needs ${eps.toFixed(2)}). Reverse one stream to get counterflow.` };
+      NTU = -Math.log(1 - eps * (1 + Cr)) / (1 + Cr);
+    } else {
+      NTU = Math.abs(1 - Cr) < 1e-4 ? eps / (1 - eps) : Math.log((1 - eps * Cr) / (1 - eps)) / (1 - Cr);
+    }
+    const UA = NTU * Cmin;
+    if (UA > UA_MAX) return { ok: false, msg: `Needs UA ≈ ${fmt(UA / 1000, 0)} kW/K (about ${fmt(UA / U_REF, 0)} m²). That is far beyond a practical exchanger for these flows.` };
+    return { ok: true, UA };
+  }
+
+  function step(dt) {
+    const { cph, cpc, rh, rc } = caps();
+    const Mh = rh * VOL_H / N, Mc = rc * VOL_C / N, ua = P.UA / N;
+    const ah = Math.abs(P.mh) / Mh, bh = ua / (Mh * cph), ac = Math.abs(P.mc) / Mc, bc = ua / (Mc * cpc);
+    const { dh, dc } = dirs();
+    for (let i = 0; i < N; i++) {
+      const d = Th[i] - Tc[i];
+      // upwind neighbour depends on flow direction
+      const uph = dh > 0 ? (i ? Th[i - 1] : P.Th_in) : (i < N - 1 ? Th[i + 1] : P.Th_in);
+      const upc = dc > 0 ? (i ? Tc[i - 1] : P.Tc_in) : (i < N - 1 ? Tc[i + 1] : P.Tc_in);
+      nTh[i] = Th[i] + dt * (ah * (uph - Th[i]) - bh * d);
+      nTc[i] = Tc[i] + dt * (ac * (upc - Tc[i]) + bc * d);
+    }
+    [Th, nTh] = [nTh, Th];
+    [Tc, nTc] = [nTc, Tc];
+  }
+
+  function maxDt() {
+    const { cph, cpc, rh, rc } = caps();
+    const Mh = rh * VOL_H / N, Mc = rc * VOL_C / N, ua = P.UA / N;
+    return 0.8 / Math.max(Math.abs(P.mh) / Mh + ua / (Mh * cph), Math.abs(P.mc) / Mc + ua / (Mc * cpc));
+  }
+
+  // Live reading at a pipe end: the inlet value if fluid enters there, else extrapolated half a cell
+  function endVal(T, e) {
+    return e === 0 ? T[0] - (T[1] - T[0]) / 2 : T[N - 1] + (T[N - 1] - T[N - 2]) / 2;
+  }
+  const hotEnd = e => (!hotStag() && dirs().ih === e) ? P.Th_in : endVal(Th, e);
+  const coldEnd = e => (!coldStag() && dirs().ic === e) ? P.Tc_in : endVal(Tc, e);
+
+  // ---------- controls ----------
+  const sliders = ['Th_in', 'Tc_in', 'mh', 'mc', 'UA', 'targetVal'];
+  for (const [sel, key] of [['fh', 'fh'], ['fc', 'fc']]) {
+    for (const [k, f] of Object.entries(FLUIDS)) $(sel).add(new Option(f.name, k));
+    $(sel).addEventListener('change', e => { P[key] = e.target.value; apply(key); });
+  }
+  for (const id of sliders) $(id).addEventListener('input', e => { P[id] = +e.target.value; apply(id); });
+  $('target').addEventListener('change', e => {
+    P.target = e.target.value;
+    P.targetVal = Math.round((P.target === 'Tc_out' ? ss.Tc_out : ss.Th_out) * 2) / 2;
+    apply('target');
+  });
+  $('mode_rate').addEventListener('click', () => setMode('rate'));
+  $('mode_size').addEventListener('click', () => setMode('size'));
+  function setMode(m) {
+    P.mode = m;
+    if (m === 'size') P.targetVal = Math.round((P.target === 'Tc_out' ? ss.Tc_out : ss.Th_out) * 2) / 2;
+    apply('mode');
+  }
+  for (const b of $('speed').querySelectorAll('button')) {
+    b.addEventListener('click', () => {
+      P.speed = +b.dataset.speed;
+      if (P.speed === 0) { Th.set(ss.th); Tc.set(ss.tc); }
+      syncControls();
+    });
+  }
+  for (const pr of PRESETS) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = pr.label;
+    b.addEventListener('click', () => {
+      const { label, ...vals } = pr;
+      Object.assign(P, vals, { mode: 'rate' });
+      apply('preset');
+    });
+    $('presets').append(b);
+  }
+
+  function apply(changed) {
+    if (P.Th_in < P.Tc_in + 5) {
+      if (changed === 'Tc_in') P.Th_in = Math.min(180, P.Tc_in + 5);
+      if (P.Th_in < P.Tc_in + 5) P.Tc_in = P.Th_in - 5;
+    }
+    sizing = null;
+    if (P.mode === 'size') {
+      const lo = P.Tc_in + 0.5, hi = P.Th_in - 0.5;
+      P.targetVal = Math.min(hi, Math.max(lo, P.targetVal));
+      sizing = solveUA();
+      if (sizing.ok) P.UA = sizing.UA;
+    }
+    ss = steady();
+    changeT = simT; settledIn = null;
+    if (P.speed === 0) { Th.set(ss.th); Tc.set(ss.tc); }
+    syncControls();
+    updateTiles();
+  }
+
+  function syncControls() {
+    for (const id of sliders) $(id).value = P[id];
+    $('fh').value = P.fh; $('fc').value = P.fc; $('target').value = P.target;
+    $('o_Th_in').textContent = `${fmt(P.Th_in, 0)} °C`;
+    $('o_Tc_in').textContent = `${fmt(P.Tc_in, 0)} °C`;
+    const { dh, dc } = dirs();
+    for (const [s, f, v, d] of [['h', FLUIDS[P.fh], VOL_H, dh], ['c', FLUIDS[P.fc], VOL_C, dc]]) {
+      const m = P['m' + s], am = Math.abs(m);
+      $('o_m' + s).textContent = `${m > 0 ? '+' : ''}${fmt(m, 2)} kg/s`;
+      $('n_m' + s).textContent = am < STAG ? 'Stagnant: no flow'
+        : `${d > 0 ? '→ left to right' : '← right to left'} · ${fmt(am / f.rho * 60000, 1)} L/min · ${fmt(f.rho * v / am, 1)} s residence`;
+    }
+    $('o_UA').textContent = `${fmt(P.UA, 0)} W/K`;
+    $('n_UA').textContent = `≈ ${fmt(P.UA / U_REF, 1)} m² at U = 1,000 W/m²·K`;
+    const sizingMode = P.mode === 'size';
+    $('mode_rate').setAttribute('aria-pressed', !sizingMode);
+    $('mode_size').setAttribute('aria-pressed', sizingMode);
+    $('size_ctls').hidden = !sizingMode;
+    $('UA').disabled = sizingMode;
+    $('mode_note').textContent = sizingMode
+      ? 'Pick a target outlet temperature. The model solves for the UA needed to reach it.'
+      : 'Set the size (UA). The model calculates the outlet temperatures.';
+    if (sizingMode) {
+      $('targetVal').min = P.Tc_in + 0.5; $('targetVal').max = P.Th_in - 0.5;
+      $('targetVal').value = P.targetVal;
+      $('o_targetVal').textContent = `${fmt(P.targetVal, 1)} °C`;
+    }
+    $('size_warn').hidden = !(sizing && !sizing.ok);
+    if (sizing && !sizing.ok) $('size_warn').textContent = sizing.msg;
+    for (const b of $('speed').querySelectorAll('button')) b.setAttribute('aria-pressed', +b.dataset.speed === P.speed);
+    $('ramp_lo').textContent = `${fmt(P.Tc_in, 0)} °C`;
+    $('ramp_hi').textContent = `${fmt(P.Th_in, 0)} °C`;
+  }
+
+  function updateTiles() {
+    const s = ss, f = s.flowing, dash = '—';
+    const arrEl = $('arr');
+    arrEl.textContent = { counter: 'Counterflow', parallel: 'Parallel flow', stagnant: 'One stream stagnant', none: 'No flow' }[s.arr];
+    arrEl.className = 'pill arr' + (f ? '' : ' off');
+    $('k_q').innerHTML = `${fmt(s.q / 1000, 1)} <small>kW</small>`;
+    $('k_eps').textContent = f ? fmt(s.eps, 3) : dash;
+    $('k_eps_s').textContent = f ? `of max ${fmt(s.Cmin * (P.Th_in - P.Tc_in) / 1000, 1)} kW`
+      : s.arr === 'none' ? 'Neither stream flows' : 'No heat carried away';
+    $('k_ntu').textContent = f ? fmt(s.NTU, 2) : dash;
+    $('k_cr').textContent = f ? fmt(s.Cr, 2) : dash;
+    $('k_cr_s').textContent = !f ? 'Needs flow in both'
+      : Math.abs(s.Ch - s.Cc) / Math.max(s.Ch, s.Cc) < 0.01 ? 'Balanced streams' : `${s.Ch < s.Cc ? 'Hot' : 'Cold'} side limits`;
+    $('k_lmtd').innerHTML = f ? `${fmt(s.lmtd, 1)} <small>°C</small>` : dash;
+    const app = Math.min(Math.abs(s.dT0), Math.abs(s.dT1));
+    $('k_app').innerHTML = f ? `${fmt(app, 1)} <small>°C</small>` : dash;
+    $('k_app_s').textContent = !f ? 'No through-flow' : Math.abs(s.dT0 - s.dT1) < 0.05 ? 'Uniform along length'
+      : Math.abs(s.dT0) < Math.abs(s.dT1) ? 'At left end' : 'At right end';
+    const cross = s.arr === 'counter' && s.Tc_out > s.Th_out + 0.05;
+    $('cross').hidden = !cross;
+    if (cross) $('cross').textContent = `Temperature cross: cold leaves at ${fmt(s.Tc_out, 1)} °C, hotter than the hot outlet (${fmt(s.Th_out, 1)} °C)`;
+  }
+
+  // ---------- drawing ----------
+  const STOPS = [[0, [44, 75, 209]], [0.3, [47, 164, 196]], [0.55, [232, 211, 90]], [0.78, [239, 138, 45]], [1, [215, 48, 31]]];
+  function cmap(T) {
+    let t = (T - P.Tc_in) / Math.max(1e-6, P.Th_in - P.Tc_in);
+    t = Math.min(1, Math.max(0, t));
+    for (let j = 1; j < STOPS.length; j++) {
+      if (t <= STOPS[j][0]) {
+        const [t0, c0] = STOPS[j - 1], [t1, c1] = STOPS[j], f = (t - t0) / (t1 - t0);
+        return `rgb(${c0.map((c, k) => Math.round(c + (c1[k] - c) * f)).join(',')})`;
+      }
+    }
+    return 'rgb(215,48,31)';
+  }
+
+  let tok = {};
+  function readTokens() {
+    const cs = getComputedStyle(document.documentElement);
+    for (const k of ['bg', 'panel', 'raised', 'ink', 'muted', 'line', 'wall', 'hot', 'cold', 'steel'])
+      tok[k] = cs.getPropertyValue('--' + k).trim();
+  }
+
+  function fitCanvas(cv) {
+    const dpr = window.devicePixelRatio || 1;
+    const w = cv.clientWidth, h = +cv.dataset.h;
+    cv.style.height = h + 'px';
+    if (cv.width !== Math.round(w * dpr) || cv._h !== h) {
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv._h = h;
+    }
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w, h };
+  }
+
+  // Particles: position p in [0,1] along the length, plus a lateral offset
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const hotP = Array.from({ length: 70 }, () => ({ p: Math.random(), y: rnd(-15, 15) }));
+  const coldP = Array.from({ length: 120 }, () => ({ p: Math.random(), y: (Math.random() < 0.5 ? -1 : 1) * rnd(29, 53) }));
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function bubble(ctx, x, y, letters, num, value, label, color) {
+    const r = 17;
+    ctx.fillStyle = tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - r, y); ctx.lineTo(x + r, y); ctx.stroke();
+    ctx.fillStyle = tok.ink; ctx.textAlign = 'center';
+    ctx.font = '600 10px "Barlow", sans-serif';
+    ctx.textBaseline = 'alphabetic'; ctx.fillText(letters, x, y - 4);
+    ctx.textBaseline = 'top'; ctx.fillText(num, x, y + 3);
+    ctx.font = '500 13px "JetBrains Mono", monospace'; ctx.fillStyle = color;
+    ctx.textBaseline = 'top'; ctx.fillText(value, x, y + r + 5);
+    ctx.font = '500 10px "Barlow", sans-serif'; ctx.fillStyle = tok.muted;
+    ctx.textBaseline = 'bottom'; ctx.fillText(label, x, y - r - 4);
+  }
+
+  function arrow(ctx, x, y, dir, size, color) {
+    // dir: 'r','l','u','d'
+    const v = { r: [1, 0], l: [-1, 0], u: [0, -1], d: [0, 1] }[dir];
+    const px = -v[1], py = v[0];
+    ctx.fillStyle = color; ctx.beginPath();
+    ctx.moveTo(x + v[0] * size, y + v[1] * size);
+    ctx.lineTo(x - v[0] * size + px * size * 0.8, y - v[1] * size + py * size * 0.8);
+    ctx.lineTo(x - v[0] * size - px * size * 0.8, y - v[1] * size - py * size * 0.8);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function drawSchematic(dtReal) {
+    const { ctx, w, h } = fitCanvas($('sch'));
+    ctx.clearRect(0, 0, w, h);
+    const mx = Math.max(64, Math.min(110, w * 0.12));
+    const x0 = mx, x1 = w - mx, L = x1 - x0, cy = h * 0.55;
+    const RO = 58, RT = 24, RI = 20; // shell, tube outer, tube inner half-heights
+    const X = p => x0 + p * L;
+
+    // stream bands (muted so particles stand out)
+    ctx.globalAlpha = 0.5;
+    const segW = L / N;
+    for (let i = 0; i < N; i++) {
+      const xs = x0 + i * segW;
+      ctx.fillStyle = cmap(Tc[i]);
+      ctx.fillRect(xs, cy - RO, segW + 0.6, RO - RT);
+      ctx.fillRect(xs, cy + RT, segW + 0.6, RO - RT);
+      ctx.fillStyle = cmap(Th[i]);
+      ctx.fillRect(xs, cy - RI, segW + 0.6, 2 * RI);
+    }
+    ctx.globalAlpha = 1;
+
+    // nozzles
+    const H0 = hotEnd(0), H1 = hotEnd(1), C0 = coldEnd(0), C1 = coldEnd(1);
+    const { dh, dc, ih, ic } = dirs(), hs = hotStag(), cs = coldStag();
+    const stubW = 22;
+    ctx.fillStyle = cmap(H0); ctx.fillRect(x0 - mx + 12, cy - 11, mx - 12, 22);
+    ctx.fillStyle = cmap(H1); ctx.fillRect(x1, cy - 11, mx - 12, 22);
+    ctx.fillStyle = cmap(C0); ctx.fillRect(x0 + 14, cy - RO - 46, stubW, 46);
+    ctx.fillStyle = cmap(C1); ctx.fillRect(x1 - 14 - stubW, cy - RO - 46, stubW, 46);
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5;
+    ctx.strokeRect(x0 - mx + 12, cy - 11, mx - 12, 22);
+    ctx.strokeRect(x1, cy - 11, mx - 12, 22);
+    ctx.beginPath();
+    for (const sx of [x0 + 14, x1 - 14 - stubW]) {
+      ctx.moveTo(sx, cy - RO); ctx.lineTo(sx, cy - RO - 46); ctx.lineTo(sx + stubW, cy - RO - 46); ctx.lineTo(sx + stubW, cy - RO);
+    }
+    ctx.stroke();
+
+    // particles
+    const { rh, rc } = caps();
+    const vh = dh * Math.abs(P.mh) / (rh * VOL_H), vc = dc * Math.abs(P.mc) / (rc * VOL_C); // lengths per second
+    const adv = reduceMotion ? 0 : dtReal;
+    const wrap = p => p > 1 ? p - 1 : p < 0 ? p + 1 : p;
+    for (const q of hotP) {
+      q.p = wrap(q.p + vh * adv);
+      const i = Math.min(N - 1, Math.floor(q.p * N));
+      ctx.fillStyle = cmap(Th[i]); ctx.strokeStyle = tok.panel; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(X(q.p), cy + q.y, 3.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+    for (const q of coldP) {
+      q.p = wrap(q.p + vc * adv);
+      const i = Math.min(N - 1, Math.floor(q.p * N));
+      ctx.fillStyle = cmap(Tc[i]); ctx.strokeStyle = tok.panel; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(X(q.p), cy + q.y, 3.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+
+    // tube wall and shell
+    ctx.fillStyle = tok.wall;
+    ctx.fillRect(x0, cy - RT, L, RT - RI);
+    ctx.fillRect(x0, cy + RI, L, RT - RI);
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x0 + 14, cy - RO); ctx.lineTo(x0, cy - RO); ctx.lineTo(x0, cy - 11);
+    ctx.moveTo(x0, cy + 11); ctx.lineTo(x0, cy + RO); ctx.lineTo(x1, cy + RO); ctx.lineTo(x1, cy + 11);
+    ctx.moveTo(x1, cy - 11); ctx.lineTo(x1, cy - RO); ctx.lineTo(x1 - 14, cy - RO);
+    ctx.moveTo(x0 + 14 + stubW, cy - RO); ctx.lineTo(x1 - 14 - stubW, cy - RO);
+    ctx.stroke();
+
+    // heat flux through the tube wall
+    let maxd = 1e-6;
+    for (let i = 0; i < N; i++) maxd = Math.max(maxd, Math.abs(Th[i] - Tc[i]));
+    const span = Math.max(1e-6, P.Th_in - P.Tc_in);
+    const marks = Math.max(6, Math.round(L / 46));
+    for (let m = 0; m < marks; m++) {
+      const p = (m + 0.5) / marks, i = Math.min(N - 1, Math.floor(p * N));
+      const d = Th[i] - Tc[i];
+      const a = Math.min(1, Math.abs(d) / span * 1.6);
+      if (a < 0.04) continue;
+      ctx.globalAlpha = 0.25 + 0.75 * a;
+      const out = d > 0;
+      const s = 2.5 + 3 * a;
+      arrow(ctx, X(p), cy - RT - 6, out ? 'u' : 'd', s, tok.ink);
+      arrow(ctx, X(p), cy + RT + 6, out ? 'd' : 'u', s, tok.ink);
+    }
+    ctx.globalAlpha = 1;
+
+    // flow direction arrows on nozzles
+    if (!hs) {
+      const d = dh > 0 ? 'r' : 'l';
+      arrow(ctx, x0 - mx + 26, cy, d, 5, tok.ink);
+      arrow(ctx, x1 + mx - 26, cy, d, 5, tok.ink);
+    }
+    if (!cs) {
+      // cold enters through the stub at its inlet end (flowing down) and leaves through the other (up)
+      arrow(ctx, x0 + 14 + stubW / 2, cy - RO - 30, ic === 0 ? 'd' : 'u', 5, tok.ink);
+      arrow(ctx, x1 - 14 - stubW / 2, cy - RO - 30, ic === 1 ? 'd' : 'u', 5, tok.ink);
+    }
+
+    // instrument tags (live), labelled by what each end is doing
+    const tag = (stag, inlet, e, name) => stag ? `${name} · NO FLOW` : `${name} ${inlet === e ? 'IN' : 'OUT'}`;
+    const bx0 = Math.max(24, x0 - mx / 2 - 2), bx1 = Math.min(w - 24, x1 + mx / 2 + 2);
+    bubble(ctx, bx0, cy + 44, 'TI', '101', `${fmt(H0, 1)}°`, tag(hs, ih, 0, 'HOT'), tok.hot);
+    bubble(ctx, bx1, cy + 44, 'TI', '102', `${fmt(H1, 1)}°`, tag(hs, ih, 1, 'HOT'), tok.hot);
+    bubble(ctx, bx0, cy - RO - 22, 'TI', '202', `${fmt(C0, 1)}°`, tag(cs, ic, 0, 'COLD'), tok.cold);
+    bubble(ctx, bx1, cy - RO - 22, 'TI', '201', `${fmt(C1, 1)}°`, tag(cs, ic, 1, 'COLD'), tok.cold);
+
+    // length dimension
+    ctx.strokeStyle = tok.muted; ctx.lineWidth = 1;
+    const dy = cy + RO + 22;
+    ctx.beginPath();
+    ctx.moveTo(x0, dy - 5); ctx.lineTo(x0, dy + 5); ctx.moveTo(x1, dy - 5); ctx.lineTo(x1, dy + 5);
+    ctx.moveTo(x0, dy); ctx.lineTo(x1, dy); ctx.stroke();
+    ctx.fillStyle = tok.panel; ctx.fillRect(w / 2 - 70, dy - 8, 140, 16);
+    ctx.fillStyle = tok.muted; ctx.font = '500 11px "Barlow", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(`L · UA = ${fmt(P.UA / 1000, 1)} kW/K`, w / 2, dy);
+  }
+
+  function drawChart() {
+    const { ctx, w, h } = fitCanvas($('chart'));
+    ctx.clearRect(0, 0, w, h);
+    const m = { l: 44, r: 14, t: 14, b: 44 };
+    const pw = w - m.l - m.r, ph = h - m.t - m.b;
+    const span = P.Th_in - P.Tc_in;
+    const step = [2, 5, 10, 20, 25, 50].find(s => (span + 10) / s <= 7) || 50;
+    const lo = Math.floor((P.Tc_in - 2) / step) * step, hi = Math.ceil((P.Th_in + 2) / step) * step;
+    const X = x => m.l + x * pw, Y = T => m.t + (1 - (T - lo) / (hi - lo)) * ph;
+
+    ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.muted;
+    ctx.strokeStyle = tok.line; ctx.lineWidth = 1;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let T = lo; T <= hi + 1e-9; T += step) {
+      ctx.beginPath(); ctx.moveTo(m.l, Y(T) + 0.5); ctx.lineTo(w - m.r, Y(T) + 0.5); ctx.stroke();
+      ctx.fillText(`${T}°`, m.l - 6, Y(T));
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (const x of [0, 0.25, 0.5, 0.75, 1]) {
+      ctx.beginPath(); ctx.moveTo(X(x) + 0.5, m.t); ctx.lineTo(X(x) + 0.5, m.t + ph); ctx.stroke();
+      ctx.fillText(x === 0 ? '0' : x === 1 ? 'L' : `${x}L`, X(x), m.t + ph + 6);
+    }
+    ctx.font = '500 11px "Barlow", sans-serif';
+    const { dh, dc, ih, ic } = dirs(), hs = hotStag(), cs = coldStag();
+    const endLab = e => [hs ? 'hot stagnant' : ih === e ? 'hot in' : 'hot out',
+                         cs ? 'cold stagnant' : ic === e ? 'cold in' : 'cold out'].join(' · ');
+    ctx.textAlign = 'left'; ctx.fillText(endLab(0), m.l, m.t + ph + 24);
+    ctx.textAlign = 'right'; ctx.fillText(endLab(1), w - m.r, m.t + ph + 24);
+
+    // series with endpoints at the pipe ends
+    const xs = [0], hL = [hotEnd(0)], cL = [coldEnd(0)], hS = [ss.ends[0]], cS = [ss.ends[2]];
+    for (let i = 0; i < N; i++) { xs.push((i + 0.5) / N); hL.push(Th[i]); cL.push(Tc[i]); hS.push(ss.th[i]); cS.push(ss.tc[i]); }
+    xs.push(1); hL.push(hotEnd(1)); cL.push(coldEnd(1)); hS.push(ss.ends[1]); cS.push(ss.ends[3]);
+
+    // fill between live lines
+    ctx.fillStyle = tok.hot; ctx.globalAlpha = 0.09;
+    ctx.beginPath();
+    xs.forEach((x, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(x), Y(hL[i])));
+    for (let i = xs.length - 1; i >= 0; i--) ctx.lineTo(X(xs[i]), Y(cL[i]));
+    ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+
+    const line = (ys, color, width, dash) => {
+      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []);
+      ctx.beginPath(); xs.forEach((x, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(x), Y(ys[i]))); ctx.stroke();
+      ctx.setLineDash([]);
+    };
+    ctx.globalAlpha = 0.75;
+    line(hS, tok.muted, 1.5, [5, 4]);
+    line(cS, tok.muted, 1.5, [5, 4]);
+    ctx.globalAlpha = 1;
+    line(hL, tok.hot, 2.5);
+    line(cL, tok.cold, 2.5);
+
+    // flow direction markers
+    const mid = Math.floor(N / 2) + 1;
+    if (!hs) arrow(ctx, X(xs[mid]), Y(hL[mid]), dh > 0 ? 'r' : 'l', 6, tok.hot);
+    if (!cs) arrow(ctx, X(xs[mid]), Y(cL[mid]), dc > 0 ? 'r' : 'l', 6, tok.cold);
+
+    // closest approach
+    let ki = 0;
+    for (let i = 1; i < xs.length; i++) if (hL[i] - cL[i] < hL[ki] - cL[ki]) ki = i;
+    const px = X(xs[ki]);
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+    ctx.beginPath(); ctx.moveTo(px, Y(hL[ki])); ctx.lineTo(px, Y(cL[ki])); ctx.stroke(); ctx.setLineDash([]);
+    for (const T of [hL[ki], cL[ki]]) {
+      ctx.fillStyle = tok.panel; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(px, Y(T), 3.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+    const label = `ΔT min ${fmt(hL[ki] - cL[ki], 1)} °C`;
+    ctx.font = '500 11px "JetBrains Mono", monospace';
+    const tw = ctx.measureText(label).width;
+    const lx = Math.min(w - m.r - tw / 2 - 4, Math.max(m.l + tw / 2 + 4, px));
+    const ly = (Y(hL[ki]) + Y(cL[ki])) / 2;
+    ctx.fillStyle = tok.panel; ctx.fillRect(lx - tw / 2 - 4, ly - 9, tw + 8, 18);
+    ctx.fillStyle = tok.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, lx, ly);
+  }
+
+  function updateStatus() {
+    const pill = $('pill');
+    if (P.speed === 0 || rate < 0.02) {
+      if (settledIn === null && P.speed !== 0) settledIn = simT - changeT;
+      pill.className = 'pill ok';
+      pill.textContent = P.speed === 0 ? 'Steady (instant)' : settledIn > 0.05 ? `Steady · settled in ${fmt(settledIn, 1)} s` : 'Steady';
+    } else {
+      pill.className = 'pill busy';
+      pill.textContent = `Settling · ${fmt(rate, 2)} °C/s`;
+    }
+    $('simclock').textContent = `t = ${fmt(simT, 1)} s`;
+  }
+
+  // ---------- loop ----------
+  let last = performance.now(), frame = 0;
+  function tick(now) {
+    const dtReal = Math.min(0.05, (now - last) / 1000); last = now;
+    if (frame++ % 30 === 0) readTokens();
+    if (P.speed > 0) {
+      const simDt = dtReal * P.speed, dm = maxDt();
+      const n = Math.min(4000, Math.ceil(simDt / dm));
+      const dt = Math.min(dm, simDt / n);
+      for (let k = 0; k < n; k++) step(dt);
+      // nTh/nTc hold the previous step after the swap, so this is the per-step change
+      let drift = 0;
+      for (let i = 0; i < N; i++) drift = Math.max(drift, Math.abs(Th[i] - nTh[i]), Math.abs(Tc[i] - nTc[i]));
+      rate = drift / dt;
+      simT += n * dt;
+    } else {
+      rate = 0;
+      simT += dtReal;
+    }
+    drawSchematic(dtReal);
+    drawChart();
+    updateStatus();
+    requestAnimationFrame(tick);
+  }
+
+  readTokens();
+  ss = steady();
+  Th.set(ss.th); Tc.set(ss.tc);
+  apply('init');
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

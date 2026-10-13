@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PWR Plant Lab v4.0</title>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.site-crumb{font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:10px 20px 0;max-width:1400px;margin:0 auto;opacity:.8}
+.site-crumb a{color:inherit}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: plant control console (v4). Control rail left grouped by system; live P&ID, alarm strip,
+   readouts, four trend recorders and the steam-generator profile on the right; one column on phones. */
+:root {
+  --bg: #eceff1;
+  --panel: #f7f9fa;
+  --raised: #ffffff;
+  --ink: #172027;
+  --muted: #5a6873;
+  --line: #cfd6db;
+  --wall: #8e9aa3;
+  --hot: #c2410c;
+  --cold: #1f6fb5;
+  --steel: #38505f;
+  --warn: #9a5a06;
+  --warn-bg: #fbefd9;
+  --ok: #2e7d4f;
+  --ok-bg: #e1f1e7;
+  --danger: #b42318;
+  --danger-bg: #fbe3e0;
+  --s-amber: #b57a00;
+  --s-rose: #b8467a;
+  --s-green: #2e8b57;
+  --s-teal: #11808a;
+  --s-violet: #6d4fc2;
+  --s-brown: #8a5a2b;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161a; --panel: #172026; --raised: #1c262d; --ink: #e2e9ee; --muted: #8e9ca6;
+    --line: #2b363e; --wall: #5d6b75; --hot: #f27a3e; --cold: #5ea9ea; --steel: #9fb6c4;
+    --warn: #e7ad48; --warn-bg: #33270f; --ok: #5cc48f; --ok-bg: #12301f; --danger: #ff8a7a; --danger-bg: #3a1714;
+    --s-amber: #e3b23c; --s-rose: #e57aa8; --s-green: #5cc48f; --s-teal: #4cc3cc; --s-violet: #a98ff0; --s-brown: #d0a070; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161a; --panel: #172026; --raised: #1c262d; --ink: #e2e9ee; --muted: #8e9ca6;
+  --line: #2b363e; --wall: #5d6b75; --hot: #f27a3e; --cold: #5ea9ea; --steel: #9fb6c4;
+  --warn: #e7ad48; --warn-bg: #33270f; --ok: #5cc48f; --ok-bg: #12301f; --danger: #ff8a7a; --danger-bg: #3a1714;
+  --s-amber: #e3b23c; --s-rose: #e57aa8; --s-green: #5cc48f; --s-teal: #4cc3cc; --s-violet: #a98ff0; --s-brown: #d0a070; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1360px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 40px; }
+@media (max-width: 480px) { .wrap { padding-inline: 16px; } }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin-bottom: 14px; }
+.eyebrow { margin: 0 0 2px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; text-wrap: balance; }
+h1 .ver { font-family: var(--f-mono); font-size: .45em; font-weight: 500; color: var(--muted); vertical-align: .55em; margin-left: 6px; }
+.status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; font-size: 13px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 13px; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.ok { color: var(--ok); background: var(--ok-bg); }
+.pill.busy { color: var(--warn); background: var(--warn-bg); }
+.pill.bad { color: var(--danger); background: var(--danger-bg); }
+.pill.busy::before, .pill.bad::before { animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .pill.busy::before, .pill.bad::before { animation: none; } }
+
+.grid { display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) {
+  /* phones and narrow tablets: schematic and readouts first, then controls, then charts */
+  .grid { display: flex; flex-direction: column; gap: 16px; }
+  .grid > main { display: contents; }
+  .sch-card { order: 1; } .kpis { order: 2; } .rail { order: 3; } .duo { order: 4; } .notes { order: 5; }
+}
+
+/* Control rail */
+.rail { display: flex; flex-direction: column; gap: 14px; }
+.group { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 11px; }
+.group h2 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 19px; letter-spacing: .02em; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.group h2 span { font-family: var(--f-body); font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.group.rx { border-top: 3px solid var(--hot); }
+.group.rcs { border-top: 3px solid var(--steel); }
+.group.pzr { border-top: 3px solid var(--s-rose); }
+.group.steam { border-top: 3px solid var(--s-amber); }
+.group.elec { border-top: 3px solid var(--s-violet); }
+.group.sea { border-top: 3px solid var(--cold); }
+.group.sim { border-top: 3px solid var(--wall); }
+.group.rx input[type=range] { accent-color: var(--hot); }
+.group.pzr input[type=range] { accent-color: var(--s-rose); }
+.group.steam input[type=range] { accent-color: var(--s-amber); }
+.group.elec input[type=range] { accent-color: var(--s-violet); }
+.group.sea input[type=range] { accent-color: var(--cold); }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: baseline; }
+.ctl .lab, .row .lab { font-size: 13px; color: var(--muted); }
+.ctl output { font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 500; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 4px 0 0; }
+.ctl small { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-family: var(--f-mono); }
+.row { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 8px; }
+.row small { grid-column: 2; font-size: 12px; color: var(--muted); font-family: var(--f-mono); margin-top: -4px; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.check input { accent-color: var(--danger); width: 16px; height: 16px; margin: 0; }
+
+.seg { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--raised); }
+.seg button { flex: 1; font: inherit; font-size: 13px; font-weight: 500; color: var(--muted); background: transparent; border: 0; padding: 6px 4px; cursor: pointer; min-height: 32px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--steel); color: var(--bg); }
+.seg button:hover:not([aria-pressed="true"]) { color: var(--ink); }
+button:focus-visible, select:focus-visible, input:focus-visible, canvas:focus-visible { outline: 2px solid var(--steel); outline-offset: 2px; }
+
+.btn { font: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; cursor: pointer; min-height: 34px; }
+.btn:hover { border-color: var(--steel); }
+.btn.danger { background: var(--danger); color: var(--bg); border-color: var(--danger); letter-spacing: .06em; }
+.btn.danger:hover { filter: brightness(1.08); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-row .btn { flex: 1 1 auto; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.presets button { font: inherit; font-size: 12.5px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; min-height: 30px; }
+.presets button:hover { border-color: var(--steel); }
+.presets.drills button { border-style: dashed; }
+.sub { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 2px 0 -4px; }
+.note { margin: 0; font-size: 12.5px; color: var(--muted); }
+.readout { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.readout b { font-family: var(--f-mono); font-weight: 500; text-align: right; }
+
+/* Main column */
+main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; margin-bottom: 6px; }
+.card-head h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; letter-spacing: .02em; }
+.sch-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#sch { display: block; width: 100%; min-width: 880px; }
+canvas.chart { display: block; width: 100%; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; vertical-align: middle; margin-right: 5px; width: 16px; height: 3px; border-radius: 2px; }
+.legend b { font-family: var(--f-mono); font-weight: 500; color: var(--ink); margin-left: 3px; }
+.ramp { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.ramp .bar { width: 140px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #2c4bd1 0%, #2fa4c4 30%, #e8d35a 55%, #ef8a2d 78%, #d7301f 100%); }
+.hint { font-size: 12px; color: var(--muted); }
+.phone-hint { display: none; }
+@media (max-width: 900px) { .phone-hint { display: inline; } }
+
+.alarms { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; align-items: center; }
+.chip { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 5px; border: 1px solid currentColor; }
+.chip.trip { color: var(--danger); background: var(--danger-bg); }
+.chip.alm { color: var(--warn); background: var(--warn-bg); }
+.chip.okc { color: var(--ok); background: var(--ok-bg); border-color: transparent; }
+
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+@media (max-width: 640px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi { background: var(--panel); padding: 10px 12px; min-width: 0; }
+.kpi .k { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kpi .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.kpi .s { font-size: 12px; color: var(--muted); margin-top: 1px; }
+@media (max-width: 400px) { .kpi .v { font-size: 17px; } }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 1100px) { .duo { grid-template-columns: minmax(0, 1fr); } }
+
+.wide { grid-column: 1 / -1; }
+.log { margin: 0; padding: 0; list-style: none; font-size: 12.5px; display: flex; flex-direction: column; gap: 3px; max-height: 190px; overflow-y: auto; }
+.log li { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 8px; }
+.log time { font-family: var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.log .trip { color: var(--danger); }
+.log .alm { color: var(--warn); }
+
+.notes { font-size: 13px; color: var(--muted); max-width: 80ch; }
+.notes h3 { font-family: var(--f-display); font-weight: 600; font-size: 17px; color: var(--ink); margin: 4px 0 6px; }
+.notes p { margin: 0 0 8px; }
+.notes b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<nav class="site-crumb" aria-label="Breadcrumb"><a href="../../../">erikson1970</a> / <a href="../">Plant models</a> / <span>PWR Plant Lab v4.0</span></nav>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Pressurized-water reactor · single primary loop · generic textbook values</p>
+      <h1>PWR Plant Lab <span class="ver">v4.0</span></h1>
+    </div>
+    <div class="status">
+      <span id="pill" class="pill ok">Steady</span>
+      <span class="mono muted" id="simclock">t = 0 s</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <aside class="rail" aria-label="Plant controls">
+      <section class="group rx">
+        <h2>Reactor <span>Rods · trips</span></h2>
+        <label class="ctl"><span class="lab">Rod program · T<sub>avg</sub> setpoint</span><output id="o_Tref"></output>
+          <input type="range" id="Tref" min="280" max="310" step="0.5"><small id="n_Tref"></small></label>
+        <div class="btn-row">
+          <button type="button" class="btn danger" id="scram">SCRAM</button>
+          <button type="button" class="btn" id="reset">Reset trips</button>
+        </div>
+        <p class="note">Rods move the core's average temperature target. Power itself follows steam demand through the negative temperature coefficient.</p>
+      </section>
+
+      <section class="group rcs">
+        <h2>Reactor coolant pumps <span>Primary loop</span></h2>
+        <div class="row"><span class="lab">RCP-1</span>
+          <div class="seg" role="group" aria-label="RCP-1 speed" id="rcp0"><button type="button" data-v="0">Off</button><button type="button" data-v="1">Slow</button><button type="button" data-v="2">Fast</button></div>
+          <small id="n_rcp0"></small></div>
+        <div class="row"><span class="lab">RCP-2</span>
+          <div class="seg" role="group" aria-label="RCP-2 speed" id="rcp1"><button type="button" data-v="0">Off</button><button type="button" data-v="1">Slow</button><button type="button" data-v="2">Fast</button></div>
+          <small id="n_rcp1"></small></div>
+        <label class="check"><input type="checkbox" id="cv0"> RCP-1 check valve stuck open</label>
+        <label class="check"><input type="checkbox" id="cv1"> RCP-2 check valve stuck open</label>
+        <div class="readout"><span class="muted">Core flow</span><b id="r_flow"></b></div>
+      </section>
+
+      <section class="group pzr">
+        <h2>Pressurizer <span>RCS pressure</span></h2>
+        <label class="ctl"><span class="lab">Pressure setpoint</span><output id="o_pset"></output>
+          <input type="range" id="pset" min="140" max="165" step="0.5"><small id="n_pset"></small></label>
+        <div class="row"><span class="lab">Heaters</span>
+          <div class="seg" role="group" aria-label="Pressurizer heaters" id="heat"><button type="button" data-v="off">Off</button><button type="button" data-v="auto">Auto</button><button type="button" data-v="full">Full</button></div>
+          <small id="n_heat"></small></div>
+        <label class="ctl"><span class="lab">Spray valve (manual)</span><output id="o_spray"></output>
+          <input type="range" id="spray" min="0" max="100" step="1"><small id="n_spray"></small></label>
+        <label class="check"><input type="checkbox" id="autoSpray"> Auto spray above setpoint</label>
+      </section>
+
+      <section class="group steam">
+        <h2>Steam &amp; propulsion <span>Secondary</span></h2>
+        <label class="ctl"><span class="lab">Main turbine throttle</span><output id="o_thr"></output>
+          <input type="range" id="thr" min="0" max="100" step="1"><small id="n_thr"></small></label>
+      </section>
+
+      <section class="group elec">
+        <h2>Electric plant <span>2 × 3 MW</span></h2>
+        <div class="row"><span class="lab">TG-1</span>
+          <div class="seg" role="group" aria-label="TG-1 breaker" id="tg0"><button type="button" data-v="0">Open</button><button type="button" data-v="1">Closed</button></div></div>
+        <div class="row"><span class="lab">TG-2</span>
+          <div class="seg" role="group" aria-label="TG-2 breaker" id="tg1"><button type="button" data-v="0">Open</button><button type="button" data-v="1">Closed</button></div></div>
+        <label class="ctl"><span class="lab">Ship's service load</span><output id="o_hotel"></output>
+          <input type="range" id="hotel" min="0.2" max="4" step="0.1"><small id="n_hotel"></small></label>
+      </section>
+
+      <section class="group sea">
+        <h2>Seawater <span>Condenser cooling</span></h2>
+        <div class="row"><span class="lab">SW pump</span>
+          <div class="seg" role="group" aria-label="Seawater pump speed" id="sw"><button type="button" data-v="0">Off</button><button type="button" data-v="1">Slow</button><button type="button" data-v="2">Fast</button></div>
+          <small id="n_sw"></small></div>
+        <label class="ctl"><span class="lab">Seawater temperature</span><output id="o_Tsea"></output>
+          <input type="range" id="Tsea" min="-2" max="32" step="0.5"><small id="n_Tsea"></small></label>
+      </section>
+
+      <section class="group sim">
+        <h2>Simulation <span>Time scale</span></h2>
+        <div class="seg" role="group" aria-label="Simulation speed" id="speed">
+          <button type="button" data-v="1">1×</button><button type="button" data-v="5">5×</button><button type="button" data-v="20">20×</button><button type="button" data-v="100">100×</button>
+        </div>
+        <p class="sub">Start from</p>
+        <div class="presets" id="presets"></div>
+        <p class="sub">Drills</p>
+        <div class="presets drills" id="drills"></div>
+        <div class="btn-row"><button type="button" class="btn" id="settle">Skip to steady state</button></div>
+      </section>
+    </aside>
+
+    <main>
+      <section class="card sch-card">
+        <div class="card-head">
+          <h3>Plant schematic</h3>
+          <span class="hint phone-hint">Swipe sideways to see the whole plant</span>
+          <div class="ramp"><span class="mono" id="ramp_lo">0 °C</span><span class="bar"></span><span class="mono" id="ramp_hi">350 °C</span></div>
+        </div>
+        <div class="sch-wrap"><canvas id="sch" aria-label="Animated plant schematic: reactor, pressurizer, steam generator, coolant pumps, main turbine, turbine generators, condenser and seawater pump"></canvas></div>
+        <div class="alarms" id="alarms" aria-live="polite"></div>
+      </section>
+
+      <section class="kpis" aria-label="Plant readouts">
+        <div class="kpi"><div class="k">Reactor power</div><div class="v" id="k_pow"></div><div class="s" id="k_pow_s"></div></div>
+        <div class="kpi"><div class="k">T<sub>hot</sub> / T<sub>cold</sub></div><div class="v" id="k_t"></div><div class="s" id="k_t_s"></div></div>
+        <div class="kpi"><div class="k">RCS pressure</div><div class="v" id="k_p"></div><div class="s" id="k_p_s"></div></div>
+        <div class="kpi"><div class="k">Steam generator</div><div class="v" id="k_sg"></div><div class="s" id="k_sg_s"></div></div>
+        <div class="kpi"><div class="k">Shaft power</div><div class="v" id="k_shaft"></div><div class="s" id="k_shaft_s"></div></div>
+        <div class="kpi"><div class="k">Electric load</div><div class="v" id="k_el"></div><div class="s" id="k_el_s"></div></div>
+        <div class="kpi"><div class="k">Condenser</div><div class="v" id="k_cd"></div><div class="s" id="k_cd_s"></div></div>
+        <div class="kpi"><div class="k">Plant efficiency</div><div class="v" id="k_eff"></div><div class="s" id="k_eff_s"></div></div>
+      </section>
+
+      <div class="duo">
+        <section class="card">
+          <div class="card-head"><h3>Power &amp; flow</h3><div class="legend" id="lg_pow"></div></div>
+          <canvas id="tr_pow" class="chart" data-h="190" aria-label="Power and flow trend"></canvas>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Loop temperatures</h3><div class="legend" id="lg_temp"></div></div>
+          <canvas id="tr_temp" class="chart" data-h="190" aria-label="Loop temperature trend"></canvas>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>RCS pressure</h3><div class="legend" id="lg_pres"></div></div>
+          <canvas id="tr_pres" class="chart" data-h="170" aria-label="RCS pressure trend"></canvas>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Pressurizer</h3><div class="legend" id="lg_pzr"></div></div>
+          <canvas id="tr_pzr" class="chart" data-h="170" aria-label="Pressurizer level, heaters and spray trend"></canvas>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Steam generator profile</h3>
+            <div class="legend"><span><i style="background:var(--hot)"></i>Primary in U-tubes</span><span><i style="background:var(--s-amber)"></i>Boiling secondary</span></div></div>
+          <canvas id="prof" class="chart" data-h="190" aria-label="Steam generator temperature profile"></canvas>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Seawater &amp; efficiency</h3>
+            <div class="legend"><span><i style="background:var(--cold)"></i>SW fast</span><span><i style="background:var(--s-teal)"></i>SW slow</span><span><i style="background:var(--danger)"></i>Turbine trip zone</span></div></div>
+          <canvas id="effc" class="chart" data-h="190" aria-label="Cycle efficiency against seawater temperature"></canvas>
+          <p class="hint" id="eff_note"></p>
+        </section>
+        <section class="card wide">
+          <div class="card-head"><h3>Event log</h3><span class="hint">Simulated time</span></div>
+          <ul class="log" id="log"></ul>
+        </section>
+      </div>
+
+      <section class="card notes">
+        <h3>Things to try</h3>
+        <p><b>Reactor follows the turbine.</b> Run the <i>Throttle 100 → 40%</i> drill at 5×. T<sub>cold</sub> rises as the steam generator takes less heat, reactivity goes negative, and power drops to match. T<sub>avg</sub> ends where the rods put it; only the T<sub>hot</sub>–T<sub>cold</sub> spread and steam pressure change.</p>
+        <p><b>Slow pumps cap power.</b> Start from <i>Quiet running</i>, then open the throttle past about 50%. Half the flow means twice the ΔT for the same power, and the flow-biased trip stops you near 63%.</p>
+        <p><b>Check valves matter.</b> Tick <i>RCP-2 check valve stuck open</i>, then stop RCP-2. RCP-1 pushes part of its flow backwards through the idle pump, and core flow falls well below what one pump should give.</p>
+        <p><b>The pressurizer is a spring.</b> Move the rod program 302 → 296 °C. The loop shrinks, water drains from the pressurizer, pressure sags, and the heaters come on to recover it. Try <i>Spray valve stuck open</i> to see how fast spray can pull pressure down.</p>
+        <p><b>Everything needs electricity.</b> Set ship's service to 3 MW and trip TG-1: load shedding saves the bus. Try again at 4 MW: shedding isn't enough, the breakers open, the pumps coast down, the reactor scrams, and the plant goes over to natural circulation.</p>
+        <p><b>The sea sets the efficiency.</b> Compare <i>Arctic</i> and <i>Tropical</i> on the efficiency chart, then try <i>Lose seawater pump</i> and watch the condenser lose vacuum.</p>
+        <h3>How the plant model works</h3>
+        <p><b>Not a real plant.</b> All values are generic, textbook-scale PWR figures (150 MW thermal, about 155 bar, T<sub>avg</sub> about 302 °C) chosen for teaching. No naval reactor design data is used or implied.</p>
+        <p><b>Reactor:</b> point kinetics with one delayed-neutron group (prompt-jump approximation, β = 0.0065, λ = 0.1 s⁻¹), a moderator temperature coefficient of −50 pcm/°C (typical late in core life), a 4 s fuel time constant and three decay-heat groups (6.5% of power at shutdown).
+          The rod program sets the core average temperature the reactor settles at; rods drive toward a new setpoint at 0.05 °C/s (3 °C/min) and never run the program more than 4 °C ahead of the actual core temperature, which caps how much reactivity a cooldown can add. After a scram reset the program restarts from the loop's current temperature, so the plant heats back up at that rate instead of jumping. With no Doppler term, steady T<sub>avg</sub> equals the setpoint at any power, so steam demand alone sets power and the T<sub>hot</sub>–T<sub>cold</sub> spread.</p>
+        <p><b>Primary loop:</b> 58 well-mixed cells around the loop (core, upper plenum, hot leg, steam-generator U-tubes, cold leg, downcomer), 20 m³ of water. Pump heat goes into the cold leg.
+          The two pumps run in parallel: each has a head curve, the loop has a square-law resistance, and the flow split is solved every step. A check valve blocks reverse flow through an idle pump; a stuck-open one lets the running pump push water backwards through it.
+          With both pumps stopped, natural circulation from the hot/cold density difference keeps a few percent flow.</p>
+        <p><b>Pressurizer:</b> a 6 m³ vessel of saturated water and steam in equilibrium, solved from its mass and internal energy with steam-table data. When the loop heats up, water expands into it (insurge) and compresses the steam bubble; when it cools, water drains out (outsurge) and pressure falls.
+          Heaters boil water to raise pressure. Spray brings cold-leg water into the steam space, condensing steam and dropping pressure; spray flow needs the pumps' head to drive it. There is no charging or letdown, so loop inventory is fixed.</p>
+        <p><b>Steam generator and turbines:</b> the secondary side is a boiling pool at saturation with perfect level control and 120 °C feedwater. The throttle sets main-turbine steam flow and moves at 1%/s, the turbine loading rate; flow is capped by what the wide-open valve can pass at the current steam pressure.
+          Cycle efficiency is 62% of the Carnot limit between steam and condenser temperatures, so colder seawater gives a colder condenser and more shaft power per megawatt of reactor heat.
+          The condenser is a shell-and-tube unit (UA 5 MW/K) cooled by 3.5 t/s of seawater at fast speed. Above 60 °C (about 0.2 bar back-pressure) the main turbine trips; above 70 °C the turbine generators trip too.</p>
+        <p><b>Electric plant:</b> two 3 MW turbine generators share the bus and draw steam in proportion to load. Loads are the coolant pumps (0.5 MW each at fast, power ∝ speed³), the seawater pump (0.4 MW), pressurizer heaters (up to 0.8 MW) and ship's service.
+          Overloading the online generators for more than 3 s trips their breakers. A dead bus stops every pump and heater.</p>
+        <p><b>Protection:</b> a relief valve on the steam generator lifts at 92 bar and vents up to 20 kg/s to atmosphere, the only heat sink once the turbines and condenser are lost.
+          On a generator overload, non-vital ship's service load is shed to 40% after 1 s; if the bus is still overloaded at 3 s the breakers open.
+          After a scram reset, rods withdraw automatically but never add more than 0.4 β of reactivity, which keeps the startup period at about 15 s or longer.</p>
+        <p><b>Trips:</b> the reactor scrams on loss of power to the coolant pumps, high power (118%), power above the flow-biased limit (110% × flow + 8%), pressure above 170 or below 125 bar, subcooling margin under 5 °C, pressurizer level above 92%, or a short period. A scram also trips the main turbine.</p>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  // ---------- constants (illustrative textbook PWR, not any real plant) ----------
+  const P_NOM = 150e6, CP_P = 5500, M_FLOW = 1000, RHO_REF = 740;
+  const BETA = 0.0065, LAMBDA = 0.1, ALPHA_M = -5e-4, RHO_SCRAM = -0.08, ROD_RATE = 0.05, ROD_RECOVER = 1e-3, ROD_LIMIT = 0.4, TREF_LEAD = 4, TAU_FUEL = 4, SOURCE = 1e-6;
+  const DECAY = [[0.03, 6], [0.02, 120], [0.015, 2400]];
+  const K_PUMP = 2, R_LOOP = 0.5, K_NC = 2.7e-5;
+  const SEG = [['core', 10, 3.0], ['upper', 4, 2.6], ['hot', 6, 1.4], ['sg', 24, 6.0], ['cold', 6, 2.4], ['down', 8, 4.6]];
+  const UA_SG = 5.2e6, C_S = 90e6, P_RELIEF = 92, RELIEF_MAX = 20, T_FEED = 120, CP_W = 4900, M_MAIN_REF = 58.5, THR_RATE = 1, P_REF = 55.8;
+  const ETA_REL = 0.62, GEAR = 0.97, GEN = 0.95;
+  const SW_NOM = 3500, CP_SW = 3990, UA_CD = 5e6, C_CD = 40e6, UA_HULL = 5e4;
+  const V_PZ = 6, Q_LOSS_PZ = 60e3, HEAT_MAX = 800e3, K_HEAT = 500e3, SPRAY_MAX = 12;
+  const TG_CAP = 3e6, P_RCP = 0.5e6, P_SW = 0.4e6;
+  const SPEEDS = [0, 0.5, 1], SPEED_NAMES = ['off', 'slow', 'fast'];
+  const LW = 1200, LH = 690, MAX_STEPS = 4000;
+
+  // ring of primary cells
+  const N = SEG.reduce((a, s) => a + s[1], 0), VOL = new Float64Array(N), MASS = new Float64Array(N), IDX = {};
+  { let i = 0; for (const [name, n, v] of SEG) { IDX[name] = [i, i + n - 1]; for (let k = 0; k < n; k++, i++) { VOL[i] = v / n; MASS[i] = RHO_REF * v / n; } } }
+  const [CORE0, CORE1] = IDX.core, [HOT0, HOT1] = IDX.hot, [SG0, SG1] = IDX.sg, [COLD0, COLD1] = IDX.cold, NSG = SG1 - SG0 + 1, NCORE = CORE1 - CORE0 + 1;
+  const SHAPE = (() => { const w = Array.from({ length: NCORE }, (_, k) => Math.cos(Math.PI * (k + 0.5 - NCORE / 2) / (NCORE + 2))); const s = w.reduce((a, b) => a + b); return w.map(x => x / s); })();
+
+  // ---------- steam tables ----------
+  // T °C, psat bar, hf, hg kJ/kg
+  const SAT = [[10, .012282, 42.02, 2519.2], [20, .023393, 83.92, 2537.4], [30, .04247, 125.74, 2555.6], [40, .073851, 167.53, 2573.5],
+    [50, .12352, 209.34, 2591.3], [60, .19946, 251.18, 2608.8], [70, .31201, 293.07, 2626.1], [80, .47416, 335.02, 2643.0], [90, .70183, 377.04, 2659.6],
+    [100, 1.0142, 419.17, 2675.6], [120, 1.9867, 503.81, 2706.0], [140, 3.6154, 589.16, 2733.5], [160, 6.1823, 675.47, 2757.4], [180, 10.028, 763.05, 2777.2],
+    [200, 15.549, 852.26, 2792.0], [220, 23.196, 943.55, 2801.0], [240, 33.469, 1037.5, 2803.0], [250, 39.762, 1085.7, 2801.0], [260, 46.917, 1135.0, 2796.6],
+    [270, 54.987, 1185.1, 2789.7], [280, 64.166, 1236.7, 2779.9], [290, 74.418, 1289.8, 2766.7], [300, 85.879, 1344.8, 2749.6], [310, 98.651, 1402.0, 2727.9],
+    [320, 112.84, 1462.2, 2700.6], [330, 128.57, 1525.9, 2666.0], [340, 145.99, 1594.5, 2621.8], [350, 165.29, 1670.9, 2563.6], [360, 186.66, 1761.7, 2481.6]];
+  // T °C, vf, vg m³/kg, uf, ug kJ/kg (pressurizer range)
+  const SATV = [[250, .001252, .05008, 1080.7, 2601.8], [260, .001276, .04221, 1128.5, 2599.1], [270, .001303, .03565, 1177.3, 2593.2], [280, .001332, .03017, 1227.4, 2585.7],
+    [290, .001366, .02557, 1279.0, 2575.5], [300, .001404, .02168, 1332.7, 2562.8], [310, .001448, .01835, 1388.4, 2547.1], [320, .001499, .01549, 1446.6, 2527.5],
+    [330, .001561, .01300, 1507.7, 2502.6], [340, .001638, .01080, 1572.5, 2470.1], [350, .001740, .00880, 1642.4, 2426.9], [360, .001895, .006945, 1719.5, 2367.3]];
+  // compressed-liquid density near 155 bar, kg/m³
+  const RHO_T = [[250, 815], [260, 800], [270, 784], [280, 767], [290, 749], [300, 729], [310, 707], [320, 683], [330, 656], [340, 623], [350, 585]];
+
+  function seek(tab, T) {
+    if (T <= tab[0][0]) return [0, 0];
+    const L = tab.length - 1;
+    if (T >= tab[L][0]) return [L - 1, 1];
+    let i = 1; while (tab[i][0] < T) i++;
+    return [i - 1, (T - tab[i - 1][0]) / (tab[i][0] - tab[i - 1][0])];
+  }
+  const lerp = (tab, T, c) => { const [i, f] = seek(tab, T); return tab[i][c] + (tab[i + 1][c] - tab[i][c]) * f; };
+  const psat = T => { const [i, f] = seek(SAT, T); return SAT[i][1] * (SAT[i + 1][1] / SAT[i][1]) ** f; };
+  function tsat(p) {
+    if (p <= SAT[0][1]) return SAT[0][0];
+    let i = 1; while (i < SAT.length - 1 && SAT[i][1] < p) i++;
+    const [t0, p0] = SAT[i - 1], [t1, p1] = SAT[i];
+    return t0 + (t1 - t0) * Math.log(p / p0) / Math.log(p1 / p0);
+  }
+  const hf = T => lerp(SAT, T, 2) * 1e3;
+  const hfg = T => (lerp(SAT, T, 3) - lerp(SAT, T, 2)) * 1e3;
+  const rhoL = T => lerp(RHO_T, T, 1);
+
+  // ---------- plant settings and state ----------
+  const DEFAULTS = { Tref: 302, rcp: [2, 2], cv: [false, false], pset: 155, heat: 'auto', spray: 0, autoSpray: true,
+                     thr: 100, tg: [true, true], hotel: 2.0, sw: 2, Tsea: 15, speed: 1 };
+  const P = structuredClone(DEFAULTS);
+  let S;
+
+  function freshState() {
+    // seed near the expected operating point so the settle doesn't pass through trip territory
+    const n0 = Math.max(0.03, 0.92 * P.thr / 100 + (P.hotel + 1.5) * 0.028);
+    const T = new Float64Array(N).fill(P.Tref);
+    const s = { T, nT: new Float64Array(N), n: n0, s: n0, D: DECAY.map(([a]) => a * n0), Qc: P_NOM * n0, rhoRod: 0, Tref: P.Tref,
+      scram: null, mtTrip: null, ps: P.rcp.map(v => SPEEDS[v]), sws: SPEEDS[P.sw], Ts: P.Tref - 33 * n0, Tc: P.Tsea + 25 * n0, settling: false, thrAct: P.thr, shed: false, relief: false, mRel: 0,
+      Upz: 0, Mtot: 0, mpz: 0, Tpz: 345, x: 0, level: 0.5, ov: 0, t: 0,
+      // derived each step
+      q: [0.5, 0.5], Q: 1, H: 0.5, m: M_FLOW, Pth: P_NOM, rho: 0, Tmod: 302, Qsg: P_NOM, mMain: 0, mTg: 0, eta: 0.25, shaft: 0, elec: 0,
+      load: 0, cap: 6e6, bus: true, Qrej: 0, Qsw: 0, Qh: 0, sprayF: 0, msp: 0, pumpHeat: 0, swm: SW_NOM };
+    // pressurizer: saturated at the setpoint, half full
+    const Tp = tsat(P.pset), vf = lerp(SATV, Tp, 1), vg = lerp(SATV, Tp, 2);
+    const mf = 0.5 * V_PZ / vf, mg = 0.5 * V_PZ / vg;
+    s.Tpz = Tp; s.mpz = mf + mg; s.Upz = (mf * lerp(SATV, Tp, 3) + mg * lerp(SATV, Tp, 4)) * 1e3;
+    let ML = 0; for (let i = 0; i < N; i++) ML += rhoL(T[i]) * VOL[i];
+    s.Mtot = ML + s.mpz;
+    return s;
+  }
+
+  // ---------- physics ----------
+  const relax = (v, tgt, dt, tauUp, tauDown) => v + (tgt - v) * (1 - Math.exp(-dt / (tgt > v ? tauUp : tauDown)));
+
+  // Parallel pumps against a square-law loop. Unknown: head H across the pump bank.
+  function hydraulics(ps, cv, Hnc) {
+    const branch = (s, H, failed) => { const a = s * s - H; return a >= 0 ? Math.sqrt(a / K_PUMP) : failed ? -Math.sqrt(-a / K_PUMP) : 0; };
+    let lo = -Hnc, hi = 1.0001;
+    for (let it = 0; it < 48; it++) {
+      const H = (lo + hi) / 2;
+      const f = branch(ps[0], H, cv[0]) + branch(ps[1], H, cv[1]) - Math.sqrt(Math.max(0, H + Hnc) / R_LOOP);
+      if (f > 0) lo = H; else hi = H;
+    }
+    const H = (lo + hi) / 2, q = [branch(ps[0], H, cv[0]), branch(ps[1], H, cv[1])];
+    return { H, q, Q: Math.max(0, q[0] + q[1]) };
+  }
+
+  function solvePzr() {
+    const v = V_PZ / S.mpz, u = S.Upz / S.mpz;
+    const g = T => { const vf = lerp(SATV, T, 1), vg = lerp(SATV, T, 2), x = (v - vf) / (vg - vf); return lerp(SATV, T, 3) * 1e3 + x * (lerp(SATV, T, 4) - lerp(SATV, T, 3)) * 1e3 - u; };
+    let lo = 250, hi = 359.9;
+    if (g(lo) > 0) hi = lo; else if (g(hi) < 0) lo = hi;
+    else for (let it = 0; it < 40; it++) { const m = (lo + hi) / 2; if (g(m) > 0) hi = m; else lo = m; }
+    const T = (lo + hi) / 2, vf = lerp(SATV, T, 1), vg = lerp(SATV, T, 2);
+    S.Tpz = T;
+    S.x = Math.min(1, Math.max(0, (v - vf) / (vg - vf)));
+    S.level = Math.min(1, S.mpz * (1 - S.x) * vf / V_PZ);
+  }
+
+  const events = [];
+  function logEvent(kind, text) {
+    events.unshift({ t: S.t, kind, text });
+    if (events.length > 40) events.pop();
+  }
+  function tripReactor(cause) {
+    if (S.scram) return;
+    S.scram = cause; S.rhoRod = RHO_SCRAM;
+    logEvent('trip', `Reactor scram: ${cause}`);
+    if (!S.mtTrip) { S.mtTrip = 'Reactor scram'; logEvent('trip', 'Main turbine tripped by the scram'); }
+    logEvent('info', 'Tip: close the throttle before resetting, or the reset main turbine keeps cooling the plant');
+  }
+
+  function step(dt) {
+    const T = S.T, nT = S.nT;
+    // electric bus from the generators that can run
+    for (let k = 0; k < 2 && !S.settling; k++) {
+      if (!P.tg[k]) continue;
+      if (S.Tc > 70) { P.tg[k] = false; logEvent('trip', `TG-${k + 1} tripped: low condenser vacuum`); }
+      else if (S.Ts < 180) { P.tg[k] = false; logEvent('trip', `TG-${k + 1} tripped: steam pressure too low`); }
+    }
+    S.cap = TG_CAP * (+P.tg[0] + +P.tg[1]);
+    S.bus = S.cap > 0;
+
+    // pumps spin up or coast down
+    for (let k = 0; k < 2; k++) S.ps[k] = relax(S.ps[k], S.bus ? SPEEDS[P.rcp[k]] : 0, dt, 2.5, 8);
+    S.sws = relax(S.sws, S.bus ? SPEEDS[P.sw] : 0, dt, 3, 6);
+
+    // loop flow
+    const Thl = T[HOT0], Tcl = T[COLD1], Hnc = K_NC * Math.max(0, Thl - Tcl);
+    const hy = hydraulics(S.ps, P.cv, Hnc);
+    S.H = hy.H; S.q = hy.q; S.Q = hy.Q; S.m = hy.Q * M_FLOW;
+
+    // reactor kinetics: prompt jump with one delayed group
+    let Tm = 0; for (let i = CORE0; i <= CORE1; i++) Tm += T[i]; Tm /= NCORE; S.Tmod = Tm;
+    const dRef = P.Tref - S.Tref; S.Tref += Math.sign(dRef) * Math.min(Math.abs(dRef), ROD_RATE * dt);
+    S.Tref = Math.min(S.Tref, Tm + TREF_LEAD); // the rod program never runs more than a few degrees ahead of the core
+    if (!S.scram) S.rhoRod = Math.min(0, ROD_LIMIT * BETA - ALPHA_M * (Tm - S.Tref), S.rhoRod + ROD_RECOVER * dt);
+    const rho = ALPHA_M * (Tm - S.Tref) + S.rhoRod, rc = Math.min(rho, 0.9 * BETA);
+    S.rho = rho;
+    S.s = S.s * Math.exp(LAMBDA * rc / (BETA - rc) * dt) + SOURCE * dt;
+    S.n = S.s * BETA / (BETA - rc);
+    let Dsum = 0;
+    for (let k = 0; k < DECAY.length; k++) { const [a, tau] = DECAY[k]; S.D[k] += (a * S.n - S.D[k]) * (1 - Math.exp(-dt / tau)); Dsum += S.D[k]; }
+    S.Pth = P_NOM * ((1 - 0.065) * S.n + Dsum);
+    S.Qc += (S.Pth - S.Qc) * (1 - Math.exp(-dt / TAU_FUEL));
+
+    // secondary state used by this step
+    const Ts = S.Ts, qkg = hfg(Ts) + CP_W * Math.max(0, Ts - T_FEED);
+    S.eta = Math.max(0, ETA_REL * (1 - (S.Tc + 273.15) / (Ts + 273.15)));
+
+    // electric load and generator steam
+    S.pumpHeat = 0.9 * P_RCP * (S.ps[0] ** 3 + S.ps[1] ** 3);
+    const loadNow = P_RCP * (S.ps[0] ** 3 + S.ps[1] ** 3) + P_SW * S.sws ** 3 + S.Qh + (S.bus ? hotelW() : 0);
+    S.load = S.bus ? loadNow : 0;
+    if (S.bus && S.load > S.cap && !S.settling) {
+      S.ov += dt;
+      if (S.ov > 1 && !S.shed) { S.shed = true; S.ov = 0; logEvent('alm', `Overload ${fmt(S.load / 1e6, 2)} MW on ${fmt(S.cap / 1e6, 0)} MW: non-vital ship's service load shed to ${fmt(SHED * 100, 0)}%`); }
+      else if (S.ov > 3) { P.tg = [false, false]; S.ov = 0; logEvent('trip', `Generator breakers tripped: ${fmt(S.load / 1e6, 2)} MW load on ${fmt(S.cap / 1e6, 0)} MW online`); }
+    } else S.ov = 0;
+    if (S.shed && S.bus && loadNow + (1 - SHED) * P.hotel * 1e6 < 0.9 * S.cap) { S.shed = false; logEvent('info', 'Non-vital loads restored'); }
+    S.elec = S.bus ? S.load : 0;
+    S.mTg = S.bus && S.eta > 0.02 ? S.elec / (qkg * S.eta * GEN) : 0;
+    const pS = psat(Ts), dThr = P.thr - S.thrAct;
+    S.thrAct = S.mtTrip ? 0 : S.thrAct + Math.sign(dThr) * Math.min(Math.abs(dThr), THR_RATE * dt);
+    S.mMain = S.mtTrip ? 0 : Math.min(S.thrAct / 100 * M_MAIN_REF, 1.15 * M_MAIN_REF * pS / P_REF);
+    S.mRel = RELIEF_MAX * Math.min(1, Math.max(0, (pS - P_RELIEF) / 6));
+    if (S.mRel > 0.2 && !S.relief) { S.relief = true; logEvent('alm', `Steam generator relief valve lifted at ${fmt(pS, 1)} bar`); }
+    else if (S.mRel === 0 && S.relief) { S.relief = false; logEvent('info', 'Steam generator relief valve reseated'); }
+    const mSt = S.mMain + S.mTg;
+    S.shaft = S.mMain * qkg * S.eta * GEAR;
+
+    // primary loop: upwind advection around the ring, core heat, SG heat, pump heat, spray return
+    const m = S.m, uaC = UA_SG / NSG;
+    let Qsg = 0;
+    for (let i = 0; i < N; i++) {
+      const up = T[i ? i - 1 : N - 1];
+      let q = m * CP_P * (up - T[i]);
+      if (i >= CORE0 && i <= CORE1) q += S.Qc * SHAPE[i - CORE0];
+      else if (i >= SG0 && i <= SG1) { const d = uaC * (T[i] - Ts); q -= d; Qsg += d; }
+      else if (i === COLD0) q += S.pumpHeat;
+      else if (i === HOT0) q += S.msp * (hf(S.Tpz) - hf(T[COLD1]));
+      nT[i] = T[i] + dt * q / (MASS[i] * CP_P);
+    }
+    S.T = nT; S.nT = T;
+    S.Qsg = Qsg;
+
+    // steam generator secondary (boiling pool) and condenser
+    S.Ts = Math.max(100, Ts + dt * (Qsg - (mSt + S.mRel) * qkg) / C_S);
+    S.swm = SW_NOM * S.sws;
+    const eps = S.swm > 1 ? 1 - Math.exp(-UA_CD / (S.swm * CP_SW)) : 0;
+    S.Qrej = mSt * qkg * (1 - S.eta);
+    S.Qsw = eps * S.swm * CP_SW * (S.Tc - P.Tsea);
+    S.Tc = Math.min(99, S.Tc + dt * (S.Qrej - S.Qsw - UA_HULL * (S.Tc - P.Tsea)) / C_CD);
+    if (S.Tc > 60 && !S.mtTrip && !S.settling) { S.mtTrip = 'Low condenser vacuum'; logEvent('trip', 'Main turbine tripped: low condenser vacuum'); }
+
+    // pressurizer: surge from loop expansion, heaters, spray
+    let ML = 0; for (let i = 0; i < N; i++) ML += rhoL(S.T[i]) * VOL[i];
+    const mNew = S.Mtot - ML, dm = mNew - S.mpz;
+    const Tset = tsat(P.pset);
+    let Qh = P.heat === 'full' ? HEAT_MAX : P.heat === 'auto' ? Math.min(HEAT_MAX, Math.max(0, Q_LOSS_PZ + K_HEAT * (Tset - S.Tpz))) : 0;
+    if (!S.bus || S.level < 0.12) Qh = 0;
+    S.Qh = Qh;
+    const autoF = P.autoSpray ? Math.min(1, Math.max(0, (S.Tpz - Tset - 0.5) / 1.5)) : 0;
+    S.sprayF = Math.max(P.spray / 100, autoF);
+    S.msp = SPRAY_MAX * S.sprayF * Math.sqrt(Math.max(0, S.H) / 0.5);
+    const hin = dm > 0 ? hf(S.T[HOT0]) : hf(S.Tpz);
+    S.Upz += dm * hin + dt * (Qh - Q_LOSS_PZ + S.msp * (hf(S.T[COLD1]) - hf(S.Tpz)));
+    S.mpz = mNew;
+    solvePzr();
+
+    S.t += dt;
+    checkTrips();
+  }
+
+  const pressure = () => psat(S.Tpz);
+  const SHED = 0.4;
+  const hotelW = () => P.hotel * 1e6 * (S.shed ? SHED : 1);
+  const powerPct = () => S.Pth / P_NOM * 100;
+  const thot = () => S.T[HOT0], tcold = () => S.T[COLD1];
+  function checkTrips() {
+    if (S.scram || S.settling) return;
+    const pw = powerPct(), p = pressure();
+    if (pw > 118) tripReactor('high power');
+    else if (pw > 110 * S.Q + 8) tripReactor(`power above flow-biased limit (${fmt(pw, 0)}% at ${fmt(S.Q * 100, 0)}% flow)`);
+    else if (p > 170) tripReactor('high RCS pressure');
+    else if (p < 125) tripReactor('low RCS pressure');
+    else if (tsat(p) - thot() < 5) tripReactor('low subcooling margin');
+    else if (S.level > 0.92) tripReactor('pressurizer level high');
+    else if (S.rho > 0.6 * BETA) tripReactor('short period');
+    else if (!S.bus) tripReactor('loss of power to the coolant pumps');
+  }
+
+  function maxDt() {
+    let r = 0;
+    for (let i = 0; i < N; i++) r = Math.max(r, (S.m + 50) / MASS[i] + (i >= SG0 && i <= SG1 ? UA_SG / NSG / (MASS[i] * CP_P) : 0));
+    return Math.min(0.25, 0.8 / r);
+  }
+
+  function settle(seconds = 3600) {
+    const t0 = performance.now(), start = S.t;
+    while (S.t - start < seconds && performance.now() - t0 < 900) {
+      const dt = maxDt();
+      for (let k = 0; k < 200; k++) { step(dt); if (S.t >= trend.next) logPoint(); }
+    }
+  }
+
+  // ---------- trend storage ----------
+  const SERIES = {
+    pow: [['Reactor', 'hot', () => powerPct()], ['Steam', 's-amber', () => (S.mMain + S.mTg) / 64 * 100], ['Core flow', 'steel', () => S.Q * 100]],
+    temp: [['T hot', 'hot', thot], ['T cold', 'cold', tcold], ['T avg', 's-violet', () => (thot() + tcold()) / 2], ['Steam', 's-amber', () => S.Ts]],
+    pres: [['RCS', 's-rose', pressure], ['Setpoint', 'muted', () => P.pset]],
+    pzr: [['Level', 's-teal', () => S.level * 100], ['Heaters', 'hot', () => S.Qh / HEAT_MAX * 100], ['Spray', 'cold', () => S.sprayF * 100]],
+  };
+  const trend = { t: [], v: {}, dt: 1, next: 0 };
+  function resetTrend() {
+    trend.t = []; trend.dt = 1; trend.next = S.t;
+    for (const k in SERIES) trend.v[k] = SERIES[k].map(() => []);
+  }
+  function logPoint() {
+    trend.t.push(S.t);
+    for (const k in SERIES) SERIES[k].forEach((s, i) => trend.v[k][i].push(s[2]()));
+    if (trend.t.length > 600) {
+      const keep = (_, i) => i % 2 === 0;
+      trend.t = trend.t.filter(keep);
+      for (const k in SERIES) trend.v[k] = trend.v[k].map(a => a.filter(keep));
+      trend.dt *= 2;
+    }
+    trend.next = S.t + trend.dt;
+  }
+
+  // ---------- formatting ----------
+  const $ = id => document.getElementById(id);
+  const fmt = (v, d = 1) => (Math.abs(v) < 0.5 * 10 ** -d ? 0 : v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmtDur = s => s < 120 ? `${fmt(s, s < 10 ? 1 : 0)} s` : s < 7200 ? `${fmt(s / 60, 1)} min` : `${fmt(s / 3600, 2)} h`;
+  const clock = s => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60; return `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}`; };
+
+  // ---------- controls ----------
+  const sliders = ['Tref', 'pset', 'spray', 'thr', 'hotel', 'Tsea'];
+  for (const id of sliders) $(id).addEventListener('input', e => { P[id] = +e.target.value; syncControls(); });
+  const segs = {
+    rcp0: v => { P.rcp[0] = +v; }, rcp1: v => { P.rcp[1] = +v; }, sw: v => { P.sw = +v; },
+    heat: v => { P.heat = v; }, tg0: v => { P.tg[0] = v === '1'; }, tg1: v => { P.tg[1] = v === '1'; }, speed: v => { P.speed = +v; },
+  };
+  for (const [id, set] of Object.entries(segs))
+    for (const b of $(id).querySelectorAll('button')) b.addEventListener('click', () => {
+      const before = id.startsWith('tg') ? P.tg[+id[2]] : null;
+      set(b.dataset.v);
+      if (id.startsWith('tg') && before !== P.tg[+id[2]]) logEvent('info', `TG-${+id[2] + 1} breaker ${P.tg[+id[2]] ? 'closed' : 'opened'}`);
+      if (id.startsWith('rcp')) logEvent('info', `RCP-${+id[3] + 1} to ${SPEED_NAMES[+b.dataset.v]}`);
+      if (id === 'sw') logEvent('info', `Seawater pump to ${SPEED_NAMES[+b.dataset.v]}`);
+      syncControls();
+    });
+  for (const k of [0, 1]) $('cv' + k).addEventListener('change', e => { P.cv[k] = e.target.checked; logEvent(P.cv[k] ? 'alm' : 'info', `RCP-${k + 1} check valve ${P.cv[k] ? 'stuck open' : 'repaired'}`); });
+  $('autoSpray').addEventListener('change', e => { P.autoSpray = e.target.checked; });
+  $('scram').addEventListener('click', () => tripReactor('manual'));
+  $('reset').addEventListener('click', resetTrips);
+  $('settle').addEventListener('click', () => { settle(3600); logEvent('info', 'Skipped ahead to steady state'); });
+
+  function resetTrips() {
+    if (S.scram) {
+      const before = S.scram; S.scram = null; checkTrips();
+      if (!S.scram) {
+        // the rod program restarts from the loop's present temperature and heats up at the rod speed
+        S.Tref = Math.min(P.Tref, S.Tmod);
+        logEvent('info', `Scram reset (${before}); rods withdrawing, heat-up from ${fmt(S.Tref, 1)} to ${fmt(P.Tref, 1)} °C at ${fmt(ROD_RATE * 60, 0)} °C/min`);
+      }
+    }
+    if (S.mtTrip && !S.scram) {
+      if (S.Tc < 55) { logEvent('info', `Main turbine reset (${S.mtTrip})`); S.mtTrip = null; }
+      else logEvent('alm', 'Main turbine reset blocked: condenser above 55 °C');
+    }
+  }
+
+  const PRESETS = [
+    { label: 'Full power', set: {} },
+    { label: 'Quiet running', set: { rcp: [1, 1], sw: 1, thr: 30, hotel: 1.5 } },
+    { label: 'Hot standby', set: { thr: 0, hotel: 1.5 } },
+    { label: 'Tropical sea 31 °C', set: { Tsea: 31 } },
+    { label: 'Arctic sea −1 °C', set: { Tsea: -1 } },
+  ];
+  for (const pr of PRESETS) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = pr.label;
+    b.addEventListener('click', () => start(pr.set, pr.label));
+    $('presets').append(b);
+  }
+  const DRILLS = [
+    { label: 'Throttle 100 → 40%', run: () => { P.thr = 40; } },
+    { label: 'Throttle 40 → 100%', run: () => { P.thr = 100; } },
+    { label: 'Lose RCP-2', run: () => { P.rcp[1] = 0; } },
+    { label: 'Lose seawater pump', run: () => { P.sw = 0; } },
+    { label: 'Trip TG-1', run: () => { P.tg[0] = false; } },
+    { label: 'Spray valve stuck open', run: () => { P.spray = 100; P.autoSpray = false; } },
+  ];
+  for (const d of DRILLS) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = d.label;
+    b.addEventListener('click', () => { d.run(); logEvent('alm', `Drill: ${d.label}`); syncControls(); });
+    $('drills').append(b);
+  }
+
+  function start(over, label) {
+    const keepSpeed = P.speed;
+    Object.assign(P, structuredClone(DEFAULTS), structuredClone(over), { speed: keepSpeed });
+    S = freshState();
+    events.length = 0;
+    resetTrend();
+    S.settling = true; settle(3600); S.settling = false;
+    S.t = 0; resetTrend(); logPoint();
+    logEvent('info', `Started from "${label}" at steady state`);
+    step(maxDt()); // any trip the settled state still violates fires now
+    syncControls();
+  }
+
+  function setSeg(id, v) { for (const b of $(id).querySelectorAll('button')) b.setAttribute('aria-pressed', b.dataset.v === String(v)); }
+  function syncControls() {
+    for (const id of sliders) $(id).value = P[id];
+    $('o_Tref').textContent = `${fmt(P.Tref, 1)} °C`;
+    $('n_Tref').textContent = Math.abs(P.Tref - S.Tref) > 0.05 ? `Rods ${P.Tref > S.Tref ? 'withdrawing' : 'inserting'} · program at ${fmt(S.Tref, 1)} °C` : 'Rods steady';
+    setSeg('rcp0', P.rcp[0]); setSeg('rcp1', P.rcp[1]); setSeg('sw', P.sw); setSeg('heat', P.heat);
+    setSeg('tg0', +P.tg[0]); setSeg('tg1', +P.tg[1]); setSeg('speed', P.speed);
+    $('cv0').checked = P.cv[0]; $('cv1').checked = P.cv[1]; $('autoSpray').checked = P.autoSpray;
+    $('o_pset').textContent = `${fmt(P.pset, 1)} bar`;
+    $('n_pset').textContent = `${fmt(P.pset * 14.5038, 0)} psia · saturation ${fmt(tsat(P.pset), 1)} °C`;
+    $('o_spray').textContent = `${fmt(P.spray, 0)}%`;
+    $('o_thr').textContent = `${fmt(P.thr, 0)}%`;
+    $('o_hotel').textContent = `${fmt(P.hotel, 1)} MW`;
+    $('n_hotel').textContent = 'Lighting, ventilation, combat systems';
+    $('o_Tsea').textContent = `${fmt(P.Tsea, 1)} °C`;
+  }
+
+  // ---------- drawing helpers ----------
+  const STOPS = [[0, [44, 75, 209]], [0.3, [47, 164, 196]], [0.55, [232, 211, 90]], [0.78, [239, 138, 45]], [1, [215, 48, 31]]];
+  const T_LO = 0, T_HI = 350;
+  function cmap(T) {
+    const t = Math.min(1, Math.max(0, (T - T_LO) / (T_HI - T_LO)));
+    for (let j = 1; j < STOPS.length; j++) {
+      if (t <= STOPS[j][0]) {
+        const [t0, c0] = STOPS[j - 1], [t1, c1] = STOPS[j], f = (t - t0) / (t1 - t0);
+        return `rgb(${c0.map((c, k) => Math.round(c + (c1[k] - c) * f)).join(',')})`;
+      }
+    }
+    return 'rgb(215,48,31)';
+  }
+  let tok = {};
+  function readTokens() {
+    const cs = getComputedStyle(document.documentElement);
+    for (const k of ['bg', 'panel', 'raised', 'ink', 'muted', 'line', 'wall', 'hot', 'cold', 'steel', 'ok', 'warn', 'danger',
+                     's-amber', 's-rose', 's-green', 's-teal', 's-violet', 's-brown'])
+      tok[k] = cs.getPropertyValue('--' + k).trim();
+  }
+  function fitScaled(cv) {
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, s = w / LW, h = LH * s;
+    cv.style.height = h + 'px';
+    const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+    if (cv.width !== bw) cv.width = bw;
+    if (cv.height !== bh) cv.height = bh;
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr * s, 0, 0, dpr * s, 0, 0);
+    return { ctx, s };
+  }
+  function fitChart(cv) {
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = +cv.dataset.h;
+    cv.style.height = h + 'px';
+    const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+    if (cv.width !== bw) cv.width = bw;
+    if (cv.height !== bh) cv.height = bh;
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w, h };
+  }
+  function arrow(ctx, x, y, dir, size, color) {
+    const v = { r: [1, 0], l: [-1, 0], u: [0, -1], d: [0, 1] }[dir];
+    const px = -v[1], py = v[0];
+    ctx.fillStyle = color; ctx.beginPath();
+    ctx.moveTo(x + v[0] * size, y + v[1] * size);
+    ctx.lineTo(x - v[0] * size + px * size * 0.8, y - v[1] * size + py * size * 0.8);
+    ctx.lineTo(x - v[0] * size - px * size * 0.8, y - v[1] * size - py * size * 0.8);
+    ctx.closePath(); ctx.fill();
+  }
+  function bubble(ctx, x, y, tag, num, value, label, color) {
+    const r = 15;
+    ctx.fillStyle = tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - r, y); ctx.lineTo(x + r, y); ctx.stroke();
+    ctx.fillStyle = tok.ink; ctx.textAlign = 'center';
+    ctx.font = '600 9.5px "Barlow", sans-serif';
+    ctx.textBaseline = 'alphabetic'; ctx.fillText(tag, x, y - 3.5);
+    ctx.textBaseline = 'top'; ctx.fillText(num, x, y + 2.5);
+    ctx.font = '500 13px "JetBrains Mono", monospace'; ctx.fillStyle = color;
+    ctx.textBaseline = 'top'; ctx.fillText(value, x, y + r + 4);
+    ctx.font = '600 9.5px "Barlow", sans-serif'; ctx.fillStyle = tok.muted;
+    ctx.textBaseline = 'bottom'; ctx.fillText(label, x, y - r - 3);
+  }
+  const phases = {};
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function pipe(ctx, id, pts, T, pxPerSec, dt, width = 11) {
+    ctx.lineJoin = 'round'; ctx.lineCap = 'butt';
+    const path = () => { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); };
+    path(); ctx.strokeStyle = tok.ink; ctx.lineWidth = width + 4; ctx.stroke();
+    path(); ctx.strokeStyle = cmap(T); ctx.lineWidth = width; ctx.stroke();
+    if (Math.abs(pxPerSec) > 0.5 && !reduceMotion) {
+      phases[id] = ((phases[id] || 0) + pxPerSec * dt) % 160;
+      path(); ctx.setLineDash([5, 11]); ctx.lineDashOffset = -phases[id];
+      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    }
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function label(ctx, text, x, y, align = 'center', size = 13, color = tok.ink) {
+    ctx.font = `600 ${size}px "Barlow Condensed", sans-serif`; ctx.fillStyle = color;
+    ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillText(text, x, y);
+  }
+  function small(ctx, text, x, y, align = 'center', color = tok.muted) {
+    ctx.font = '500 10.5px "JetBrains Mono", monospace'; ctx.fillStyle = color;
+    ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillText(text, x, y);
+  }
+
+  // pump: circle with spinning vanes; check valve: flap symbol
+  const spin = { rcp0: 0, rcp1: 0, sw: 0, fp: 0, tg0: 0, tg1: 0, mt: 0 };
+  function pumpIcon(ctx, x, y, r, speed, key, dt, powered) {
+    spin[key] = (spin[key] + (reduceMotion ? 0 : speed * 9 * dt)) % (Math.PI * 2);
+    ctx.fillStyle = tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = speed > 0.02 ? tok.steel : tok.wall; ctx.lineWidth = 2.5;
+    for (let k = 0; k < 3; k++) {
+      const a = spin[key] + k * 2 * Math.PI / 3;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * (r - 4), y + Math.sin(a) * (r - 4)); ctx.stroke();
+    }
+    // motor box
+    ctx.fillStyle = powered ? tok['s-violet'] : tok.wall;
+    ctx.fillRect(x - 9, y - r - 16, 18, 13);
+    ctx.fillStyle = tok.bg; ctx.font = '600 10px "Barlow", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('M', x, y - r - 9.5);
+  }
+  function checkValve(ctx, x, y, flow, failed) {
+    const shut = flow <= 1e-4 && !failed;
+    ctx.fillStyle = tok.raised; ctx.strokeStyle = failed ? tok.danger : tok.ink; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.moveTo(x - 10, y - 10); ctx.lineTo(x + 10, y); ctx.lineTo(x - 10, y + 10); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 10, y - 11); ctx.lineTo(x + 10, y + 11); ctx.stroke();
+    if (shut) { ctx.fillStyle = tok.ink; ctx.fillRect(x + 7, y - 11, 3, 22); }
+  }
+
+  let propAngle = 0;
+  function drawSchematic(dt) {
+    const cv = $('sch');
+    const { ctx } = fitScaled(cv);
+    ctx.clearRect(0, 0, LW, LH);
+    const T = S.T, m = S.m, p = pressure();
+    const flowPx = mdot => Math.sign(mdot) * Math.min(260, 25 + 220 * Math.abs(mdot) / M_FLOW) * (Math.abs(mdot) > 1 ? 1 : 0) * Math.min(1, P.speed ** 0.25);
+    const stPx = mdot => mdot > 0.05 ? 30 + 200 * mdot / 64 : 0;
+    const swPx = mdot => mdot > 1 ? 30 + 200 * mdot / SW_NOM : 0;
+    const Thl = thot(), Tcl = tcold();
+
+    // --- reactor vessel ---
+    const vx0 = 70, vx1 = 180, vy0 = 250, vy1 = 560;
+    // primary pipes first so vessels draw over the stubs
+    pipe(ctx, 'hot', [[vx1 - 4, 300], [280, 300], [280, 575], [355, 575], [355, 520]], Thl, flowPx(m), dt, 13);
+    pipe(ctx, 'cold1', [[415, 520], [415, 575], [640, 575]], T[SG1], flowPx(Math.max(0, S.q[0]) * M_FLOW + 0.0), dt, 13);
+    pipe(ctx, 'cold2', [[470, 575], [470, 625], [640, 625], [640, 575]], T[COLD0], flowPx(S.q[1] * M_FLOW), dt, 11);
+    pipe(ctx, 'ret', [[640, 575], [680, 575], [680, 655], [125, 655], [125, vy1 - 4]], Tcl, flowPx(m), dt, 13);
+    // spray line: cold leg to pressurizer top
+    pipe(ctx, 'spray', [[150, 655], [36, 655], [36, 45], [230, 45], [230, 72]], Tcl, S.msp > 0.05 ? 40 + 12 * S.msp : 0, dt, 5);
+    pipe(ctx, 'surge', [[230, 300], [230, 232]], Thl, 0, dt, 7);
+
+    // vessel body: downcomer ring, core bands, upper plenum
+    ctx.fillStyle = cmap(T[IDX.down[1]]);
+    roundRect(ctx, vx0, vy0, vx1 - vx0, vy1 - vy0, 40); ctx.fill();
+    const cx0 = vx0 + 14, cx1 = vx1 - 14, cy0 = 405, cy1 = 535, ch = (cy1 - cy0) / NCORE;
+    for (let k = 0; k < NCORE; k++) { ctx.fillStyle = cmap(T[CORE0 + k]); ctx.fillRect(cx0, cy1 - (k + 1) * ch, cx1 - cx0, ch + 0.5); }
+    const up = IDX.upper; ctx.fillStyle = cmap((T[up[0]] + T[up[1]]) / 2); ctx.fillRect(cx0, 275, cx1 - cx0, cy0 - 275);
+    // core glow by power
+    const glow = Math.min(1, S.Pth / P_NOM);
+    ctx.fillStyle = `rgba(120,190,255,${0.08 + 0.32 * glow})`; ctx.fillRect(cx0, cy0, cx1 - cx0, cy1 - cy0);
+    // fuel pins
+    ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 2;
+    for (let k = 0; k < 9; k++) { const x = cx0 + 6 + k * (cx1 - cx0 - 12) / 8; ctx.beginPath(); ctx.moveTo(x, cy0 + 3); ctx.lineTo(x, cy1 - 3); ctx.stroke(); }
+    // control rods: insertion follows rod reactivity and program
+    const ins = S.scram ? 1 : Math.min(1, Math.max(0.05, 0.35 + (306 - S.Tref) / 50 + S.rhoRod / RHO_SCRAM));
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 4;
+    for (const x of [cx0 + 18, (cx0 + cx1) / 2, cx1 - 18]) { ctx.beginPath(); ctx.moveTo(x, vy0 - 22); ctx.lineTo(x, cy0 + ins * (cy1 - cy0)); ctx.stroke(); }
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2.5;
+    roundRect(ctx, vx0, vy0, vx1 - vx0, vy1 - vy0, 40); ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.strokeRect(cx0, 275, cx1 - cx0, cy1 - 275);
+    label(ctx, 'REACTOR', (vx0 + vx1) / 2, 205);
+    small(ctx, `${fmt(powerPct(), 1)}% · ${fmt(S.Pth / 1e6, 1)} MWt`, (vx0 + vx1) / 2, 222, 'center', tok.ink);
+    if (S.scram) small(ctx, 'SCRAMMED', (vx0 + vx1) / 2, 590, 'center', tok.danger);
+
+    // --- pressurizer ---
+    const px0 = 200, px1 = 260, py0 = 72, py1 = 232, pH = py1 - py0;
+    ctx.fillStyle = cmap(S.Tpz + 0); ctx.globalAlpha = 0.35;
+    roundRect(ctx, px0, py0, px1 - px0, pH, 22); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.save(); roundRect(ctx, px0, py0, px1 - px0, pH, 22); ctx.clip();
+    const lvlY = py1 - S.level * pH;
+    ctx.fillStyle = cmap(S.Tpz); ctx.fillRect(px0, lvlY, px1 - px0, py1 - lvlY);
+    // spray droplets
+    if (S.msp > 0.05 && !reduceMotion) {
+      phases.drops = ((phases.drops || 0) + dt * 60) % 30;
+      ctx.fillStyle = cmap(Tcl);
+      for (let k = 0; k < 14; k++) { const dx = px0 + 8 + (k * 7) % (px1 - px0 - 14), dy = py0 + 8 + ((k * 11 + phases.drops * 2) % Math.max(10, lvlY - py0 - 10)); ctx.beginPath(); ctx.arc(dx, dy, 1.8, 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.restore();
+    // heaters
+    const hf01 = S.Qh / HEAT_MAX;
+    ctx.strokeStyle = hf01 > 0.01 ? `rgba(255,${Math.round(200 - 150 * hf01)},40,${0.5 + 0.5 * hf01})` : tok.wall; ctx.lineWidth = 2.5;
+    ctx.beginPath(); for (let k = 0; k <= 8; k++) ctx.lineTo(px0 + 8 + k * (px1 - px0 - 16) / 8, py1 - 10 + (k % 2 ? -6 : 0)); ctx.stroke();
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2.2; roundRect(ctx, px0, py0, px1 - px0, pH, 22); ctx.stroke();
+    label(ctx, 'PRESSURIZER', (px0 + px1) / 2, 18);
+    small(ctx, `${fmt(S.level * 100, 0)}%`, px1 + 6, lvlY, 'left', tok.ink);
+    // spray valve on the top run
+    const sx = 130, sy = 45, open = S.sprayF;
+    ctx.fillStyle = open > 0.01 ? tok.ok : tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(sx - 11, sy - 9); ctx.lineTo(sx + 11, sy + 9); ctx.lineTo(sx + 11, sy - 9); ctx.lineTo(sx - 11, sy + 9); ctx.closePath(); ctx.fill(); ctx.stroke();
+    small(ctx, `SPRAY ${fmt(open * 100, 0)}%`, sx, sy - 18);
+
+    // --- steam generator ---
+    const gx0 = 330, gx1 = 440, gy0 = 90, gy1 = 470;
+    ctx.fillStyle = cmap(S.Ts); ctx.globalAlpha = 0.85;
+    roundRect(ctx, gx0, gy0, gx1 - gx0, gy1 - gy0, 30); ctx.fill(); ctx.globalAlpha = 1;
+    // boiling bubbles
+    if (!reduceMotion && S.Qsg > 1e6) {
+      phases.boil = ((phases.boil || 0) + dt * (10 + 40 * S.Qsg / P_NOM)) % 1000;
+      ctx.fillStyle = 'rgba(255,255,255,.5)';
+      for (let k = 0; k < 18; k++) { const bx = gx0 + 12 + (k * 37) % (gx1 - gx0 - 24), by = gy1 - 20 - ((k * 53 + phases.boil * (1 + k % 3)) % (gy1 - gy0 - 90)); ctx.beginPath(); ctx.arc(bx, by, 2.2, 0, Math.PI * 2); ctx.fill(); }
+    }
+    // U-tube bundle: up leg = first half of SG cells, down leg = second half
+    const half = NSG / 2, ux0 = 360, ux1 = 410, uTop = 170, uBot = 470;
+    ctx.lineWidth = 9; ctx.lineCap = 'round';
+    for (let k = 0; k < half; k++) {
+      const y0 = uBot - k * (uBot - uTop) / half, y1 = uBot - (k + 1) * (uBot - uTop) / half;
+      ctx.strokeStyle = cmap(T[SG0 + k]); ctx.beginPath(); ctx.moveTo(ux0, y0); ctx.lineTo(ux0, y1); ctx.stroke();
+      ctx.strokeStyle = cmap(T[SG1 - k]); ctx.beginPath(); ctx.moveTo(ux1, y0); ctx.lineTo(ux1, y1); ctx.stroke();
+    }
+    ctx.strokeStyle = cmap(T[SG0 + half]); ctx.beginPath(); ctx.arc((ux0 + ux1) / 2, uTop, (ux1 - ux0) / 2, Math.PI, 0); ctx.stroke();
+    ctx.lineCap = 'butt';
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2.5; roundRect(ctx, gx0, gy0, gx1 - gx0, gy1 - gy0, 30); ctx.stroke();
+    // bottom head split hot / cold
+    ctx.fillStyle = cmap(Thl); ctx.fillRect(gx0 + 10, gy1, (gx1 - gx0) / 2 - 10, 50);
+    ctx.fillStyle = cmap(T[SG1]); ctx.fillRect((gx0 + gx1) / 2, gy1, (gx1 - gx0) / 2 - 10, 50);
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2; ctx.strokeRect(gx0 + 10, gy1, gx1 - gx0 - 20, 50);
+    ctx.beginPath(); ctx.moveTo((gx0 + gx1) / 2, gy1); ctx.lineTo((gx0 + gx1) / 2, gy1 + 50); ctx.stroke();
+    label(ctx, 'STEAM GEN', (gx0 + gx1) / 2, gy0 + 22, 'center', 13);
+    // relief valve on the steam dome, venting to atmosphere
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(gx1, 120); ctx.lineTo(472, 120); ctx.lineTo(472, 100); ctx.stroke();
+    ctx.fillStyle = S.mRel > 0.2 ? tok.warn : tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(466, 100); ctx.lineTo(478, 100); ctx.lineTo(472, 90); ctx.closePath(); ctx.fill(); ctx.stroke();
+    small(ctx, 'RELIEF', 472, 134);
+    if (S.mRel > 0.2) {
+      phases.vent = ((phases.vent || 0) + (reduceMotion ? 0 : dt * 30)) % 30;
+      ctx.fillStyle = 'rgba(190,190,190,.55)';
+      for (let k = 0; k < 5; k++) { const h = (k * 6 + phases.vent) % 30, r = 3 + h / 4; ctx.beginPath(); ctx.arc(474 + h * 0.5, 86 - h, r, 0, Math.PI * 2); ctx.fill(); }
+    }
+
+    // --- secondary piping ---
+    const mSt = S.mMain + S.mTg;
+    pipe(ctx, 'steam', [[385, gy0 + 2], [385, 40], [905, 40]], S.Ts, stPx(mSt), dt, 11);
+    pipe(ctx, 'mtin', [[500, 40], [500, 125], [522, 125]], S.Ts, stPx(S.mMain), dt, 9);
+    pipe(ctx, 'tg1in', [[905, 40], [905, 190]], S.Ts, stPx(S.mTg / 2), dt, 7);
+    pipe(ctx, 'tg2in', [[905, 40], [1005, 40], [1005, 190]], S.Ts, stPx(S.mTg / 2), dt, 7);
+    pipe(ctx, 'mtex', [[662, 170], [662, 412]], S.Tc, stPx(S.mMain), dt, 13);
+    pipe(ctx, 'tgex', [[1005, 240], [1005, 380], [760, 380], [760, 412]], S.Tc, stPx(S.mTg), dt, 9);
+    pipe(ctx, 'tg1ex', [[905, 240], [905, 380]], S.Tc, stPx(S.mTg / 2), dt, 7);
+    pipe(ctx, 'feed', [[602, 470], [470, 470], [470, 400], [442, 400]], T_FEED, stPx(mSt), dt, 9);
+    // seawater
+    pipe(ctx, 'swin', [[1185, 640], [860, 640], [860, 505], [802, 505]], P.Tsea, swPx(S.swm), dt, 11);
+    pipe(ctx, 'swout', [[802, 450], [880, 450], [880, 672], [1185, 672]], S.swm > 1 ? P.Tsea + S.Qsw / (S.swm * CP_SW) : S.Tc, swPx(S.swm), dt, 11);
+    arrow(ctx, 1165, 640, 'l', 5, tok.raised); arrow(ctx, 1165, 672, 'r', 5, tok.raised);
+
+    // --- main turbine, gear, propeller ---
+    const mtOn = S.mMain > 0.05;
+    spin.mt = (spin.mt + (reduceMotion ? 0 : dt * 6 * Math.cbrt(S.shaft / 36e6))) % 1;
+    ctx.fillStyle = tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(522, 100); ctx.lineTo(680, 75); ctx.lineTo(680, 175); ctx.lineTo(522, 150); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = mtOn ? tok['s-amber'] : tok.wall; ctx.lineWidth = 2;
+    for (let k = 0; k < 6; k++) { const x = 535 + ((k + spin.mt) % 6) * 24, hh = 25 + (x - 522) * 0.16; ctx.beginPath(); ctx.moveTo(x, 125 - hh); ctx.lineTo(x, 125 + hh); ctx.stroke(); }
+    label(ctx, 'MAIN TURBINE', 590, 64);
+    small(ctx, S.mtTrip ? 'TRIPPED' : `${fmt(S.shaft / 1e6, 1)} MW shaft`, 585, 192, 'center', S.mtTrip ? tok.danger : tok.ink);
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(680, 125); ctx.lineTo(740, 125); ctx.moveTo(776, 125); ctx.lineTo(830, 125); ctx.stroke();
+    ctx.fillStyle = tok.steel; ctx.fillRect(740, 102, 36, 46); ctx.strokeRect(740, 102, 36, 46);
+    small(ctx, 'GEAR', 758, 160);
+    propAngle = (propAngle + (reduceMotion ? 0 : dt * 5 * Math.cbrt(S.shaft / 36e6))) % (Math.PI * 2);
+    ctx.fillStyle = tok.steel;
+    for (let k = 0; k < 5; k++) {
+      const a = propAngle + k * 2 * Math.PI / 5;
+      ctx.beginPath(); ctx.ellipse(840 + Math.cos(a) * 15, 125 + Math.sin(a) * 15, 15, 5, a, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = tok.ink; ctx.beginPath(); ctx.arc(840, 125, 5, 0, Math.PI * 2); ctx.fill();
+    small(ctx, `${fmt(S.shaft / 745.7, 0)} shp`, 840, 165);
+
+    // --- turbine generators and bus ---
+    for (let k = 0; k < 2; k++) {
+      const x = k ? 1005 : 905, on = P.tg[k] && S.mTg > 0.01;
+      spin['tg' + k] = (spin['tg' + k] + (reduceMotion || !on ? 0 : dt * 3)) % 1;
+      ctx.fillStyle = tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x - 16, 190); ctx.lineTo(x + 16, 190); ctx.lineTo(x + 24, 240); ctx.lineTo(x - 24, 240); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = on ? tok['s-amber'] : tok.wall;
+      for (let j = 0; j < 3; j++) { const y = 196 + ((j + spin['tg' + k]) % 3) * 14; const hw = 16 + (y - 190) * 0.16; ctx.beginPath(); ctx.moveTo(x - hw + 3, y); ctx.lineTo(x + hw - 3, y); ctx.stroke(); }
+      const gx = x + 48;
+      ctx.fillStyle = P.tg[k] ? tok['s-violet'] : tok.wall; ctx.beginPath(); ctx.arc(gx, 215, 15, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + 24, 215); ctx.lineTo(gx - 15, 215); ctx.stroke();
+      ctx.fillStyle = tok.bg; ctx.font = '600 12px "Barlow", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('G', gx, 215);
+      // breaker to bus
+      ctx.strokeStyle = P.tg[k] ? tok['s-violet'] : tok.wall; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(gx, 200); ctx.lineTo(gx, P.tg[k] ? 150 : 168); ctx.stroke();
+      if (!P.tg[k]) { ctx.beginPath(); ctx.moveTo(gx, 168); ctx.lineTo(gx + 9, 155); ctx.stroke(); }
+      label(ctx, `TG-${k + 1}`, x - 12, 258, 'right', 12);
+    }
+    ctx.strokeStyle = S.bus ? tok['s-violet'] : tok.wall; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(935, 150); ctx.lineTo(1080, 150); ctx.stroke();
+    small(ctx, S.bus ? 'BUS · LIVE' : 'BUS · DEAD', 1085, 150, 'left', S.bus ? tok['s-violet'] : tok.danger);
+
+    // --- condenser ---
+    const kx0 = 602, kx1 = 802, ky0 = 412, ky1 = 530;
+    ctx.fillStyle = cmap(S.Tc); roundRect(ctx, kx0, ky0, kx1 - kx0, ky1 - ky0, 10); ctx.fill();
+    ctx.strokeStyle = cmap(P.Tsea); ctx.lineWidth = 4;
+    for (let k = 0; k < 5; k++) { const y = 440 + k * 15; ctx.beginPath(); ctx.moveTo(kx0 + 12, y); ctx.lineTo(kx1 - 4, y); ctx.stroke(); }
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2.2; roundRect(ctx, kx0, ky0, kx1 - kx0, ky1 - ky0, 10); ctx.stroke();
+    label(ctx, 'CONDENSER', (kx0 + kx1) / 2, 545);
+    small(ctx, `${fmt(psat(S.Tc), 3)} bar abs`, (kx0 + kx1) / 2, 561, 'center', S.Tc > 50 ? tok.danger : tok.ink);
+    // feed pump
+    pumpIcon(ctx, 530, 470, 12, mSt > 0.05 ? 1 : 0, 'fp', dt, S.bus);
+    small(ctx, 'FEED', 530, 496);
+    // seawater pump
+    pumpIcon(ctx, 1000, 640, 16, S.sws, 'sw', dt, S.bus && P.sw > 0);
+    label(ctx, `SW PUMP · ${SPEED_NAMES[P.sw].toUpperCase()}`, 1000, 592, 'center', 12);
+    small(ctx, `${fmt(S.swm / 1000, 2)} t/s`, 1024, 656, 'left');
+    label(ctx, 'SEA', 1185, 625, 'right', 12, tok.cold);
+
+    // --- reactor coolant pumps and check valves ---
+    for (let k = 0; k < 2; k++) {
+      const y = k ? 625 : 575, q = S.q[k];
+      pumpIcon(ctx, 530, y, 15, S.ps[k], 'rcp' + k, dt, S.bus && P.rcp[k] > 0);
+      checkValve(ctx, 595, y, q, P.cv[k]);
+      small(ctx, `RCP-${k + 1} ${SPEED_NAMES[P.rcp[k]]}`, k ? 460 : 505, k ? y : 549, 'right');
+      if (q < -0.005) { arrow(ctx, 565, y, 'l', 6, tok.danger); small(ctx, 'REVERSE', 595, y - 20, 'center', tok.danger); }
+    }
+
+    // --- electric load panel ---
+    const ex0 = 905, ey0 = 400, ew = 270;
+    ctx.fillStyle = tok.panel; ctx.strokeStyle = tok.line; ctx.lineWidth = 1;
+    roundRect(ctx, ex0, ey0, ew, 150, 8); ctx.fill(); ctx.stroke();
+    label(ctx, 'ELECTRIC LOADS', ex0 + 10, ey0 + 14, 'left', 12);
+    small(ctx, `${fmt(S.load / 1e6, 2)} / ${fmt(S.cap / 1e6, 0)} MW`, ex0 + ew - 10, ey0 + 14, 'right', S.load > S.cap ? tok.danger : tok.ink);
+    const loads = [['RCP-1', P_RCP * S.ps[0] ** 3], ['RCP-2', P_RCP * S.ps[1] ** 3], ['SW pump', P_SW * S.sws ** 3], ['PZR heaters', S.Qh], [S.shed ? 'Ship svc (shed)' : 'Ship service', S.bus ? hotelW() : 0]];
+    loads.forEach(([name, w], i) => {
+      const y = ey0 + 34 + i * 22, bx = ex0 + 90, bw = ew - 150;
+      small(ctx, name, ex0 + 10, y, 'left');
+      ctx.fillStyle = tok.line; ctx.fillRect(bx, y - 5, bw, 10);
+      ctx.fillStyle = tok['s-violet']; ctx.fillRect(bx, y - 5, bw * Math.min(1, w / 4e6), 10);
+      small(ctx, `${fmt(w / 1e6, 2)} MW`, ex0 + ew - 10, y, 'right', tok.ink);
+    });
+
+    // --- instrument tags ---
+    bubble(ctx, 232, 350, 'TI', '101', `${fmt(Thl, 1)}°`, 'T HOT', tok.hot);
+    bubble(ctx, 210, 606, 'TI', '102', `${fmt(Tcl, 1)}°`, 'T COLD', tok.cold);
+    bubble(ctx, 140, 130, 'PI', '103', `${fmt(p, 1)}`, 'RCS bar', tok['s-rose']);
+    bubble(ctx, 466, 205, 'PI', '201', `${fmt(psat(S.Ts), 1)}`, 'STEAM bar', tok['s-amber']);
+    bubble(ctx, 745, 600, 'TI', '202', `${fmt(S.Tc, 1)}°`, 'EXHAUST', tok['s-teal']);
+    bubble(ctx, 1130, 592, 'TI', '301', `${fmt(P.Tsea, 1)}°`, 'SEA', tok.cold);
+    bubble(ctx, 232, 462, 'FI', '104', `${fmt(S.Q * 100, 0)}%`, 'FLOW', tok.steel);
+  }
+
+  // ---------- charts ----------
+  function niceStep(span, n) {
+    const raw = span / n, p = 10 ** Math.floor(Math.log10(raw));
+    return [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw) || 10 * p;
+  }
+  function yAxis(ctx, m, w, ph, lo, hi, unit) {
+    const step = niceStep(hi - lo, 4);
+    const a = Math.floor(lo / step) * step, b = Math.ceil(hi / step) * step;
+    const Y = v => m.t + (1 - (v - a) / (b - a)) * ph;
+    ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.muted;
+    ctx.strokeStyle = tok.line; ctx.lineWidth = 1; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let v = a; v <= b + 1e-9; v += step) {
+      ctx.beginPath(); ctx.moveTo(m.l, Math.round(Y(v)) + 0.5); ctx.lineTo(w - m.r, Math.round(Y(v)) + 0.5); ctx.stroke();
+      ctx.fillText(`${+v.toFixed(1)}${unit}`, m.l - 6, Y(v));
+    }
+    return Y;
+  }
+  function drawTrend(key, unit, minSpan, floor) {
+    const { ctx, w, h } = fitChart($('tr_' + key));
+    ctx.clearRect(0, 0, w, h);
+    const m = { l: 50, r: 12, t: 10, b: 24 }, pw = w - m.l - m.r, ph = h - m.t - m.b;
+    const n = trend.t.length;
+    if (n < 2) return;
+    let lo = Infinity, hi = -Infinity;
+    for (const s of trend.v[key]) for (const v of s) { if (v < lo) lo = v; if (v > hi) hi = v; }
+    if (floor !== undefined) lo = Math.min(lo, floor);
+    if (hi - lo < minSpan) { const c = (hi + lo) / 2; lo = c - minSpan / 2; hi = c + minSpan / 2; }
+    const Y = yAxis(ctx, m, w, ph, lo, hi, unit);
+    const t0 = trend.t[0], tmax = Math.max(trend.t[n - 1] - t0, 1);
+    const [u, div] = tmax < 180 ? ['s', 1] : tmax < 3 * 3600 ? ['min', 60] : ['h', 3600];
+    const step = niceStep(tmax / div, 5) * div;
+    const X = t => m.l + (t - t0) / tmax * pw;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let t = 0; t <= tmax + 1e-9; t += step) {
+      ctx.strokeStyle = tok.line; ctx.beginPath(); ctx.moveTo(Math.round(X(t0 + t)) + 0.5, m.t); ctx.lineTo(Math.round(X(t0 + t)) + 0.5, m.t + ph); ctx.stroke();
+      ctx.fillText(`${+(t / div).toFixed(1)} ${u}`, X(t0 + t), m.t + ph + 6);
+    }
+    SERIES[key].forEach(([, c], k) => {
+      const ys = trend.v[key][k];
+      ctx.strokeStyle = tok[c]; ctx.lineWidth = c === 'muted' ? 1.2 : 2;
+      if (c === 'muted') ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(trend.t[i]), Y(ys[i]));
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = tok[c]; ctx.beginPath(); ctx.arc(X(trend.t[n - 1]), Y(ys[n - 1]), 3, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+  function legends() {
+    const units = { pow: '%', temp: '°', pres: ' bar', pzr: '%' };
+    for (const k in SERIES)
+      $('lg_' + k).innerHTML = SERIES[k].map(([name, c], i) => `<span><i style="background:var(--${c})"></i>${name}<b id="lg_${k}${i}"></b></span>`).join('');
+    return units;
+  }
+  const UNITS = legends();
+
+  function drawProfile() {
+    const { ctx, w, h } = fitChart($('prof'));
+    ctx.clearRect(0, 0, w, h);
+    const m = { l: 50, r: 12, t: 10, b: 30 }, pw = w - m.l - m.r, ph = h - m.t - m.b;
+    let lo = S.Ts, hi = S.Ts;
+    for (let i = SG0; i <= SG1; i++) { lo = Math.min(lo, S.T[i]); hi = Math.max(hi, S.T[i]); }
+    const Y = yAxis(ctx, m, w, ph, lo - 3, hi + 3, '°');
+    const X = f => m.l + f * pw;
+    ctx.fillStyle = tok.muted; ctx.font = '500 11px "Barlow", sans-serif'; ctx.textBaseline = 'top';
+    ctx.textAlign = 'left'; ctx.fillText('tube inlet (hot leg)', m.l, m.t + ph + 10);
+    ctx.textAlign = 'right'; ctx.fillText('tube outlet (cold leg)', w - m.r, m.t + ph + 10);
+    ctx.fillStyle = tok.hot; ctx.globalAlpha = 0.1; ctx.beginPath();
+    for (let k = 0; k < NSG; k++) (k ? ctx.lineTo : ctx.moveTo).call(ctx, X((k + 0.5) / NSG), Y(S.T[SG0 + k]));
+    ctx.lineTo(X(1 - 0.5 / NSG), Y(S.Ts)); ctx.lineTo(X(0.5 / NSG), Y(S.Ts)); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = tok.hot; ctx.lineWidth = 2.2; ctx.beginPath();
+    for (let k = 0; k < NSG; k++) (k ? ctx.lineTo : ctx.moveTo).call(ctx, X((k + 0.5) / NSG), Y(S.T[SG0 + k]));
+    ctx.stroke();
+    ctx.strokeStyle = tok['s-amber']; ctx.beginPath(); ctx.moveTo(X(0), Y(S.Ts)); ctx.lineTo(X(1), Y(S.Ts)); ctx.stroke();
+    ctx.fillStyle = tok['s-amber']; ctx.font = '500 11px "JetBrains Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText(`saturation ${fmt(S.Ts, 1)} °C · ${fmt(psat(S.Ts), 1)} bar`, X(0.5), Y(S.Ts) - 4);
+  }
+
+  // Condenser steady state for a given sea temperature and seawater flow, at today's steam flow and pressure
+  function condenserAt(Tsea, swm, mSt, Ts) {
+    const qkg = hfg(Ts) + CP_W * Math.max(0, Ts - T_FEED), eps = swm > 1 ? 1 - Math.exp(-UA_CD / (swm * CP_SW)) : 0;
+    let Tc = Tsea + 20, eta = 0;
+    for (let it = 0; it < 40; it++) {
+      eta = Math.max(0, ETA_REL * (1 - (Tc + 273.15) / (Ts + 273.15)));
+      Tc = Tsea + mSt * qkg * (1 - eta) / (eps * swm * CP_SW + UA_HULL);
+    }
+    return { Tc, eta };
+  }
+  function drawEff() {
+    const { ctx, w, h } = fitChart($('effc'));
+    ctx.clearRect(0, 0, w, h);
+    const m = { l: 50, r: 12, t: 10, b: 26 }, pw = w - m.l - m.r, ph = h - m.t - m.b;
+    const live = S.mMain + S.mTg > 5, mSt = live ? S.mMain + S.mTg : 64, Ts = live ? S.Ts : 269;
+    const xs = [], fast = [], slow = [];
+    for (let T = -2; T <= 32; T += 0.5) { xs.push(T); fast.push(condenserAt(T, SW_NOM, mSt, Ts)); slow.push(condenserAt(T, SW_NOM / 2, mSt, Ts)); }
+    const all = [...fast, ...slow].map(r => r.eta * 100);
+    const Y = yAxis(ctx, m, w, ph, Math.min(...all) - 0.5, Math.max(...all) + 0.5, '%');
+    const X = T => m.l + (T + 2) / 34 * pw;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = tok.muted;
+    for (let T = 0; T <= 30; T += 5) {
+      ctx.strokeStyle = tok.line; ctx.beginPath(); ctx.moveTo(Math.round(X(T)) + 0.5, m.t); ctx.lineTo(Math.round(X(T)) + 0.5, m.t + ph); ctx.stroke();
+      ctx.fillText(`${T}°`, X(T), m.t + ph + 6);
+    }
+    for (const [rows, c] of [[fast, 'cold'], [slow, 's-teal']]) {
+      ctx.strokeStyle = tok[c]; ctx.lineWidth = 2.2; ctx.beginPath();
+      rows.forEach((r, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(xs[i]), Y(r.eta * 100))); ctx.stroke();
+      ctx.strokeStyle = tok.danger; ctx.lineWidth = 4; ctx.beginPath(); let on = false;
+      rows.forEach((r, i) => { if (r.Tc > 60) { (on ? ctx.lineTo : ctx.moveTo).call(ctx, X(xs[i]), Y(r.eta * 100)); on = true; } }); ctx.stroke();
+    }
+    const now = condenserAt(P.Tsea, S.swm, mSt, Ts);
+    if (S.swm > 1) { ctx.fillStyle = tok.ink; ctx.beginPath(); ctx.arc(X(P.Tsea), Y(now.eta * 100), 4.5, 0, Math.PI * 2); ctx.fill(); }
+    const f0 = condenserAt(0, SW_NOM, mSt, Ts).eta, f30 = condenserAt(30, SW_NOM, mSt, Ts).eta;
+    $('eff_note').textContent = `${live ? 'At the current' : 'At full-power'} steam flow (${fmt(mSt, 0)} kg/s, ${fmt(psat(Ts), 0)} bar): going from 0 °C to 30 °C sea costs ${fmt((1 - f30 / f0) * 100, 0)}% of the shaft power. The dot is where you are.`;
+  }
+
+  // ---------- readouts ----------
+  function updateReadouts() {
+    const pw = powerPct(), p = pressure(), Thl = thot(), Tcl = tcold(), margin = tsat(p) - Thl;
+    const decay = S.D.reduce((a, b) => a + b) * 100;
+    $('k_pow').innerHTML = `${fmt(pw, 1)} <small>%</small>`;
+    const period = S.rho > 1e-6 ? (BETA - S.rho) / (LAMBDA * S.rho) : Infinity;
+    $('k_pow_s').textContent = `${fmt(S.Pth / 1e6, 1)} MWt · ${Number.isFinite(period) && period < 1e4 ? `period ${fmt(period, 0)} s` : `decay heat ${fmt(decay, 1)}%`}`;
+    $('k_t').innerHTML = `${fmt(Thl, 1)}<small>/</small>${fmt(Tcl, 1)} <small>°C</small>`;
+    $('k_t_s').textContent = `ΔT ${fmt(Thl - Tcl, 1)} · T avg ${fmt((Thl + Tcl) / 2, 1)}`;
+    $('k_p').innerHTML = `${fmt(p, 1)} <small>bar</small>`;
+    $('k_p_s').textContent = `Level ${fmt(S.level * 100, 0)}% · margin ${fmt(margin, 1)} °C`;
+    $('k_sg').innerHTML = `${fmt(psat(S.Ts), 1)} <small>bar</small>`;
+    $('k_sg_s').textContent = `${fmt(S.Ts, 1)} °C · ${fmt(S.mMain + S.mTg, 1)} kg/s steam`;
+    $('k_shaft').innerHTML = `${fmt(S.shaft / 1e6, 1)} <small>MW</small>`;
+    $('k_shaft_s').textContent = S.mtTrip ? `Tripped: ${S.mtTrip}` : `${fmt(S.shaft / 745.7, 0)} shp`;
+    $('k_el').innerHTML = `${fmt(S.load / 1e6, 2)} <small>/ ${fmt(S.cap / 1e6, 0)} MW</small>`;
+    $('k_el_s').textContent = S.bus ? `${+P.tg[0] + +P.tg[1]} generator${P.tg[0] && P.tg[1] ? 's' : ''} online` : 'Bus dead';
+    $('k_cd').innerHTML = `${fmt(S.Tc, 1)} <small>°C</small>`;
+    $('k_cd_s').textContent = `${fmt(psat(S.Tc), 3)} bar abs · sea ${fmt(P.Tsea, 1)} °C`;
+    const gross = S.Pth > 1e6 ? (S.shaft + S.elec) / S.Pth * 100 : 0, carnot = (1 - (S.Tc + 273.15) / (S.Ts + 273.15)) * 100;
+    $('k_eff').innerHTML = `${fmt(gross, 1)} <small>%</small>`;
+    $('k_eff_s').textContent = `Carnot limit ${fmt(carnot, 1)}% at these temperatures`;
+    $('r_flow').textContent = `${fmt(S.m, 0)} kg/s · ${fmt(S.Q * 100, 0)}%`;
+    for (const k of [0, 1]) $('n_rcp' + k).textContent = `${fmt(S.ps[k] * 100, 0)}% speed · ${fmt(S.q[k] * M_FLOW, 0)} kg/s${S.q[k] < -0.005 ? ' backwards' : ''}`;
+    $('n_heat').textContent = `${fmt(S.Qh / 1e3, 0)} kW${!S.bus ? ' · no power' : S.level < 0.12 ? ' · uncovered, locked out' : ''}`;
+    $('n_spray').textContent = `Valve ${fmt(S.sprayF * 100, 0)}% open · ${fmt(S.msp, 1)} kg/s${S.sprayF > 0 && S.H < 0.05 ? ' · no pump head' : ''}`;
+    $('n_thr').textContent = S.mtTrip ? 'Main turbine tripped' : Math.abs(P.thr - S.thrAct) > 0.5 ? `Loading at ${THR_RATE}%/s · now ${fmt(S.thrAct, 0)}%`
+      : `${fmt(S.mMain, 1)} kg/s to main turbine${S.mMain < S.thrAct / 100 * M_MAIN_REF - 0.5 ? ' · steam pressure limits flow' : ''}`;
+    $('n_sw').textContent = `${fmt(S.swm / 1000, 2)} t/s · ${fmt(S.Qsw / 1e6, 1)} MW to sea`;
+    $('n_Tsea').textContent = `Condenser ${fmt(S.Tc, 1)} °C · cycle ${fmt(S.eta * 100, 1)}% efficient`;
+    $('n_Tref').textContent = Math.abs(P.Tref - S.Tref) > 0.05 ? `Rods ${P.Tref > S.Tref ? 'withdrawing' : 'inserting'} · program at ${fmt(S.Tref, 1)} °C` : S.scram ? 'Rods fully inserted' : S.rhoRod < -1e-5 ? 'Rods withdrawing after reset' : 'Rods steady';
+    for (const k in SERIES) SERIES[k].forEach((s, i) => { $(`lg_${k}${i}`).textContent = `${fmt(s[2](), 1)}${UNITS[k]}`; });
+    // alarms
+    const chips = [];
+    if (S.scram) chips.push(['trip', `SCRAM · ${S.scram}`]);
+    if (S.mtTrip) chips.push(['trip', `Main turbine tripped · ${S.mtTrip}`]);
+    if (!S.bus) chips.push(['trip', 'Electric bus dead']);
+    if (S.ov > 0) chips.push(['alm', `Generator overload ${fmt(S.ov, 1)} s`]);
+    if (S.shed) chips.push(['alm', 'Non-vital loads shed']);
+    if (S.mRel > 0.2) chips.push(['alm', `SG relief valve open · ${fmt(S.mRel, 1)} kg/s`]);
+    if (margin < 15) chips.push(['alm', `Low subcooling margin ${fmt(margin, 1)} °C`]);
+    if (S.level > 0.8) chips.push(['alm', 'Pressurizer level high']);
+    if (S.level < 0.2) chips.push(['alm', 'Pressurizer level low']);
+    if (p > 162) chips.push(['alm', 'RCS pressure high']);
+    if (p < 140) chips.push(['alm', 'RCS pressure low']);
+    if (S.Tc > 50) chips.push(['alm', 'Condenser vacuum low']);
+    if (S.q.some(q => q < -0.005)) chips.push(['alm', 'Reverse flow through idle pump']);
+    if (pw > 103) chips.push(['alm', 'Reactor power above 103%']);
+    if (S.Q < 0.1 && S.Pth > 0.5e6) chips.push(['alm', 'Natural circulation']);
+    $('alarms').innerHTML = chips.length ? chips.map(([c, t]) => `<span class="chip ${c}">${t}</span>`).join('') : '<span class="chip okc">No alarms</span>';
+    $('log').innerHTML = events.map(e => `<li><time>${clock(e.t)}</time><span class="${e.kind}">${e.text}</span></li>`).join('') || '<li><time></time><span class="muted">No events yet.</span></li>';
+  }
+
+  let rate = 0, effSpeed = 0;
+  function updateStatus() {
+    const pill = $('pill');
+    if (S.scram || !S.bus) { pill.className = 'pill bad'; pill.textContent = S.scram ? 'Reactor shut down' : 'Electric bus dead'; }
+    else if (rate < 0.02) { pill.className = 'pill ok'; pill.textContent = 'Steady'; }
+    else { pill.className = 'pill busy'; pill.textContent = `Transient · ${fmt(rate, rate < 1 ? 2 : 1)} %/min`; }
+    const sp = effSpeed < P.speed * 0.9 ? ` · running ≈${fmt(effSpeed, 0)}×` : ` · ${P.speed}×`;
+    $('simclock').textContent = `t = ${clock(S.t)}${sp}`;
+  }
+
+  // ---------- loop ----------
+  let last = performance.now(), frame = 0, lastPow = 100, lastT = 0;
+  function tick(now) {
+    const dtReal = Math.min(0.05, (now - last) / 1000); last = now;
+    if (frame % 30 === 0) readTokens();
+    const want = dtReal * P.speed, dm = maxDt();
+    let n = Math.ceil(want / dm);
+    const capped = n > MAX_STEPS; if (capped) n = MAX_STEPS;
+    const dt = capped ? dm : want / Math.max(1, n);
+    for (let k = 0; k < n; k++) { step(dt); if (S.t >= trend.next) logPoint(); }
+    effSpeed = dtReal > 0 ? n * dt / dtReal : P.speed;
+    if (S.t - lastT > 5) { rate = Math.abs(powerPct() - lastPow) / (S.t - lastT) * 60; lastPow = powerPct(); lastT = S.t; }
+    drawSchematic(dtReal);
+    if (frame % 3 === 0) {
+      drawTrend('pow', '%', 10, 0);
+      drawTrend('temp', '°', 10);
+      drawTrend('pres', '', 4);
+      drawTrend('pzr', '%', 10, 0);
+      drawProfile();
+      drawEff();
+    }
+    if (frame % 6 === 0) { updateReadouts(); updateStatus(); syncControls(); }
+    frame++;
+    requestAnimationFrame(tick);
+  }
+
+  readTokens();
+  start({}, 'Full power');
+  updateReadouts();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

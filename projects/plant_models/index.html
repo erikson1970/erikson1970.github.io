@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plant models</title>
+<meta name="description" content="Interactive, browser-only thermal plant models: heat exchangers, a storage-tank loop, and a pressurized-water reactor plant with its steam and electric plants.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+/* Section index: same palette and type as the root landing page, self-contained. */
+:root {
+  --ink: #1b2430; --paper: #f4f1e8; --panel: #ffffff; --rule: #c9c0a8; --navy: #1f3350;
+  --forest: #2f4a3c; --gold: #a97c34; --bronze: #8a5a2b; --muted: #5b6472;
+  --link: var(--navy); --link-visited: var(--forest);
+  --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
+  --font-body: "EB Garamond", Garamond, Georgia, serif;
+  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e8e4d8; --paper: #14181f; --panel: #1b212b; --rule: #3a4250; --navy: #7fa0c9;
+    --forest: #7fb89a; --gold: #d4a24e; --bronze: #c98a52; --muted: #9aa3b0;
+    --link: var(--gold); --link-visited: var(--forest);
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 1.125rem; line-height: 1.6; }
+.hall { max-width: 46rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+.crumb { font-size: 0.95rem; color: var(--muted); margin: 0 0 1.5rem; }
+.crumb a { color: var(--link); }
+.kicker { margin: 0; font-family: var(--font-display); font-size: 0.85rem; letter-spacing: 0.35em; text-transform: uppercase; color: var(--bronze); }
+h1 { margin: 0.4rem 0 0.25rem; font-family: var(--font-display); font-weight: 700; font-size: clamp(1.75rem, 5vw, 2.6rem); color: var(--navy); line-height: 1.2; text-wrap: balance; }
+.tagline { margin: 0 0 1.5rem; color: var(--muted); font-style: italic; }
+h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.05rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bronze); margin: 2rem 0 0.75rem; }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1rem; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 1rem 1.25rem; }
+.card h3 { margin: 0 0 0.25rem; font-family: var(--font-display); font-weight: 500; font-size: 1.1rem; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; }
+.card h3 a { color: var(--link); text-decoration: none; }
+.card h3 a:hover, .card h3 a:focus-visible { text-decoration: underline; }
+.card h3 a:visited { color: var(--link-visited); }
+.ver { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); letter-spacing: 0; }
+.card p { margin: 0; }
+.aside { margin-top: 1.5rem; color: var(--muted); font-size: 1rem; }
+footer { margin-top: 3rem; font-size: 0.95rem; color: var(--muted); }
+footer a { color: var(--link); }
+a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+</style>
+</head>
+<body>
+  <div class="hall">
+    <p class="crumb"><a href="../../">erikson1970</a> / Plant models</p>
+    <p class="kicker">Projects</p>
+    <h1>Plant models</h1>
+    <p class="tagline">Thermal plants you can run in the browser, from a single heat exchanger to a reactor plant.</p>
+    <main>
+      <h2>Heat exchangers &amp; storage</h2>
+      <ul class="list">
+      <li class="card">
+        <h3><a href="counterflow-hx/">Counterflow heat exchanger</a><span class="ver">v1.0</span></h3>
+        <p>One double-pipe exchanger with inlet temperatures and flow rates you can drive in either direction: rating and sizing modes, ε-NTU and LMTD, and a finite-volume transient that settles onto the analytic profile.</p>
+      </li>
+      <li class="card">
+        <h3><a href="hx-tank-loop-v2/">Exchanger &amp; storage tank loop</a><span class="ver">v2.0</span></h3>
+        <p>A cooling-water exchanger and a recuperator feeding a stratified storage tank with surface heat loss, a mid-height sample valve, and a button to swap the two exchanger units.</p>
+      </li>
+      <li class="card">
+        <h3><a href="hx-tank-loop-v3/">Three-exchanger tank loop</a><span class="ver">v3.1</span></h3>
+        <p>Adds a third exchanger with its own service stream, primary inlet temperatures up to 300 °C, and a switch that puts the recuperator before or after the cooler.</p>
+      </li>
+      </ul>
+      <h2>Pressurized-water reactor plant</h2>
+      <ul class="list">
+      <li class="card">
+        <h3><a href="pwr-plant-v4/">PWR plant lab</a><span class="ver">v4.0</span></h3>
+        <p>A single-loop PWR: point kinetics with moderator feedback, two-speed coolant pumps with check valves, pressurizer heaters and spray, steam generator, propulsion turbine, two turbine generators and a seawater-cooled condenser.</p>
+      </li>
+      <li class="card">
+        <h3><a href="pwr-plant-v5/">PWR plant lab</a><span class="ver">v5.0</span></h3>
+        <p>Six-group kinetics with Doppler, moderator and xenon feedback, decay heat, rod control, steam-generator level, a sampling loop with charging and discharge, shore power, metric/imperial units and four operator panels.</p>
+      </li>
+      <li class="card">
+        <h3><a href="pwr-plant-v5-1/">PWR plant lab</a><span class="ver">v5.1</span></h3>
+        <p>v5.0 with a loop electric plant: port and starboard vital and non-vital AC buses, a tie bus with shore power, motor-generators to a DC bus and battery, all switched from a clickable one-line diagram.</p>
+      </li>
+      </ul>
+      <p class="aside">All values are generic, textbook-scale figures chosen for teaching. No real plant&rsquo;s design data is used or implied.</p>
+    </main>
+    <footer><p>Each page is a single self-contained file that runs in the browser: no server, no install.</p>
+    <p><a href="https://github.com/erikson1970">github.com/erikson1970</a></p></footer>
+  </div>
+</body>
+</html>

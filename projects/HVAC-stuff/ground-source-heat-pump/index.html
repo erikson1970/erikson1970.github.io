@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ground Loop Home Model</title>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.site-crumb{font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:10px 20px 0;max-width:1400px;margin:0 auto;opacity:.8}
+.site-crumb a{color:inherit}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: engineer's worksheet. Inputs in a left rail (home, climate table, ground, heat pump, prices, cost
+   assumptions); results on the right: headline numbers, the year by month, ground profile, ten-year projection,
+   then the installed-cost and 20-year operating-cost cards. One column on phones. */
+:root {
+  --bg: #edf0ed;
+  --panel: #f8faf8;
+  --raised: #ffffff;
+  --ink: #1c2420;
+  --muted: #5b6760;
+  --line: #d2d9d3;
+  --soil: #7a5b3d;
+  --heat: #bf4f2a;
+  --cool: #1f6f8b;
+  --dhw: #8a6d00;
+  --aux: #9c2f55;
+  --pump: #5c6a7a;
+  --base: #8b8f86;
+  --ashp: #6b4fa8;
+  --ok: #2f7a4b;
+  --warn: #9a5a06;
+  --warn-bg: #fbefd9;
+  --ok-bg: #e2f1e7;
+  --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121714; --panel: #18201c; --raised: #1d2621; --ink: #e3ebe6; --muted: #93a29a; --line: #2c3731;
+    --soil: #c49a6c; --heat: #f07a4e; --cool: #5db4d2; --dhw: #d9b43c; --aux: #e0769d; --pump: #9fb0c2; --base: #a3a79d; --ashp: #b49cf0;
+    --ok: #62c48a; --warn: #e7ad48; --warn-bg: #33270f; --ok-bg: #143022; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121714; --panel: #18201c; --raised: #1d2621; --ink: #e3ebe6; --muted: #93a29a; --line: #2c3731;
+  --soil: #c49a6c; --heat: #f07a4e; --cool: #5db4d2; --dhw: #d9b43c; --aux: #e0769d; --pump: #9fb0c2; --base: #a3a79d; --ashp: #b49cf0;
+  --ok: #62c48a; --warn: #e7ad48; --warn-bg: #33270f; --ok-bg: #143022; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1380px; margin: 0 auto; padding-inline: 20px; padding-block: 22px 40px; display: flex; flex-direction: column; gap: 18px; }
+@media (max-width: 480px) { .wrap { padding-inline: 16px; } }
+.mono, td.n, .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; }
+.eyebrow { margin: 0 0 3px; font-size: 12px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 4.2vw, 42px); line-height: 1.05; letter-spacing: -.01em; text-wrap: balance; }
+.site { font-family: var(--f-mono); font-size: 13px; color: var(--muted); }
+
+.grid { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.rail { display: flex; flex-direction: column; gap: 14px; }
+.group { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.group h2 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 17px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.group h2 span { font-family: var(--f-body); font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.f { display: grid; grid-template-columns: minmax(0, 1fr) 108px; align-items: center; gap: 8px; font-size: 13.5px; }
+.f label { color: var(--muted); }
+.f input, .f select { font: inherit; font-family: var(--f-mono); font-size: 13px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 5px; padding: 5px 7px; width: 100%; min-height: 32px; }
+.f select { font-family: var(--f-body); }
+.f2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hint { font-size: 12px; color: var(--muted); margin: 0; }
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--cool); outline-offset: 1px; }
+.btn { font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 5px; padding: 5px 9px; cursor: pointer; min-height: 30px; }
+.btn:hover { border-color: var(--cool); }
+.dd { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.dd th { font-weight: 600; color: var(--muted); text-align: right; padding: 2px 4px; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; }
+.dd th:first-child, .dd td:first-child { text-align: left; }
+.dd td { padding: 1px 3px; }
+.dd input { width: 100%; font: inherit; font-family: var(--f-mono); font-size: 12.5px; text-align: right; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 4px; padding: 3px 5px; min-height: 26px; }
+.dd tfoot td { font-family: var(--f-mono); font-weight: 500; text-align: right; padding-top: 4px; border-top: 1px solid var(--line); }
+.dd tfoot td:first-child { font-family: var(--f-body); text-align: left; color: var(--muted); }
+
+main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+@media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi { background: var(--panel); padding: 10px 12px; min-width: 0; }
+.kpi .k { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kpi .v { font-size: 21px; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.kpi .s { font-size: 12px; color: var(--muted); }
+.kpi.warn { box-shadow: inset 0 3px 0 var(--warn); }
+.kpi.good { box-shadow: inset 0 3px 0 var(--ok); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 14px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; margin-bottom: 8px; }
+.card-head h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+canvas.chart { display: block; width: 100%; }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 1100px) { .duo { grid-template-columns: minmax(0, 1fr); } }
+.tbl-wrap { overflow-x: auto; }
+table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.t th { text-align: right; font-weight: 600; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.t td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.t th:first-child, table.t td:first-child { text-align: left; }
+table.t tr.tot td { font-weight: 600; border-bottom: 0; border-top: 2px solid var(--ink); }
+table.t tr.sub td { color: var(--muted); }
+table.t tr.cr td { color: var(--ok); }
+td .bar { display: inline-block; height: 8px; border-radius: 2px; background: var(--soil); vertical-align: middle; }
+.note { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
+.chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+.chip.ok { color: var(--ok); background: var(--ok-bg); }
+.chip.warn { color: var(--warn); background: var(--warn-bg); }
+.notes { font-size: 13px; color: var(--muted); }
+.notes > div { max-width: 82ch; }
+.notes h3 { font-family: var(--f-display); font-weight: 600; font-size: 16px; color: var(--ink); margin: 2px 0 6px; }
+.notes p { margin: 0 0 8px; }
+.notes b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<nav class="site-crumb" aria-label="Breadcrumb"><a href="../../../">erikson1970</a> / <a href="../">HVAC stuff</a> / <span>Ground Loop Home Model</span></nav>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Ground-source heat pump · monthly degree-day model</p>
+      <h1>Ground Loop Home Model</h1>
+    </div>
+    <div class="site" id="siteLine"></div>
+  </header>
+
+  <div class="grid">
+    <aside class="rail" aria-label="Model inputs">
+      <section class="group">
+        <h2>Home <span>Site · envelope</span></h2>
+        <div class="f2">
+          <div class="f" style="grid-template-columns:1fr"><label for="lat">Latitude</label><input id="lat" type="number" step="0.001" value="42.297"></div>
+          <div class="f" style="grid-template-columns:1fr"><label for="lon">Longitude</label><input id="lon" type="number" step="0.001" value="-71.293"></div>
+        </div>
+        <div class="f"><label for="A">Conditioned area (sq ft)</label><input id="A" type="number" step="50" value="2800"></div>
+        <div class="f"><label for="Z">Zones</label><input id="Z" type="number" min="1" max="12" step="1" value="4"></div>
+        <div class="f"><label for="occ">Occupants</label><input id="occ" type="number" min="1" max="12" step="1" value="4"></div>
+        <div class="f"><label for="env">Envelope</label>
+          <select id="env"><option value="0.20">Tight, new build</option><option value="0.30" selected>Average, 1990s–2010s</option><option value="0.42">Older, some upgrades</option><option value="0.55">Leaky, pre-1960</option></select></div>
+        <div class="f"><label for="Tin">Indoor setpoint (°F)</label><input id="Tin" type="number" step="1" value="70"></div>
+        <div class="f"><label for="Tdes">Heating design temp (°F)</label><input id="Tdes" type="number" step="1" value="7"></div>
+        <div class="f"><label for="Tcd">Cooling design temp (°F)</label><input id="Tcd" type="number" step="1" value="88"></div>
+        <p class="hint" id="n_env"></p>
+      </section>
+
+      <section class="group">
+        <h2>Climate <span>Degree days · base 65 °F</span></h2>
+        <div style="overflow-x:auto"><table class="dd" id="ddt"><thead><tr><th>Month</th><th>HDD</th><th>CDD</th><th>Mean °F</th></tr></thead><tbody></tbody><tfoot><tr><td>Year</td><td id="hddT"></td><td id="cddT"></td><td id="tmT"></td></tr></tfoot></table></div>
+        <p class="hint">Pre-filled for Wellesley, MA: estimated 1991–2020 normals from nearby Boston-area stations. Edit any cell; the whole model follows.</p>
+        <div><button type="button" class="btn" id="resetDD">Reset to Wellesley</button></div>
+      </section>
+
+      <section class="group">
+        <h2>Ground loop <span>Vertical bores</span></h2>
+        <div class="f"><label for="Nw">Number of wells</label><input id="Nw" type="number" min="1" max="20" step="1" value="2"></div>
+        <div class="f"><label for="Dw">Well depth (ft)</label><input id="Dw" type="number" min="100" max="1500" step="25" value="425"></div>
+        <div class="f"><label for="sp">Well spacing (ft)</label><input id="sp" type="number" min="10" max="60" step="1" value="20"></div>
+        <div class="f"><label for="kg">Ground conductivity (Btu/h·ft·°F)</label><input id="kg" type="number" min="0.5" max="2.5" step="0.05" value="1.4"></div>
+        <div class="f"><label for="grad">Geothermal gradient (°F/100 ft)</label><input id="grad" type="number" min="0" max="3" step="0.1" value="1.0"></div>
+        <div class="f"><label for="alpha">Ground diffusivity (ft²/day)</label><input id="alpha" type="number" min="0.2" max="2" step="0.05" value="0.9"></div>
+        <p class="hint" id="n_loop"></p>
+      </section>
+
+      <section class="group">
+        <h2>Heat pump <span>Water-to-air</span></h2>
+        <div class="f"><label for="tons">Capacity (tons, 0 = auto)</label><input id="tons" type="number" min="0" max="12" step="0.5" value="0"></div>
+        <div class="f"><label for="cop32">Heating COP at 32 °F EWT</label><input id="cop32" type="number" min="2" max="5" step="0.1" value="3.4"></div>
+        <div class="f"><label for="eer77">Cooling EER at 77 °F EWT</label><input id="eer77" type="number" min="10" max="30" step="0.5" value="18"></div>
+        <div class="f"><label for="dhwMode">Hot water source</label>
+          <select id="dhwMode"><option value="2.8">Heat pump + desuperheater (COP 2.8)</option><option value="3.3">Heat-pump water heater (COP 3.3)</option><option value="1.0">Electric resistance (COP 1.0)</option></select></div>
+        <div class="f"><label for="dhwT">Hot water setpoint (°F)</label><input id="dhwT" type="number" step="1" value="125"></div>
+      </section>
+
+      <section class="group">
+        <h2>Energy prices <span>Year 1</span></h2>
+        <div class="f"><label for="elec">Electricity ($/kWh)</label><input id="elec" type="number" step="0.01" value="0.31"></div>
+        <div class="f"><label for="eEsc">Electricity escalation (%/yr)</label><input id="eEsc" type="number" step="0.5" value="3"></div>
+        <div class="f"><label for="fuelT">Current heating fuel</label>
+          <select id="fuelT"><option value="oil" selected>Heating oil</option><option value="propane">Propane</option></select></div>
+        <div class="f"><label for="fuelP">Fuel price ($/gal)</label><input id="fuelP" type="number" step="0.05" value="3.60"></div>
+        <div class="f"><label for="fEsc">Fuel escalation (%/yr)</label><input id="fEsc" type="number" step="0.5" value="3"></div>
+        <div class="f"><label for="infl">General inflation (%/yr)</label><input id="infl" type="number" step="0.5" value="2.5"></div>
+        <div class="f"><label for="disc">Discount rate (%/yr)</label><input id="disc" type="number" step="0.5" value="3"></div>
+        <div class="f"><label for="grid">Grid CO₂ (lb/kWh)</label><input id="grid" type="number" step="0.05" value="0.55"></div>
+        <p class="hint">Typical 2026 Massachusetts prices: oil about $3.60/gal, propane about $3.40/gal. Maintenance and replacements rise with general inflation.</p>
+      </section>
+
+      <section class="group">
+        <h2>Current system <span>Hydronic + window AC</span></h2>
+        <div class="f"><label for="afue">Boiler seasonal efficiency (%)</label><input id="afue" type="number" step="1" value="82"></div>
+        <div class="f"><label for="bSvc">Boiler service ($/yr)</label><input id="bSvc" type="number" step="25" value="350"></div>
+        <div class="f"><label for="bLife">Boiler life left (yr, 0 = none)</label><input id="bLife" type="number" min="0" max="30" step="1" value="10"></div>
+        <div class="f"><label for="bCost">Boiler replacement ($)</label><input id="bCost" type="number" step="500" value="11000"></div>
+        <div class="f"><label for="wN">Window AC units</label><input id="wN" type="number" min="0" max="20" step="1" value="5"></div>
+        <div class="f"><label for="wCost">Window unit price ($)</label><input id="wCost" type="number" step="25" value="450"></div>
+        <div class="f"><label for="wEer">Window unit CEER</label><input id="wEer" type="number" step="0.5" value="11"></div>
+        <p class="hint">Hot water comes from an indirect tank on the boiler. Window units last 5 years and cool only the rooms they sit in; the model assumes they meet 70% of the cooling load.</p>
+      </section>
+
+      <section class="group">
+        <h2>Air-source refit <span>Cold-climate ducted</span></h2>
+        <div class="f"><label for="aTon">Installed $/ton (equipment)</label><input id="aTon" type="number" step="100" value="4800"></div>
+        <div class="f"><label for="aCop5">COP at 5 °F</label><input id="aCop5" type="number" step="0.1" value="1.9"></div>
+        <div class="f"><label for="aCop47">COP at 47 °F</label><input id="aCop47" type="number" step="0.1" value="3.6"></div>
+        <div class="f"><label for="aCap5">Capacity at 5 °F (% of rated)</label><input id="aCap5" type="number" step="1" value="80"></div>
+        <div class="f"><label for="aSeer">Cooling SEER2</label><input id="aSeer" type="number" step="0.5" value="18"></div>
+        <div class="f"><label for="aLife">Outdoor unit life (yr)</label><input id="aLife" type="number" min="5" max="30" step="1" value="15"></div>
+        <div class="f"><label for="aReb">Mass Save rebate ($)</label><input id="aReb" type="number" step="500" value="8500"></div>
+        <p class="hint">Same ductwork and zoning as the ground-source system, plus a heat-pump water heater (13-year life). Outdoor units are replaced at end of life at 45% of the original equipment price.</p>
+      </section>
+
+      <section class="group">
+        <h2>Cost assumptions <span>2026 $</span></h2>
+        <div class="f"><label for="cDrill">Drilling + loop + grout ($/ft)</label><input id="cDrill" type="number" step="1" value="30"></div>
+        <div class="f"><label for="cTon">Heat pump ($/ton)</label><input id="cTon" type="number" step="100" value="2600"></div>
+        <div class="f"><label for="cDist">Ductwork ($/sq ft)</label><input id="cDist" type="number" step="0.25" value="2.5"></div>
+        <div class="f"><label for="cZone">Zone controls ($/zone)</label><input id="cZone" type="number" step="50" value="1100"></div>
+        <div class="f"><label for="maint">Maintenance ($/yr)</label><input id="maint" type="number" step="25" value="250"></div>
+        <div class="f"><label for="rebate">Mass Save rebate ($)</label><input id="rebate" type="number" step="500" value="13500"></div>
+        <div class="f"><label for="itc">Federal tax credit (%)</label><input id="itc" type="number" step="1" value="0"></div>
+        <p class="hint">2026 Mass Save whole-home geothermal rebate is $13,500 (up to $25,000 with income-based eligibility); the 30% federal credit ended for systems placed in service after 2025. Confirm current rules before relying on them.</p>
+      </section>
+    </aside>
+
+    <main>
+      <section class="kpis" aria-label="Headline results">
+        <div class="kpi"><div class="k">Design heat loss</div><div class="v" id="k_dl"></div><div class="s" id="s_dl"></div></div>
+        <div class="kpi"><div class="k">Heat pump</div><div class="v" id="k_tons"></div><div class="s" id="s_tons"></div></div>
+        <div class="kpi" id="kb_bore"><div class="k">Bore length</div><div class="v" id="k_bore"></div><div class="s" id="s_bore"></div></div>
+        <div class="kpi" id="kb_ewt"><div class="k">Coldest EWT</div><div class="v" id="k_ewt"></div><div class="s" id="s_ewt"></div></div>
+        <div class="kpi"><div class="k">Electricity, year 1</div><div class="v" id="k_kwh"></div><div class="s" id="s_kwh"></div></div>
+        <div class="kpi"><div class="k">Operating cost, year 1</div><div class="v" id="k_cost"></div><div class="s" id="s_cost"></div></div>
+        <div class="kpi"><div class="k">Seasonal COP</div><div class="v" id="k_scop"></div><div class="s" id="s_scop"></div></div>
+        <div class="kpi" id="kb_pb"><div class="k">Net installed</div><div class="v" id="k_net"></div><div class="s" id="s_net"></div></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h3>The year by month</h3>
+          <div class="legend"><span><i style="background:var(--heat)"></i>Heating</span><span><i style="background:var(--aux)"></i>Backup heat</span><span><i style="background:var(--cool)"></i>Cooling</span><span><i style="background:var(--dhw)"></i>Hot water</span><span><i style="background:var(--pump)"></i>Loop pump</span><span><i style="background:var(--ink);height:2px;vertical-align:3px"></i>Cost</span></div></div>
+        <canvas id="cMonth" class="chart" data-h="260" aria-label="Monthly electricity use by end use with monthly cost"></canvas>
+        <div class="tbl-wrap" style="margin-top:10px"><table class="t" id="tMonth"></table></div>
+      </section>
+
+      <div class="duo">
+        <section class="card">
+          <div class="card-head"><h3>Ground temperature with depth</h3>
+            <div class="legend"><span><i style="background:var(--soil)"></i>Undisturbed mean</span><span><i style="background:var(--soil);opacity:.25"></i>Seasonal range</span><span><i style="background:var(--cool);opacity:.2"></i>Bore field</span></div></div>
+          <canvas id="cDepth" class="chart" data-h="300" aria-label="Ground temperature profile against depth"></canvas>
+          <p class="note" id="n_depth"></p>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Entering water temperature</h3>
+            <div class="legend"><span><i style="background:var(--cool)"></i>Year 1</span><span><i style="background:var(--heat)"></i>Year 10</span><span><i style="background:var(--warn)"></i>30 °F floor</span></div></div>
+          <canvas id="cEwt" class="chart" data-h="300" aria-label="Monthly loop entering water temperature, years 1 and 10"></canvas>
+          <p class="note" id="n_ewt"></p>
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="card-head"><h3>Ten-year projection, annual cost</h3>
+          <div class="legend"><span><i style="background:var(--cool)"></i>Ground source</span><span><i style="background:var(--ashp)"></i>Air source</span><span><i style="background:var(--base)"></i>Current oil/propane + window AC</span><span><i style="border:1.5px solid var(--ink);background:transparent"></i>Replacements</span></div></div>
+        <canvas id="cProj" class="chart" data-h="240" aria-label="Annual cost for ten years: ground source, air source and the current system"></canvas>
+        <div class="tbl-wrap" style="margin-top:10px"><table class="t" id="tProj"></table></div>
+        <p class="note" id="n_proj"></p>
+      </section>
+
+      <div class="duo">
+        <section class="card">
+          <div class="card-head"><h3>Installed cost, year 0</h3><span class="chip ok" id="chipInst"></span></div>
+          <div class="tbl-wrap"><table class="t" id="tInst"></table></div>
+          <p class="note">Planning-level estimate for eastern Massachusetts. Get two or three drilling and installer quotes before budgeting.</p>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Alternatives, year 0</h3></div>
+          <div class="tbl-wrap"><table class="t" id="tAlt"></table></div>
+          <p class="note" id="n_alt"></p>
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="card-head"><h3>20-year comparison</h3>
+          <div class="legend"><span><i style="background:var(--cool)"></i>Ground source</span><span><i style="background:var(--ashp)"></i>Air source refit</span><span><i style="background:var(--base)"></i>Current oil/propane + window AC</span></div></div>
+        <canvas id="cOp" class="chart" data-h="230" aria-label="Cumulative 20-year cost including installation and replacements for the three systems"></canvas>
+        <p class="note" style="margin-top:2px">Cumulative cost: year-0 installation, then energy, maintenance and replacements, in nominal dollars.</p>
+        <div class="tbl-wrap" style="margin-top:8px"><table class="t" id="tCmp"></table></div>
+      </section>
+
+      <section class="card notes">
+        <div>
+          <h3>How the model works</h3>
+          <p><b>Loads.</b> Heat loss is the envelope coefficient (Btu/h·°F per sq ft) times the area. Monthly heating is that coefficient × HDD × 24 × 0.85, where the 0.85 accounts for internal and solar gains beyond what the 65 °F base already assumes. Cooling is coefficient × CDD × 24 × 1.6, which adds solar gain and latent (dehumidification) load. Design loads use the design temperatures. Zones split the area for the per-zone figures and add zone-control cost.</p>
+          <p><b>Hot water.</b> Use is 12 + 17 gallons a day per occupant. Cold-water mains temperature follows the U.S. DOE Building America correlation from the monthly air temperatures, which lags and damps the air swing.</p>
+          <p><b>Ground.</b> The undisturbed temperature at depth y is the surface mean plus the geothermal gradient, plus a seasonal wave that shrinks as e<sup>−y/d</sup> and lags by y/d radians, where the damping depth is d = √(365·α/π). The surface mean and swing come from the climate table, plus 2 °F for snow and ground cover. Below about 30 ft the season disappears.</p>
+          <p><b>Loop.</b> Each month the net heat pulled from (or pushed into) the ground is spread over the total bore length. The ground answers as an infinite line source around each well (exponential-integral solution), plus the interference from its neighbours, which are laid out in a row at the given spacing. The model superposes every month's load step over 20 years, so the field slowly cools when it gives up more heat in winter than it gets back in summer. Entering water temperature is the undisturbed bore temperature minus that ground response and a 0.15 h·ft·°F/Btu borehole resistance. The design-hour check adds a six-hour peak pulse at the design heat load.</p>
+          <p><b>Heat pump.</b> Heating COP and capacity rise with entering water temperature (+0.03 COP and +0.8% capacity per °F, from the rating at 32 °F). Cooling EER falls by 0.25 per °F above 77 °F. When capacity is below the design load, the shortfall comes from resistance backup, estimated from how far short it falls. The loop pump draws 80 W per ton while the compressor runs.</p>
+          <p><b>Current system.</b> The oil or propane boiler burns fuel at its seasonal efficiency for space heat. It heats water through an indirect tank at 85% of that efficiency. Burner and circulators use 5 kWh per MBtu. Fuel energy content is 138,500 Btu/gal for oil and 91,500 for propane. CO₂ is 22.4 lb/gal for oil and 12.7 for propane. Window units meet about 70% of the cooling load at their CEER and are replaced every 5 years. The boiler is replaced once, in the year you set.</p>
+          <p><b>Air-source refit.</b> A cold-climate ducted heat pump is sized so its output at the heating design temperature covers the design load. Its COP and capacity vary linearly between the 5 °F and 47 °F ratings. Each month is split into nine temperature bins (±2 standard deviations of 8 °F around the monthly mean). Any shortfall below the balance point comes from resistance heat. A monthly model understates the coldest nights, so real backup use will be somewhat higher. Hot water comes from a heat-pump water heater at COP 3.3. Outdoor units last the number of years you set (15 is typical in New England) and cost 45% of the original equipment to replace.</p>
+          <p><b>Costs.</b> Prices escalate at the rates given. The 20-year card adds maintenance (escalating with electricity) and shows the present value at the discount rate. The heat pump unit typically lasts 20–25 years and the bore field 50+, so no replacement is included.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const MID = [15, 46, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349];
+  // Wellesley, MA: estimated monthly normals (base 65 °F) from nearby Boston-area stations
+  const WELLESLEY = { hdd: [1150, 990, 860, 540, 250, 60, 8, 15, 110, 400, 680, 1010], cdd: [0, 0, 0, 3, 25, 120, 270, 230, 75, 6, 0, 0] };
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const fmt = (v, d = 0) => (Math.abs(v) < 0.5 * 10 ** -d ? 0 : v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const usd = (v, d = 0) => `${v < 0 ? '−' : ''}$${fmt(Math.abs(v), d)}`;
+  const BTU_KWH = 3412.14;
+
+  // ---------- degree-day table ----------
+  const tb = $('ddt').querySelector('tbody');
+  tb.innerHTML = MONTHS.map((m, i) => `<tr><td>${m}</td><td><input id="h${i}" type="number" min="0" step="1" aria-label="${m} HDD"></td><td><input id="c${i}" type="number" min="0" step="1" aria-label="${m} CDD"></td><td class="mono" id="tm${i}" style="text-align:right"></td></tr>`).join('');
+  function loadDD(src) { for (let i = 0; i < 12; i++) { $('h' + i).value = src.hdd[i]; $('c' + i).value = src.cdd[i]; } }
+  loadDD(WELLESLEY);
+  $('resetDD').addEventListener('click', () => { loadDD(WELLESLEY); recalc(); });
+
+  const num = id => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : 0; };
+
+  // ---------- model ----------
+  function model() {
+    const I = {
+      lat: num('lat'), lon: num('lon'), A: Math.max(100, num('A')), Z: Math.max(1, Math.round(num('Z'))), occ: Math.max(1, num('occ')),
+      ua: +$('env').value, Tin: num('Tin'), Tdes: num('Tdes'), Tcd: num('Tcd'),
+      Nw: Math.max(1, Math.round(num('Nw'))), Dw: Math.max(50, num('Dw')), sp: Math.max(5, num('sp')), k: Math.max(0.3, num('kg')), grad: num('grad') / 100, alpha: Math.max(0.05, num('alpha')),
+      tons: num('tons'), cop32: num('cop32'), eer77: num('eer77'), copD: +$('dhwMode').value, dhwT: num('dhwT'),
+      elec: num('elec'), eEsc: num('eEsc') / 100, fuelT: $('fuelT').value, fuelP: num('fuelP'), fEsc: num('fEsc') / 100, infl: num('infl') / 100, disc: num('disc') / 100, grid: num('grid'),
+      afue: Math.max(0.3, num('afue') / 100), bSvc: num('bSvc'), bLife: Math.max(0, Math.round(num('bLife'))), bCost: num('bCost'), wN: Math.max(0, Math.round(num('wN'))), wCost: num('wCost'), wEer: Math.max(5, num('wEer')),
+      aTon: num('aTon'), aCop5: num('aCop5'), aCop47: num('aCop47'), aCap5: num('aCap5') / 100, aSeer: Math.max(8, num('aSeer')), aLife: Math.max(5, Math.round(num('aLife'))), aReb: num('aReb'),
+      cDrill: num('cDrill'), cTon: num('cTon'), cDist: num('cDist'), cZone: num('cZone'), maint: num('maint'), rebate: num('rebate'), itc: num('itc') / 100,
+    };
+    const hdd = MONTHS.map((_, i) => Math.max(0, num('h' + i))), cdd = MONTHS.map((_, i) => Math.max(0, num('c' + i)));
+    const Tair = hdd.map((h, i) => 65 - h / DAYS[i] + cdd[i] / DAYS[i]);
+    const Tmean = Tair.reduce((a, t, i) => a + t * DAYS[i], 0) / 365;
+    const Tamp = (Math.max(...Tair) - Math.min(...Tair)) / 2;
+    const coldDay = MID[Tair.indexOf(Math.min(...Tair))];
+
+    // building loads
+    const UA = I.ua * I.A;                                   // Btu/h·°F
+    const DL = UA * (I.Tin - I.Tdes);                        // design heating, Btu/h
+    const CL = UA * (I.Tcd - 75) * 1.6 + 400 * I.occ + 1.2 * I.A; // design cooling incl. people and solar
+    const qHeat = hdd.map(h => UA * h * 24 * 0.85);          // Btu/month
+    const qCool = cdd.map(c => UA * c * 24 * 1.6);
+    // hot water: DOE Building America mains temperature
+    const ratio = 0.4 + 0.01 * (Tmean - 44), lag = 35 - (Tmean - 44);
+    const Tmains = MID.map(d => (Tmean + 6) + ratio * Tamp * Math.sin((0.986 * (d - 15 - lag) - 90) * Math.PI / 180));
+    const gpd = 12 + 17 * I.occ;
+    const qDhw = Tmains.map((tm, i) => (gpd * 8.33 * Math.max(0, I.dhwT - tm) + 1500) * DAYS[i]);
+
+    // heat pump size
+    const autoTons = Math.max(1.5, Math.ceil(Math.max(DL * 0.9, CL) / 12000 * 2) / 2);
+    const tons = I.tons > 0 ? I.tons : autoTons;
+
+    // ground temperature profile
+    const Tsurf = Tmean + 2, Asurf = Tamp * 0.8, dd = Math.sqrt(365 * I.alpha / Math.PI);
+    const Tg = (y, day) => Tsurf + I.grad * y - Asurf * Math.exp(-y / dd) * Math.cos(2 * Math.PI * (day - coldDay) / 365 - y / dd);
+    const L = I.Nw * I.Dw;                                   // total bore ft
+    const Tbore = Tsurf + I.grad * I.Dw / 2;                 // bore-average undisturbed (season vanishes below ~30 ft)
+    // borehole field response: infinite line source per bore + neighbour interference (wells in a row), monthly superposition
+    const RB = 0.15, rb = 0.25, GAMMA = 0.5772;
+    const E1 = x => { // exponential integral, series for small x, continued fraction for large
+      if (x <= 0) return 40;
+      if (x < 1) { let s = -GAMMA - Math.log(x), t = 1; for (let n = 1; n < 30; n++) { t *= -x / n; s -= t / n; } return s; }
+      let f = 0; for (let n = 40; n >= 1; n--) f = n / (1 + n / (x + f)); return Math.exp(-x) / (x + f);
+    };
+    const neigh = []; for (let i = 0; i < I.Nw; i++) for (let j = 0; j < I.Nw; j++) if (i !== j) neigh.push(Math.abs(i - j) * I.sp);
+    const G = tDays => { // h·ft·°F/Btu temperature rise per unit Btu/h·ft step, averaged over the wells
+      const at = I.alpha * tDays;
+      let g = E1(rb * rb / (4 * at));
+      for (const r of neigh) g += E1(r * r / (4 * at)) / I.Nw;
+      return g / (4 * Math.PI * I.k);
+    };
+    const Gm = Array.from({ length: 242 }, (_, n) => n ? G(n * 30.42 - 15.2) : 0); // response at mid-month, n months after a load step at a month start
+    const Rhr = RB + G(0.25);                                 // six-hour design pulse
+
+    const copH = ewt => clamp(I.cop32 + 0.03 * (ewt - 32), 1.8, 6);
+    const capF = ewt => clamp(1 + 0.008 * (ewt - 32), 0.6, 1.3);
+    const eer = ewt => clamp(I.eer77 - 0.25 * (ewt - 77), 8, 40);
+    const dhwOnLoop = I.copD > 2 && I.copD < 3;               // desuperheater draws its heat from the ground loop
+
+    // 20 years of months, superposing the ground response to each month's net extraction
+    const qHist = [];
+    const years = [];
+    let rows = [];
+    const capNom = tons * 12000;
+    for (let m = 0; m < 240; m++) {
+      const i = m % 12, hours = DAYS[i] * 24;
+      let past = 0; // temperature drop from earlier months' load steps, evaluated at this month
+      for (let j = 0; j < m; j++) past += (qHist[j] - (j ? qHist[j - 1] : 0)) * Gm[m - j + 1];
+      let ewt = Tbore - past, cop = copH(ewt), copC = eer(Math.max(ewt, 40)) / 3.412, q = 0;
+      for (let it = 0; it < 10; it++) {
+        const ext = qHeat[i] * (1 - 1 / cop) + (dhwOnLoop ? qDhw[i] * (1 - 1 / I.copD) : 0);
+        const rej = qCool[i] * (1 + 1 / copC);
+        q = (ext - rej) / hours / L;
+        const step = q - (m ? qHist[m - 1] : 0);
+        ewt = Tbore - past - step * Gm[1] - q * RB;
+        cop = copH(ewt); copC = eer(Math.max(ewt, 40)) / 3.412;
+      }
+      qHist.push(q);
+      const cap = capNom * capF(ewt);
+      const short = DL > 0 ? Math.max(0, 1 - cap / DL) : 0;
+      const auxQ = qHeat[i] * 0.35 * short * short, hpQ = qHeat[i] - auxQ;
+      const kHeat = hpQ / cop / BTU_KWH, kAux = auxQ / BTU_KWH, kCool = qCool[i] / copC / BTU_KWH, kDhw = qDhw[i] / I.copD / BTU_KWH;
+      const run = Math.min(hours, (hpQ + qCool[i]) / Math.max(cap, 1)), kPump = run * 0.08 * tons;
+      const qPk = hdd[i] > 0 ? DL * (1 - 1 / cop) / L : 0;
+      const ewtHour = ewt - Math.max(0, qPk - Math.max(q, 0)) * Rhr;
+      rows.push({ ewt, ewtHour, cop, copC, kHeat, kAux, kCool, kDhw, kPump, kWh: kHeat + kAux + kCool + kDhw + kPump, run, hpQ, auxQ, q });
+      if (i === 11) {
+        const r = rows, sum = k => r.reduce((a, x) => a + x[k], 0);
+        years.push({ rows: r, kWh: sum('kWh'), sum, ewtMin: Math.min(...r.map(x => x.ewt)), ewtMinHour: Math.min(...r.map(x => x.ewtHour)) });
+        rows = [];
+      }
+    }
+    const y1 = years[0];
+    const qNet = years[0].rows.reduce((a, x, i) => a + x.q * DAYS[i], 0) / 365;
+    const Rm = RB + Gm[1];
+
+    // ---- alternative 1: current oil/propane hydronic boiler + indirect hot water + window AC
+    const FUEL = { oil: { btu: 138500, co2: 22.4, name: 'oil' }, propane: { btu: 91500, co2: 12.7, name: 'propane' } }[I.fuelT];
+    const sum12 = a => a.reduce((x, y) => x + y, 0);
+    const heatYr = sum12(qHeat), coolYr = sum12(qCool), dhwYr = sum12(qDhw);
+    const cur = (() => {
+      const gal = (heatYr / I.afue + dhwYr / (I.afue * 0.85)) / FUEL.btu;
+      const coolServed = I.wN > 0 ? coolYr * 0.7 : 0;
+      const kWhAc = coolServed / I.wEer / 1000;
+      const kWhAux = (heatYr + dhwYr) / 1e6 * 5;                       // burner + circulators
+      return { gal, kWh: kWhAc + kWhAux, kWhAc, coolServed, heatEff: I.afue, coolEff: I.wEer / 3.412,
+        co2: gal * FUEL.co2 + (kWhAc + kWhAux) * I.grid, monthGal: MONTHS.map((_, i) => (qHeat[i] / I.afue + qDhw[i] / (I.afue * 0.85)) / FUEL.btu) };
+    })();
+
+    // ---- alternative 2: cold-climate air-source heat pump, whole-house refit, heat-pump water heater
+    const aCop = T => clamp(I.aCop5 + (I.aCop47 - I.aCop5) * (T - 5) / 42, 1.2, I.aCop47 + 0.6);
+    const aCapF = T => clamp(I.aCap5 + (1 - I.aCap5) * (T - 5) / 42, 0.5, 1.05);
+    // sized so capacity at the design temperature covers the design load
+    const aTons = Math.max(1.5, Math.ceil(Math.max(DL / (12000 * aCapF(I.Tdes)), CL / 12000) * 2) / 2);
+    const ZB = [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2], WB = ZB.map(z => Math.exp(-z * z / 2)), WS = WB.reduce((a, b) => a + b);
+    const ash = (() => {
+      let kHeat = 0, kAux = 0, kCool = 0, heatServed = 0;
+      const monthK = [];
+      for (let i = 0; i < 12; i++) {
+        const bins = ZB.map((z, b) => { const T = Tair[i] + 8 * z; return { T, w: WB[b] / WS, dh: WB[b] / WS * Math.max(0, 65 - T) }; });
+        const dsum = bins.reduce((a, x) => a + x.dh, 0);
+        let kh = 0, ka = 0;
+        if (qHeat[i] > 0 && dsum > 0) for (const x of bins) {
+          const q = qHeat[i] * x.dh / dsum, need = UA * (I.Tin - x.T), cap = aTons * 12000 * aCapF(x.T);
+          const short = need > cap ? (need - cap) / need : 0;
+          kh += q * (1 - short) / aCop(x.T) / BTU_KWH; ka += q * short / BTU_KWH;
+        }
+        const kc = qCool[i] / (I.aSeer * 0.95) / 1000;
+        kHeat += kh; kAux += ka; kCool += kc; heatServed += qHeat[i];
+        monthK.push(kh + ka + kc + qDhw[i] / 3.3 / BTU_KWH);
+      }
+      const kDhw = dhwYr / 3.3 / BTU_KWH;
+      const kWh = kHeat + kAux + kCool + kDhw;
+      return { kWh, kHeat, kAux, kCool, kDhw, monthK, scop: heatServed / BTU_KWH / (kHeat + kAux), coolEff: I.aSeer * 0.95 / 3.412, co2: kWh * I.grid };
+    })();
+
+    // installed cost, year 0
+    const drill = L * I.cDrill;
+    const header = 3000 + 1200 * I.Nw;
+    const unit = 4500 + tons * I.cTon;
+    const flow = 1800;
+    const dist = I.A * I.cDist;
+    const zones = I.Z * I.cZone;
+    const dhw = I.copD > 2.5 && I.copD < 3 ? 2200 : I.copD >= 3 ? 3200 : 1200;
+    const elecW = 2500;
+    const sub = drill + header + unit + flow + dist + zones + dhw + elecW;
+    const soft = sub * 0.06;
+    const gross = sub + soft;
+    const credit = (gross - I.rebate) * I.itc;
+    const net = gross - I.rebate - credit;
+    const aEquip = 6000 + aTons * I.aTon, aSub = aEquip + dist + zones + 3200 + 3000, aGross = aSub * 1.06;
+    const aCredit = (aGross - I.aReb) * I.itc, aNet = aGross - I.aReb - aCredit;
+    const instA = { equip: aEquip, gross: aGross, net: aNet, rebate: I.aReb, credit: aCredit };
+    const inst = { items: [['Drilling, loop pipe and grout', drill, `${I.Nw} × ${fmt(I.Dw)} ft = ${fmt(L)} ft`], ['Trenching, headers and manifold', header, `${I.Nw} wells`],
+      ['Heat pump unit', unit, `${fmt(tons, 1)} tons`], ['Flow center and pumps', flow, ''], ['Ductwork and air handling', dist, `${fmt(I.A)} sq ft`],
+      ['Zone controls', zones, `${I.Z} zones`], ['Hot water equipment', dhw, $('dhwMode').selectedOptions[0].text.replace(/ \(.*/, '')], ['Electrical service work', elecW, ''],
+      ['Design, permits, commissioning', soft, '6%']], gross, rebate: I.rebate, credit, net };
+
+    // operating costs by year for all three systems (year n+1, prices escalate from year 1)
+    const scopG = y => (heatYr + coolYr) / BTU_KWH / (y.kWh - y.sum('kDhw'));
+    const proj = years.map((y, n) => {
+      const e = I.elec * (1 + I.eEsc) ** n, f = I.fuelP * (1 + I.fEsc) ** n, inf = (1 + I.infl) ** n, yr = n + 1;
+      const g = { energy: y.kWh * e, maint: I.maint * inf, repl: 0 };
+      const a = { energy: ash.kWh * e, maint: 300 * inf, repl: (yr % I.aLife === 0 ? aEquip * 0.45 * inf : 0) + (yr % 13 === 0 ? 3200 * inf : 0) };
+      const c = { energy: cur.gal * f + cur.kWh * e, maint: I.bSvc * inf,
+        repl: (yr % 5 === 0 ? I.wN * I.wCost * inf : 0) + (I.bLife > 0 && (yr === I.bLife || (yr - I.bLife) % 25 === 0 && yr > I.bLife) ? I.bCost * inf : 0) };
+      for (const o of [g, a, c]) o.total = o.energy + o.maint + o.repl;
+      return { n: yr, kWh: y.kWh, rate: e, fuel: f, g, a, c, gshp: g.energy, maint: g.maint, total: g.total, ewtMin: y.ewtMin, scop: scopG(y) };
+    });
+    const pv = (v, n) => v / (1 + I.disc) ** n;
+
+    return { I, hdd, cdd, Tair, Tmean, Tamp, UA, DL, CL, qHeat, qCool, qDhw, Tmains, gpd, tons, autoTons, Tg, Tsurf, Asurf, dd, L, Tbore, Rm, Rhr, y1, years, qNet, inst, instA, aTons, cur, ash, FUEL, proj, pv, coldDay, heatYr, coolYr };
+  }
+
+  // ---------- drawing ----------
+  let tok = {};
+  function readTokens() { const cs = getComputedStyle(document.documentElement); for (const k of ['bg', 'panel', 'raised', 'ink', 'muted', 'line', 'soil', 'heat', 'cool', 'dhw', 'aux', 'pump', 'base', 'ashp', 'ok', 'warn']) tok[k] = cs.getPropertyValue('--' + k).trim(); }
+  function fit(cv) {
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = +cv.dataset.h;
+    cv.style.height = h + 'px';
+    if (cv.width !== Math.round(w * dpr)) cv.width = Math.round(w * dpr);
+    if (cv.height !== Math.round(h * dpr)) cv.height = Math.round(h * dpr);
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+    ctx.font = '400 11px "IBM Plex Mono", monospace';
+    return { ctx, w, h };
+  }
+  function nice(span, n) { const raw = span / n, p = 10 ** Math.floor(Math.log10(raw)); return [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw); }
+  function axisY(ctx, x0, x1, top, bot, lo, hi, fmtv, side = 'left') {
+    const st = nice(hi - lo || 1, 4), a = Math.floor(lo / st) * st, b = Math.ceil(hi / st) * st;
+    const Y = v => bot - (v - a) / (b - a) * (bot - top);
+    ctx.fillStyle = tok.muted; ctx.textBaseline = 'middle'; ctx.textAlign = side === 'left' ? 'right' : 'left';
+    for (let v = a; v <= b + st * 1e-6; v += st) {
+      if (side === 'left') { ctx.strokeStyle = tok.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, Math.round(Y(v)) + 0.5); ctx.lineTo(x1, Math.round(Y(v)) + 0.5); ctx.stroke(); }
+      ctx.fillText(fmtv(v), side === 'left' ? x0 - 6 : x1 + 6, Y(v));
+    }
+    return Y;
+  }
+
+  function drawMonth(M) {
+    const { ctx, w, h } = fit($('cMonth'));
+    const m = { l: 58, r: 54, t: 10, b: 26 }, pw = w - m.l - m.r;
+    const rows = M.y1.rows, max = Math.max(...rows.map(r => r.kWh)) * 1.08;
+    const Y = axisY(ctx, m.l, w - m.r, m.t, h - m.b, 0, max, v => fmt(v));
+    const costs = rows.map(r => r.kWh * M.I.elec), cmax = Math.max(...costs) * 1.08;
+    const Yc = axisY(ctx, m.l, w - m.r, m.t, h - m.b, 0, cmax, v => '$' + fmt(v), 'right');
+    const bw = pw / 12;
+    rows.forEach((r, i) => {
+      let y = Y(0);
+      for (const [k, c] of [['kHeat', 'heat'], ['kAux', 'aux'], ['kCool', 'cool'], ['kDhw', 'dhw'], ['kPump', 'pump']]) {
+        const hgt = Y(0) - Y(r[k]);
+        ctx.fillStyle = tok[c]; ctx.fillRect(m.l + i * bw + bw * 0.18, y - hgt, bw * 0.64, hgt); y -= hgt;
+      }
+      ctx.fillStyle = tok.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(MONTHS[i], m.l + (i + 0.5) * bw, h - m.b + 7);
+    });
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2; ctx.beginPath();
+    costs.forEach((c, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, m.l + (i + 0.5) * bw, Yc(c))); ctx.stroke();
+    ctx.fillStyle = tok.ink; costs.forEach((c, i) => { ctx.beginPath(); ctx.arc(m.l + (i + 0.5) * bw, Yc(c), 2.8, 0, Math.PI * 2); ctx.fill(); });
+    ctx.save(); ctx.translate(12, (m.t + h - m.b) / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center'; ctx.fillStyle = tok.muted; ctx.fillText('kWh', 0, 0); ctx.restore();
+  }
+
+  function drawDepth(M) {
+    const { ctx, w, h } = fit($('cDepth'));
+    const m = { l: 54, r: 14, t: 22, b: 30 };
+    const Dmax = Math.max(100, M.I.Dw * 1.15);
+    const ys = []; for (let y = 0; y <= Dmax; y += Dmax / 120) ys.push(y);
+    const prof = ys.map(y => { let lo = Infinity, hi = -Infinity; for (let d = 0; d < 365; d += 7) { const t = M.Tg(y, d); lo = Math.min(lo, t); hi = Math.max(hi, t); } return { y, lo, hi, mean: M.Tsurf + M.I.grad * y }; });
+    const tlo = Math.min(...prof.map(p => p.lo)) - 2, thi = Math.max(...prof.map(p => p.hi)) + 2;
+    const st = nice(thi - tlo, 5), a = Math.floor(tlo / st) * st, b = Math.ceil(thi / st) * st;
+    const X = t => m.l + (t - a) / (b - a) * (w - m.l - m.r), Y = y => m.t + y / Dmax * (h - m.t - m.b);
+    ctx.fillStyle = tok.cool; ctx.globalAlpha = 0.12; ctx.fillRect(m.l, Y(0), w - m.l - m.r, Y(M.I.Dw) - Y(0)); ctx.globalAlpha = 1;
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'right'; ctx.fillStyle = tok.muted;
+    const ds = nice(Dmax, 5);
+    for (let y = 0; y <= Dmax; y += ds) { ctx.strokeStyle = tok.line; ctx.beginPath(); ctx.moveTo(m.l, Math.round(Y(y)) + .5); ctx.lineTo(w - m.r, Math.round(Y(y)) + .5); ctx.stroke(); ctx.fillText(`${fmt(y)} ft`, m.l - 6, Y(y)); }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    for (let t = a; t <= b + 1e-6; t += st) { ctx.strokeStyle = tok.line; ctx.beginPath(); ctx.moveTo(Math.round(X(t)) + .5, m.t); ctx.lineTo(Math.round(X(t)) + .5, h - m.b); ctx.stroke(); ctx.fillText(`${fmt(t)}°`, X(t), m.t - 5); }
+    ctx.fillStyle = tok.soil; ctx.globalAlpha = 0.22; ctx.beginPath();
+    prof.forEach((p, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(p.lo), Y(p.y))); [...prof].reverse().forEach(p => ctx.lineTo(X(p.hi), Y(p.y))); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = tok.soil; ctx.lineWidth = 2.2; ctx.beginPath(); prof.forEach((p, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(p.mean), Y(p.y))); ctx.stroke();
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = tok.cool; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(m.l, Y(M.I.Dw)); ctx.lineTo(w - m.r, Y(M.I.Dw)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = tok.cool; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(`well bottom ${fmt(M.I.Dw)} ft`, m.l + 6, Y(M.I.Dw) - 3);
+    ctx.fillStyle = tok.ink; ctx.beginPath(); ctx.arc(X(M.Tbore), Y(M.I.Dw / 2), 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(` bore average ${fmt(M.Tbore, 1)} °F`, X(M.Tbore) + 6, Y(M.I.Dw / 2));
+    ctx.fillStyle = tok.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText('Temperature (°F) · depth below grade', (m.l + w - m.r) / 2, h - m.b + 10);
+  }
+
+  function drawEwt(M) {
+    const { ctx, w, h } = fit($('cEwt'));
+    const m = { l: 46, r: 12, t: 10, b: 26 }, pw = w - m.l - m.r;
+    const a = M.y1.rows.map(r => r.ewt), b = M.years[9].rows.map(r => r.ewt);
+    const lo = Math.min(28, ...a, ...b) - 2, hi = Math.max(...a, ...b, M.Tbore) + 2;
+    const Y = axisY(ctx, m.l, w - m.r, m.t, h - m.b, lo, hi, v => `${fmt(v)}°`);
+    const X = i => m.l + (i + 0.5) * pw / 12;
+    ctx.fillStyle = tok.warn; ctx.globalAlpha = 0.12; ctx.fillRect(m.l, Y(30), pw, Y(lo) - Y(30) + 20); ctx.globalAlpha = 1;
+    ctx.strokeStyle = tok.warn; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(m.l, Y(30)); ctx.lineTo(w - m.r, Y(30)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = tok.muted; ctx.setLineDash([2, 4]); ctx.beginPath(); ctx.moveTo(m.l, Y(M.Tbore)); ctx.lineTo(w - m.r, Y(M.Tbore)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = tok.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText(`undisturbed ${fmt(M.Tbore, 1)}°`, w - m.r - 4, Y(M.Tbore) - 3);
+    for (const [arr, c] of [[a, 'cool'], [b, 'heat']]) {
+      ctx.strokeStyle = tok[c]; ctx.lineWidth = 2.2; ctx.beginPath(); arr.forEach((v, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(i), Y(v))); ctx.stroke();
+      ctx.fillStyle = tok[c]; arr.forEach((v, i) => { ctx.beginPath(); ctx.arc(X(i), Y(v), 2.6, 0, Math.PI * 2); ctx.fill(); });
+    }
+    ctx.fillStyle = tok.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    MONTHS.forEach((mn, i) => ctx.fillText(mn, X(i), h - m.b + 7));
+  }
+
+  function drawProj(M) {
+    const { ctx, w, h } = fit($('cProj'));
+    const m = { l: 58, r: 12, t: 10, b: 26 }, pw = w - m.l - m.r;
+    const P10 = M.proj.slice(0, 10), keys = [['g', 'cool'], ['a', 'ashp'], ['c', 'base']];
+    const max = Math.max(...P10.flatMap(p => keys.map(([k]) => p[k].total))) * 1.08;
+    const Y = axisY(ctx, m.l, w - m.r, m.t, h - m.b, 0, max, v => '$' + fmt(v / 1000, v % 1000 ? 1 : 0) + 'k');
+    const bw = pw / 10, gw = bw * 0.25;
+    P10.forEach((p, i) => {
+      keys.forEach(([k, c], j) => {
+        const x = m.l + i * bw + bw * 0.12 + j * gw, o = p[k], yOp = Y(o.energy + o.maint);
+        ctx.fillStyle = tok[c]; ctx.fillRect(x, yOp, gw - 2, Y(0) - yOp);
+        if (o.repl > 0) { ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; ctx.strokeRect(x + 0.75, Y(o.total) + 0.75, gw - 3.5, Math.max(1, yOp - Y(o.total) - 1)); }
+      });
+      ctx.fillStyle = tok.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(`Y${p.n}`, m.l + (i + 0.5) * bw, h - m.b + 7);
+    });
+  }
+
+  function drawOp(M) {
+    const { ctx, w, h } = fit($('cOp'));
+    const narrow = w < 520, m = { l: 58, r: narrow ? 16 : 122, t: 10, b: 24 }, pw = w - m.l - m.r;
+    const series = [['g', 'cool', M.inst.net, 'Ground source'], ['a', 'ashp', M.instA.net, 'Air source'], ['c', 'base', 0, 'Current']].map(([k, c, start, name]) => {
+      const pts = [start]; let s = start; for (const p of M.proj) pts.push(s += p[k].total); return { c, pts, name };
+    });
+    const max = Math.max(...series.flatMap(x => x.pts)) * 1.05;
+    const Y = axisY(ctx, m.l, w - m.r, m.t, h - m.b, 0, max, v => '$' + fmt(v / 1000) + 'k');
+    const X = i => m.l + i / 20 * pw;
+    for (const sr of series) {
+      ctx.strokeStyle = tok[sr.c]; ctx.lineWidth = 2.4; ctx.beginPath(); sr.pts.forEach((v, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(i), Y(v))); ctx.stroke();
+      ctx.fillStyle = tok[sr.c]; ctx.beginPath(); ctx.arc(X(20), Y(sr.pts[20]), 4, 0, Math.PI * 2); ctx.fill();
+    }
+    if (!narrow) {
+      const lab = series.map(sr => ({ y: Y(sr.pts[20]), sr })).sort((a, b) => a.y - b.y);
+      for (let i = 1; i < lab.length; i++) if (lab[i].y - lab[i - 1].y < 28) lab[i].y = lab[i - 1].y + 28;
+      for (const { y, sr } of lab) {
+        ctx.fillStyle = tok[sr.c]; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = '600 12px "Public Sans", sans-serif'; ctx.fillText(sr.name, X(20) + 10, y - 7);
+        ctx.fillStyle = tok.ink; ctx.font = '400 11px "IBM Plex Mono", monospace'; ctx.fillText(usd(sr.pts[20]), X(20) + 10, y + 7);
+      }
+    }
+    ctx.font = '400 11px "IBM Plex Mono", monospace'; ctx.fillStyle = tok.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (const i of [0, 5, 10, 15, 20]) ctx.fillText(`${i} yr`, X(i), h - m.b + 6);
+  }
+
+  // ---------- tables and readouts ----------
+  function render(M) {
+    const I = M.I, y1 = M.y1;
+    $('siteLine').textContent = `${fmt(Math.abs(I.lat), 3)}°${I.lat >= 0 ? 'N' : 'S'}, ${fmt(Math.abs(I.lon), 3)}°${I.lon >= 0 ? 'E' : 'W'} · ${fmt(I.A)} sq ft · ${I.Z} zones · ${I.occ} occupants`;
+    let hT = 0, cT = 0;
+    for (let i = 0; i < 12; i++) { $('tm' + i).textContent = fmt(M.Tair[i], 1); hT += M.hdd[i]; cT += M.cdd[i]; }
+    $('hddT').textContent = fmt(hT); $('cddT').textContent = fmt(cT); $('tmT').textContent = fmt(M.Tmean, 1);
+    const latEst = 109 - 1.4 * Math.abs(I.lat);
+    $('n_env').textContent = `UA ${fmt(M.UA)} Btu/h·°F · ${fmt(M.DL / I.Z / 1000, 1)} kBtu/h heating per zone (${fmt(I.A / I.Z)} sq ft each)`;
+    $('n_loop').textContent = `${fmt(M.L)} ft of bore · ${fmt(M.L / M.tons)} ft/ton · damping depth ${fmt(M.dd, 1)} ft. Latitude alone suggests a ${fmt(latEst, 1)} °F mean air temperature; the climate table gives ${fmt(M.Tmean, 1)} °F.`;
+
+    // KPIs
+    $('k_dl').innerHTML = `${fmt(M.DL / 1000, 1)} <small>kBtu/h</small>`;
+    $('s_dl').textContent = `Cooling ${fmt(M.CL / 1000, 1)} kBtu/h at ${fmt(I.Tcd)} °F`;
+    $('k_tons').innerHTML = `${fmt(M.tons, 1)} <small>tons</small>`;
+    $('s_tons').textContent = I.tons > 0 ? `Manual · auto would be ${fmt(M.autoTons, 1)}` : 'Auto-sized to 90% of design heat';
+    const ftPerTon = M.L / M.tons, boreOK = ftPerTon >= 150;
+    $('k_bore').innerHTML = `${fmt(M.L)} <small>ft</small>`;
+    $('s_bore').textContent = `${fmt(ftPerTon)} ft/ton · ${boreOK ? 'typical for New England' : 'short: 150–200 ft/ton is typical here'}`;
+    $('kb_bore').className = 'kpi ' + (boreOK ? 'good' : 'warn');
+    const minH = Math.min(...M.years.slice(0, 10).map(y => y.ewtMinHour));
+    $('k_ewt').innerHTML = `${fmt(M.years[9].ewtMin, 1)} <small>°F</small>`;
+    $('s_ewt').textContent = `Monthly avg, year 10 · design hour ${fmt(minH, 1)} °F`;
+    $('kb_ewt').className = 'kpi ' + (minH < 25 ? 'warn' : 'good');
+    $('k_kwh').innerHTML = `${fmt(y1.kWh)} <small>kWh</small>`;
+    $('s_kwh').textContent = `Heat ${fmt(y1.sum('kHeat') + y1.sum('kAux'))} · cool ${fmt(y1.sum('kCool'))} · hot water ${fmt(y1.sum('kDhw'))}`;
+    const p1 = M.proj[0];
+    $('k_cost').innerHTML = usd(p1.total);
+    $('s_cost').textContent = `vs ${usd(p1.c.total)} current system · ${usd(p1.a.total)} air source`;
+    $('k_scop').innerHTML = fmt(p1.scop, 2);
+    $('s_scop').textContent = `Heating + cooling, incl. pump and backup`;
+    const extra = M.inst.net;
+    let pb = null, cum = 0; for (const p of M.proj) { cum += p.c.total - p.g.total; if (pb === null && cum >= extra) pb = p.n; }
+    $('k_net').innerHTML = usd(M.inst.net);
+    $('s_net').textContent = pb ? `Pays back against the current system in ${pb} yr` : 'Not repaid against the current system in 20 yr';
+    $('kb_pb').className = 'kpi ' + (pb ? 'good' : 'warn');
+
+    // monthly table
+    const r = y1.rows;
+    const hdr = `<tr><th></th>${MONTHS.map(m => `<th>${m}</th>`).join('')}<th>Year</th></tr>`;
+    const line = (lab, f, d = 0, tot = true) => `<tr><td>${lab}</td>${r.map((x, i) => `<td>${fmt(f(x, i), d)}</td>`).join('')}<td>${tot ? fmt(r.reduce((a, x, i) => a + f(x, i), 0), d) : ''}</td></tr>`;
+    $('tMonth').innerHTML = hdr
+      + line('Heating load, MBtu', (x, i) => M.qHeat[i] / 1e6, 1)
+      + line('Cooling load, MBtu', (x, i) => M.qCool[i] / 1e6, 1)
+      + line('Hot water, MBtu', (x, i) => M.qDhw[i] / 1e6, 1)
+      + line('Mains water, °F', (x, i) => M.Tmains[i], 0, false)
+      + line('EWT, °F', x => x.ewt, 1, false)
+      + line('Heating COP', x => x.cop, 2, false)
+      + line('Compressor hours', x => x.run)
+      + line('Electricity, kWh', x => x.kWh)
+      + `<tr class="tot"><td>Cost</td>${r.map(x => `<td>${usd(x.kWh * I.elec)}</td>`).join('')}<td>${usd(y1.kWh * I.elec)}</td></tr>`;
+
+    // projection table
+    const P10 = M.proj.slice(0, 10);
+    let csG = 0, csA = 0;
+    $('tProj').innerHTML = `<tr><th>Year</th>${P10.map(p => `<th>${p.n}</th>`).join('')}</tr>`
+      + `<tr class="sub"><td>Electricity $/kWh</td>${P10.map(p => `<td>$${fmt(p.rate, 3)}</td>`).join('')}</tr>`
+      + `<tr class="sub"><td>${M.FUEL.name[0].toUpperCase() + M.FUEL.name.slice(1)} $/gal</td>${P10.map(p => `<td>$${fmt(p.fuel, 2)}</td>`).join('')}</tr>`
+      + `<tr class="sub"><td>Coldest EWT, °F</td>${P10.map(p => `<td>${fmt(p.ewtMin, 1)}</td>`).join('')}</tr>`
+      + `<tr><td>Ground source</td>${P10.map(p => `<td>${usd(p.g.total)}</td>`).join('')}</tr>`
+      + `<tr><td>Air source</td>${P10.map(p => `<td>${usd(p.a.total)}${p.a.repl ? '*' : ''}</td>`).join('')}</tr>`
+      + `<tr><td>Current system</td>${P10.map(p => `<td>${usd(p.c.total)}${p.c.repl ? '*' : ''}</td>`).join('')}</tr>`
+      + `<tr class="tot"><td>Ground source saves vs current, cumulative</td>${P10.map(p => `<td>${usd(csG += p.c.total - p.g.total)}</td>`).join('')}</tr>`
+      + `<tr class="sub"><td>Air source saves vs current, cumulative</td>${P10.map(p => `<td>${usd(csA += p.c.total - p.a.total)}</td>`).join('')}</tr>`;
+    $('n_proj').textContent = '* includes a replacement that year (window units every 5 years, boiler, air-source outdoor units or water heater).';
+
+    // installed cost
+    const maxItem = Math.max(...M.inst.items.map(i => i[1]));
+    $('tInst').innerHTML = `<tr><th>Item</th><th>Basis</th><th>Cost</th><th></th></tr>`
+      + M.inst.items.map(([n, v, b]) => `<tr><td>${n}</td><td style="color:var(--muted)">${b}</td><td>${usd(v)}</td><td style="width:22%"><span class="bar" style="width:${v / maxItem * 100}%"></span></td></tr>`).join('')
+      + `<tr class="tot"><td>Installed cost</td><td></td><td>${usd(M.inst.gross)}</td><td></td></tr>`
+      + `<tr class="cr"><td>Mass Save rebate</td><td></td><td>${usd(-M.inst.rebate)}</td><td></td></tr>`
+      + (I.itc > 0 ? `<tr class="cr"><td>Federal tax credit</td><td>${fmt(I.itc * 100)}% of net</td><td>${usd(-M.inst.credit)}</td><td></td></tr>` : '')
+      + `<tr class="tot"><td>Net to owner</td><td></td><td>${usd(M.inst.net)}</td><td></td></tr>`;
+    $('chipInst').textContent = `${usd(M.inst.gross / (M.tons))} per ton gross`;
+
+    // alternatives at year 0
+    const A = M.instA, C = M.cur, H = M.ash, dz = I.A * I.cDist + I.Z * I.cZone;
+    $('tAlt').innerHTML = `<tr><th>Air-source refit</th><th>Basis</th><th>Cost</th></tr>`
+      + `<tr><td>Outdoor units + air handlers</td><td style="color:var(--muted)">${fmt(M.aTons, 1)} tons cold-climate</td><td>${usd(A.equip)}</td></tr>`
+      + `<tr><td>Ductwork and zone controls</td><td style="color:var(--muted)">same as ground source</td><td>${usd(dz)}</td></tr>`
+      + `<tr><td>Heat-pump water heater</td><td></td><td>${usd(3200)}</td></tr>`
+      + `<tr><td>Electrical, design, permits</td><td style="color:var(--muted)">incl. 6%</td><td>${usd(A.gross - A.equip - dz - 3200)}</td></tr>`
+      + `<tr class="tot"><td>Installed cost</td><td></td><td>${usd(A.gross)}</td></tr>`
+      + `<tr class="cr"><td>Mass Save rebate</td><td></td><td>${usd(-A.rebate)}</td></tr>`
+      + (I.itc > 0 ? `<tr class="cr"><td>Federal tax credit</td><td></td><td>${usd(-A.credit)}</td></tr>` : '')
+      + `<tr class="tot"><td>Net to owner</td><td></td><td>${usd(A.net)}</td></tr>`
+      + `<tr><th style="padding-top:14px;text-align:left">Current system</th><th></th><th></th></tr>`
+      + `<tr><td>${M.FUEL.name[0].toUpperCase() + M.FUEL.name.slice(1)} boiler, indirect tank</td><td style="color:var(--muted)">already installed</td><td>${usd(0)}</td></tr>`
+      + `<tr><td>Boiler replacement</td><td style="color:var(--muted)">${I.bLife > 0 ? `in year ${I.bLife}` : 'not planned'}</td><td>${I.bLife > 0 ? usd(I.bCost) : '–'}</td></tr>`
+      + `<tr><td>Window AC units</td><td style="color:var(--muted)">${I.wN} × ${usd(I.wCost)}, every 5 yr</td><td>${usd(I.wN * I.wCost)}</td></tr>`;
+    $('n_alt').textContent = `Air-source outdoor units are replaced in year ${I.aLife} at 45% of the equipment price, and the heat-pump water heater in year 13. Replacement prices rise with ${fmt(I.infl * 100, 1)}% general inflation.`;
+
+    // 20-year comparison
+    const tot = k => M.proj.reduce((a, p) => ({ energy: a.energy + p[k].energy, maint: a.maint + p[k].maint, repl: a.repl + p[k].repl, total: a.total + p[k].total, pv: a.pv + M.pv(p[k].total, p.n) }), { energy: 0, maint: 0, repl: 0, total: 0, pv: 0 });
+    const tg = tot('g'), ta = tot('a'), tc = tot('c');
+    const life = [M.inst.net + tg.total, A.net + ta.total, tc.total], lpv = [M.inst.net + tg.pv, A.net + ta.pv, tc.pv];
+    const bestN = life.indexOf(Math.min(...life)), bestP = lpv.indexOf(Math.min(...lpv));
+    const y = M.y1, kG = y.kWh;
+    const r3 = (lab, a, cls = '', best = -1) => `<tr${cls ? ` class="${cls}"` : ''}><td>${lab}</td>${a.map((v, i) => `<td${i === best ? ' style="color:var(--ok)"' : ''}>${v}</td>`).join('')}</tr>`;
+    const tons2 = v => `${fmt(v / 2000, 1)} t`;
+    const Fn = M.FUEL.name[0].toUpperCase() + M.FUEL.name.slice(1);
+    $('tCmp').innerHTML = `<tr><th></th><th>Ground source</th><th>Air source refit</th><th>Current ${M.FUEL.name} + window AC</th></tr>`
+      + r3('Installed, net (year 0)', [usd(M.inst.net), usd(A.net), usd(0)])
+      + r3('Energy, 20 yr', [usd(tg.energy), usd(ta.energy), usd(tc.energy)])
+      + r3('Maintenance, 20 yr', [usd(tg.maint), usd(ta.maint), usd(tc.maint)])
+      + r3('Replacements, 20 yr', [usd(tg.repl), usd(ta.repl), usd(tc.repl)])
+      + r3('Total, 20 yr', life.map(v => usd(v)), 'tot', bestN)
+      + r3(`Present value at ${fmt(I.disc * 100, 1)}%`, lpv.map(v => usd(v)), 'tot', bestP)
+      + `<tr><th style="padding-top:14px;text-align:left">Performance, year 1</th><th></th><th></th><th></th></tr>`
+      + r3('Seasonal heating efficiency', [`COP ${fmt(M.heatYr / BTU_KWH / (y.sum('kHeat') + y.sum('kAux')), 2)}`, `COP ${fmt(H.scop, 2)}`, `${fmt(I.afue * 100)}% (COP ${fmt(I.afue, 2)})`])
+      + r3('Cooling efficiency', [`COP ${fmt((M.coolYr / BTU_KWH) / Math.max(1, y.sum('kCool')), 1)}`, `COP ${fmt(H.coolEff, 1)}`, `COP ${fmt(C.coolEff, 1)}`])
+      + r3('Cooling coverage', ['Whole house', 'Whole house', I.wN ? `≈70%, ${I.wN} rooms` : 'None'])
+      + r3('Resistance backup heat', [`${fmt(y.sum('kAux'))} kWh`, `${fmt(H.kAux)} kWh`, '–'])
+      + r3('Electricity', [`${fmt(kG)} kWh`, `${fmt(H.kWh)} kWh`, `${fmt(C.kWh)} kWh`])
+      + r3(Fn, ['–', '–', `${fmt(C.gal)} gal`])
+      + r3('CO₂ per year', [tons2(kG * I.grid), tons2(H.co2), tons2(C.co2)])
+      + r3('Energy cost, year 1', [usd(M.proj[0].g.energy), usd(M.proj[0].a.energy), usd(M.proj[0].c.energy)]);
+
+    $('n_depth').textContent = `Seasonal swing fades with a ${fmt(M.dd, 1)} ft damping depth: ±${fmt(M.Asurf, 1)} °F at the surface, ±${fmt(M.Asurf * Math.exp(-20 / M.dd), 1)} °F at 20 ft, ±${fmt(M.Asurf * Math.exp(-40 / M.dd), 2)} °F at 40 ft. Below that, temperature rises ${fmt(I.grad * 100, 1)} °F per 100 ft.`;
+    const drift = M.Tbore - M.years[9].rows.reduce((a, x) => a + x.ewt, 0) / 12 - (M.Tbore - y1.rows.reduce((a, x) => a + x.ewt, 0) / 12);
+    $('n_ewt').textContent = `Net heat extraction averages ${fmt(M.qNet, 2)} Btu/h per ft of bore over the year, so the field cools about ${fmt(drift, 2)} °F by year 10. ${minH < 25 ? 'The design-hour EWT is below 25 °F: add bore length or wells, or plan on a stronger antifreeze mix.' : 'The design-hour EWT stays above 25 °F, comfortable for a standard antifreeze mix.'}`;
+
+    drawMonth(M); drawDepth(M); drawEwt(M); drawProj(M); drawOp(M);
+  }
+
+  let last = null;
+  function recalc() { readTokens(); last = model(); render(last); }
+  document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', recalc));
+  window.addEventListener('resize', () => last && render(last));
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', recalc);
+  new MutationObserver(recalc).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(recalc);
+  globalThis.__gshp = { model };
+  recalc();
+})();
+</script>
+</body>
+</html>
