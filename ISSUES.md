@@ -105,6 +105,7 @@ _(none yet — see Tabled below)_
 - **Note (Milestone 4):** Improved, not resolved — Milestone 4 split cleanly into three commits (data pipeline, UI, docs/traceability) instead of one or two, closer to but still short of the "small, real commits" ideal. Left open since Milestones 0–3 are unaffected and the practice isn't yet consistent enough to call this closed.
 - **Note (Milestone 5):** Regressed back to two commits (code, then docs/traceability) — not egregious (still a clean split, not a single squash), but not the three-commit improvement Milestone 4 made either. Practice still inconsistent; left open.
 - **Note (Milestone 7):** Regressed further — landed as a single commit bundling the new `js/timescale.js` module, the `js/timeline.js`/`js/sankey.js`/`js/app.js`/`index.html` integration, all three test files, and all docs/traceability updates together (flagged by that milestone's own architecture council review). Practice remains inconsistent milestone to milestone; left open.
+- **Note (Milestone 9):** Improved, not resolved — five commits on `feature/plant-models-hvac` (plant models, HVAC, landing/docs, traceability, council reconciliation).
 
 ### ISSUE-011 — `Links` "transition year sensible" check is a loose union-envelope heuristic, not a real sensibility check
 - **Severity:** Minor
@@ -145,6 +146,23 @@ subagent reviewers before a site-level change merges to `main`. Milestone 8
 explicit request to publish, with the three lenses checked by the driving
 session itself rather than by independent reviewers. An independent pass
 over the new project is still owed.
+
+### ISSUE-018 — Plant-model and HVAC pages are copies of files developed outside this repo
+- **Severity:** Minor
+- **Status:** Tabled
+- **Filed:** Milestone 9 (2026-10-12)
+
+The seven pages under `projects/plant_models/*/` and
+`projects/HVAC-stuff/ground-source-heat-pump/` were developed as single
+self-contained HTML files in a separate working folder
+(`Energy-Flow/visualization/`, not in this repo) and copied in, wrapped in a
+full HTML document with a breadcrumb. There is no build step, so the copy in
+this repo is the complete published source and can be edited directly, but
+the wrapping was done by a one-off script and the origin folder cannot be
+checked from here. The Milestone 9 checks (inline scripts parse, relative
+links resolve) were likewise ad hoc and not committed (cf. ISSUE-009).
+Resolve by either treating these copies as the source of truth from now on,
+or vendoring a small wrap/check script under each section.
 
 ## Resolved
 
@@ -372,3 +390,23 @@ inline by the session that built the change (ISSUE-015).
 No gatekeeper findings. Tabled: ISSUE-015 (no independent council),
 ISSUE-016 (third-party STL provenance/licence), ISSUE-017 (page not
 reproducible from this repo; since resolved). Merged to `main` at the site owner's request.
+
+### Milestone 9 — Plant models and HVAC sections
+Reviewed 2026-10-12 on branch `feature/plant-models-hvac` vs. `main` at
+`2924c2a` by an independent council of three subagent reviewers, one per lens.
+
+| Lens | Verdict |
+|---|---|
+| Content integrity | PASS_WITH_MINOR_ISSUES |
+| Static-site architecture / constraints | PASS |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No gatekeeper findings. Every published page matches its source except for the
+added doctype/head wrapper and breadcrumb (each grew by exactly 12 lines); the
+only external loads are Google Fonts; all relative links resolve. Fixed inline:
+the three PWR pages now carry their version in `<title>` and the breadcrumb, and
+the new landing-page cards match the existing indentation. Tabled: ISSUE-018
+(pages copied from outside the repo; ad hoc checks). Noted, not filed: the
+counterflow page carries no version string of its own (the section page calls it
+v1.0, as the v2/v3 pages do); v5.0 and v5.1 share the `pwr-units` localStorage
+key, so the metric/imperial choice carries across them, which is intended.
