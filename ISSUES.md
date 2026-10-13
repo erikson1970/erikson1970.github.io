@@ -105,7 +105,7 @@ _(none yet — see Tabled below)_
 - **Note (Milestone 4):** Improved, not resolved — Milestone 4 split cleanly into three commits (data pipeline, UI, docs/traceability) instead of one or two, closer to but still short of the "small, real commits" ideal. Left open since Milestones 0–3 are unaffected and the practice isn't yet consistent enough to call this closed.
 - **Note (Milestone 5):** Regressed back to two commits (code, then docs/traceability) — not egregious (still a clean split, not a single squash), but not the three-commit improvement Milestone 4 made either. Practice still inconsistent; left open.
 - **Note (Milestone 7):** Regressed further — landed as a single commit bundling the new `js/timescale.js` module, the `js/timeline.js`/`js/sankey.js`/`js/app.js`/`index.html` integration, all three test files, and all docs/traceability updates together (flagged by that milestone's own architecture council review). Practice remains inconsistent milestone to milestone; left open.
-- **Note (Milestone 9):** Improved, not resolved — five commits on `feature/plant-models-hvac` (plant models, HVAC, landing/docs, traceability, council reconciliation).
+- **Note (Milestone 9):** Improved, not resolved — six commits on `feature/plant-models-hvac` (plant models, HVAC, landing/docs, traceability, two council-reconciliation commits).
 
 ### ISSUE-011 — `Links` "transition year sensible" check is a loose union-envelope heuristic, not a real sensibility check
 - **Severity:** Minor

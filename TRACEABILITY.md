@@ -448,14 +448,18 @@ under a `projects/HVAC-stuff/` section, both reachable from the landing page.
 | M9-1 | `projects/plant_models/index.html` exists and links each plant model as a sub-page | User request | Met | Six sub-directories (`counterflow-hx/`, `hx-tank-loop-v2/`, `hx-tank-loop-v3/`, `pwr-plant-v4/`, `pwr-plant-v5/`, `pwr-plant-v5-1/`), each with `index.html`, linked from the section page |
 | M9-2 | Heat pump analysis nested under `projects/HVAC-stuff/` | User request | Met | `projects/HVAC-stuff/index.html` links `ground-source-heat-pump/index.html` |
 | M9-3 | Both sections reachable from the root landing page | AGENTS.md § Repository structure ("link it from the root landing page") | Met | Two new `project-card` entries in root `index.html` |
-| M9-4 | Pages are complete HTML documents and navigable back up the tree | Static-site norm | Met | Every new page starts with `<!DOCTYPE html>`, has one `<title>`, and a breadcrumb to its section and to the root; scripted link check found 0 broken relative links |
-| M9-5 | No backend, database, auth, API keys or runtime Python | AGENTS.md § Project intent | Met | Each page is one self-contained HTML file; only external load is Google Fonts; inline scripts parse (`new Function` check on all seven) |
+| M9-4 | Pages are complete HTML documents and navigable back up the tree | Static-site norm | Met | Every new page starts with `<!DOCTYPE html>`, has one `<title>`, and a breadcrumb to its section and to the root; an ad hoc link check (not committed, ISSUE-018) found 0 broken relative links, confirmed by the council |
+| M9-5 | No backend, database, auth, API keys or runtime Python | AGENTS.md § Project intent | Met | Each page is one self-contained HTML file; only external load is Google Fonts; inline scripts parse (ad hoc `new Function` check on all seven, not committed — ISSUE-018) |
 | M9-6 | `README.md`/`AGENTS.md` describe the new sections | Process norm (docs must match reality) | Met | Root `README.md` structure tree and project list, `AGENTS.md` § Repository structure, a `README.md` in each section |
-| M9-7 | Page sources traceable | Process norm (cf. AGENTS.md § Source of truth) | Partial | Pages are copies of files developed outside this repo (`Energy-Flow/visualization/`); each section `README.md` records the origin. No build step, so the copy in this repo is the published source |
+| M9-7 | Page sources traceable | Process norm (cf. AGENTS.md § Source of truth) | Partial | Pages are copies of files developed outside this repo (`Energy-Flow/visualization/`); each section `README.md` records the origin. No build step, so the copy in this repo is the published source. Tabled as ISSUE-018 |
 
 ### Milestone 9 council review
 
-_Pending — see below._
+Reviewed 2026-10-12 by an independent council of three subagent reviewers:
+content integrity PASS_WITH_MINOR_ISSUES, static-site architecture/constraints
+PASS, process & documentation consistency PASS_WITH_MINOR_ISSUES. No gatekeeper
+findings; minor nits fixed inline, ISSUE-018 tabled — see `ISSUES.md` §
+Milestone council reviews. Merged to `main`.
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
