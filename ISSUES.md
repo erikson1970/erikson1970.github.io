@@ -1,8 +1,9 @@
 # Issues
 
 Open-issue tracker for `erikson1970.github.io` as a whole (the root landing
-page, `projects/world-history/`, and any future project) — one shared,
-continuous history, not split per project.
+page, `projects/world-history/`, `projects/representing-3d-shapes/`,
+`projects/plant_models/`, `projects/HVAC-stuff/`, and any future project) —
+one shared, continuous history, not split per project.
 
 Severity:
 
