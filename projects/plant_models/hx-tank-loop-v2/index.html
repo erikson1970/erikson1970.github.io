@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Exchanger &amp; Storage Tank Lab</title>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.site-crumb{font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:10px 20px 0;max-width:1400px;margin:0 auto;opacity:.8}
+.site-crumb a{color:inherit}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: process-engineering bench (v2). Control rail left; P&ID-style live schematic, readouts,
+   trend and exchanger profiles on the right; stacks to one column on phones. */
+:root {
+  --bg: #eceff1;
+  --panel: #f7f9fa;
+  --raised: #ffffff;
+  --ink: #172027;
+  --muted: #5a6873;
+  --line: #cfd6db;
+  --wall: #8e9aa3;
+  --insul: #d9cfae;
+  --hot: #c2410c;
+  --cold: #1f6fb5;
+  --steel: #38505f;
+  --warn: #9a5a06;
+  --warn-bg: #fbefd9;
+  --ok: #2e7d4f;
+  --ok-bg: #e1f1e7;
+  --s-amber: #b57a00;
+  --s-rose: #b8467a;
+  --s-green: #2e8b57;
+  --s-teal: #11808a;
+  --s-violet: #6d4fc2;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161a; --panel: #172026; --raised: #1c262d; --ink: #e2e9ee; --muted: #8e9ca6;
+    --line: #2b363e; --wall: #5d6b75; --insul: #5c5438; --hot: #f27a3e; --cold: #5ea9ea; --steel: #9fb6c4;
+    --warn: #e7ad48; --warn-bg: #33270f; --ok: #5cc48f; --ok-bg: #12301f;
+    --s-amber: #e3b23c; --s-rose: #e57aa8; --s-green: #5cc48f; --s-teal: #4cc3cc; --s-violet: #a98ff0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161a; --panel: #172026; --raised: #1c262d; --ink: #e2e9ee; --muted: #8e9ca6;
+  --line: #2b363e; --wall: #5d6b75; --insul: #5c5438; --hot: #f27a3e; --cold: #5ea9ea; --steel: #9fb6c4;
+  --warn: #e7ad48; --warn-bg: #33270f; --ok: #5cc48f; --ok-bg: #12301f;
+  --s-amber: #e3b23c; --s-rose: #e57aa8; --s-green: #5cc48f; --s-teal: #4cc3cc; --s-violet: #a98ff0; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 40px; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin-bottom: 18px; }
+.eyebrow { margin: 0 0 2px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; text-wrap: balance; }
+h1 .ver { font-family: var(--f-mono); font-size: .45em; font-weight: 500; color: var(--muted); vertical-align: .55em; margin-left: 6px; }
+.status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; font-size: 13px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 13px; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.ok { color: var(--ok); background: var(--ok-bg); }
+.pill.busy { color: var(--warn); background: var(--warn-bg); }
+.pill.busy::before { animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .pill.busy::before { animation: none; } }
+
+.grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Control rail */
+.rail { display: flex; flex-direction: column; gap: 14px; }
+.group { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 12px; }
+.group h2 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 19px; letter-spacing: .02em; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.group h2 span { font-family: var(--f-body); font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.group.hot { border-top: 3px solid var(--hot); }
+.group.cold { border-top: 3px solid var(--cold); }
+.group.hx { border-top: 3px solid var(--steel); }
+.group.tank { border-top: 3px solid var(--s-teal); }
+.group.sample { border-top: 3px solid var(--s-green); }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: baseline; }
+.ctl .lab, .sel .lab { font-size: 13px; color: var(--muted); }
+.ctl output { font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 500; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 4px 0 0; }
+.ctl small { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-family: var(--f-mono); }
+.group.hot input[type=range] { accent-color: var(--hot); }
+.group.cold input[type=range] { accent-color: var(--cold); }
+.group.hx input[type=range] { accent-color: var(--steel); }
+.group.tank input[type=range] { accent-color: var(--s-teal); }
+.group.sample input[type=range] { accent-color: var(--s-green); }
+.sel { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+select { font: inherit; font-size: 13px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; max-width: 62%; }
+
+.seg { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--raised); }
+.seg button { flex: 1; font: inherit; font-size: 13px; font-weight: 500; color: var(--muted); background: transparent; border: 0; padding: 6px 4px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--steel); color: var(--bg); }
+.seg button:hover:not([aria-pressed="true"]) { color: var(--ink); }
+button:focus-visible, select:focus-visible, input:focus-visible, canvas:focus-visible { outline: 2px solid var(--steel); outline-offset: 2px; }
+
+.btn { font: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; cursor: pointer; }
+.btn:hover { border-color: var(--steel); }
+.btn.primary { background: var(--steel); color: var(--bg); border-color: var(--steel); }
+.btn.valve[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: var(--bg); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-row .btn { flex: 1 1 auto; }
+
+.roles { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 13px; align-items: baseline; }
+.roles b { font-family: var(--f-mono); font-weight: 500; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.presets button { font: inherit; font-size: 12.5px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.presets button:hover { border-color: var(--steel); }
+.note { margin: 0; font-size: 12.5px; color: var(--muted); }
+.warn { margin: 0; font-size: 12.5px; color: var(--warn); background: var(--warn-bg); border-radius: 6px; padding: 6px 8px; }
+.readout { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.readout b { font-family: var(--f-mono); font-weight: 500; }
+
+/* Main column */
+main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; margin-bottom: 6px; }
+.card-head h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; letter-spacing: .02em; }
+.sch-wrap { overflow-x: auto; }
+#sch { display: block; width: 100%; min-width: 680px; }
+canvas.chart { display: block; width: 100%; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; vertical-align: middle; margin-right: 5px; width: 16px; height: 3px; border-radius: 2px; }
+.legend b { font-family: var(--f-mono); font-weight: 500; color: var(--ink); margin-left: 3px; }
+.ramp { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.ramp .bar { width: 140px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #2c4bd1 0%, #2fa4c4 30%, #e8d35a 55%, #ef8a2d 78%, #d7301f 100%); }
+.hint { font-size: 12px; color: var(--muted); }
+
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+@media (max-width: 1150px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi { background: var(--panel); padding: 10px 12px; min-width: 0; }
+.kpi .k { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kpi .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 500; margin-top: 2px; white-space: nowrap; }
+.kpi .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.kpi .s { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 700px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+
+.notes { font-size: 13px; color: var(--muted); max-width: 78ch; }
+.notes h3 { font-family: var(--f-display); font-weight: 600; font-size: 17px; color: var(--ink); margin: 4px 0 6px; }
+.notes p { margin: 0 0 8px; }
+.notes code { font-family: var(--f-mono); font-size: 12px; color: var(--ink); }
+</style>
+</head>
+<body>
+<nav class="site-crumb" aria-label="Breadcrumb"><a href="../../../">erikson1970</a> / <a href="../">Plant models</a> / <span>Exchanger &amp; Storage Tank Lab</span></nav>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Cooler · recuperator · stratified storage tank with sample point</p>
+      <h1>Exchanger &amp; Storage Tank Lab <span class="ver">v2.0</span></h1>
+    </div>
+    <div class="status">
+      <span id="pill" class="pill ok">Steady</span>
+      <span id="simclock" class="mono muted">t = 0 s</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <aside class="rail">
+      <section class="group hot">
+        <h2>Primary fluid <span>Process stream</span></h2>
+        <label class="ctl"><span class="lab">Inlet temperature</span><output id="o_Tp_in"></output>
+          <input type="range" id="Tp_in" min="30" max="150" step="1"></label>
+        <label class="ctl"><span class="lab">Mass flow</span><output id="o_mp"></output>
+          <input type="range" id="mp" min="0.005" max="1" step="0.005"><small id="n_mp"></small></label>
+        <label class="sel"><span class="lab">Fluid</span><select id="fp"></select></label>
+      </section>
+
+      <section class="group cold">
+        <h2>Cooling water <span>HX-1 annulus</span></h2>
+        <label class="ctl"><span class="lab">Inlet temperature</span><output id="o_Tcw_in"></output>
+          <input type="range" id="Tcw_in" min="0" max="40" step="1"></label>
+        <label class="ctl"><span class="lab">Mass flow</span><output id="o_mcw"></output>
+          <input type="range" id="mcw" min="0" max="2" step="0.005"><small id="n_mcw"></small></label>
+      </section>
+
+      <section class="group hx">
+        <h2>Exchanger units <span>Counterflow</span></h2>
+        <label class="ctl"><span class="lab">Unit A conductance UA</span><output id="o_UA_A"></output>
+          <input type="range" id="UA_A" min="20" max="5000" step="10"><small id="n_UA_A"></small></label>
+        <label class="ctl"><span class="lab">Unit B conductance UA</span><output id="o_UA_B"></output>
+          <input type="range" id="UA_B" min="20" max="5000" step="10"><small id="n_UA_B"></small></label>
+        <div class="roles">
+          <span class="muted">HX-1 · cooler</span><b id="role1">Unit A</b>
+          <span class="muted">HX-2 · recuperator</span><b id="role2">Unit B</b>
+        </div>
+        <button type="button" class="btn" id="swap">⇄ Swap HX-1 and HX-2 units</button>
+      </section>
+
+      <section class="group tank">
+        <h2>Storage tank <span>Vertical cylinder</span></h2>
+        <label class="ctl"><span class="lab">Volume</span><output id="o_V"></output>
+          <input type="range" id="V" min="20" max="2000" step="10"><small id="n_V"></small></label>
+        <label class="ctl"><span class="lab">Height / diameter</span><output id="o_HD"></output>
+          <input type="range" id="HD" min="0.5" max="4" step="0.1"></label>
+        <label class="ctl"><span class="lab">Insulation R-value <span style="font-size:11px">(ft²·°F·h/BTU)</span></span><output id="o_R"></output>
+          <input type="range" id="R" min="0" max="30" step="0.5"><small id="n_R"></small></label>
+        <label class="ctl"><span class="lab">Ambient temperature</span><output id="o_Tamb"></output>
+          <input type="range" id="Tamb" min="-10" max="40" step="1"></label>
+        <div class="seg" role="group" aria-label="Tank mixing">
+          <button type="button" id="mix_strat" aria-pressed="true">Stratified</button>
+          <button type="button" id="mix_stir" aria-pressed="false">Stirred</button>
+        </div>
+      </section>
+
+      <section class="group sample">
+        <h2>Sample valve <span>Mid-height</span></h2>
+        <button type="button" class="btn valve" id="valve" aria-pressed="false">Open sample valve</button>
+        <label class="ctl"><span class="lab">Flow when open</span><output id="o_sLpm"></output>
+          <input type="range" id="sLpm" min="0.1" max="10" step="0.1"></label>
+        <div class="readout"><span class="muted">Sample temperature</span><b id="r_sampleT"></b></div>
+        <div class="readout"><span class="muted">Collected since opened</span><b id="r_collected"></b></div>
+        <p class="warn" id="sample_warn" hidden></p>
+      </section>
+
+      <section class="group">
+        <h2>Simulation <span>Time scale</span></h2>
+        <div class="seg" role="group" aria-label="Simulation speed" id="speed">
+          <button type="button" data-speed="1">1×</button>
+          <button type="button" data-speed="10">10×</button>
+          <button type="button" data-speed="100">100×</button>
+          <button type="button" data-speed="1000">1k×</button>
+          <button type="button" data-speed="10000">10k×</button>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn primary" id="skip">Skip to steady state</button>
+          <button type="button" class="btn" id="restart">Restart cold</button>
+        </div>
+        <div class="presets" id="presets"></div>
+      </section>
+    </aside>
+
+    <main>
+      <section class="card">
+        <div class="card-head">
+          <h3>Live schematic</h3>
+          <div class="ramp"><span class="mono" id="ramp_lo"></span><span class="bar" aria-hidden="true"></span><span class="mono" id="ramp_hi"></span></div>
+        </div>
+        <div class="sch-wrap">
+          <canvas id="sch" tabindex="0" aria-label="Animated schematic: primary fluid through HX-1 cooler and HX-2 recuperator into a storage tank with a mid-height sample valve. Press Enter to toggle the valve."></canvas>
+        </div>
+        <p class="hint">Click the valve on the tank to open or close it.</p>
+      </section>
+
+      <section class="kpis">
+        <div class="kpi"><div class="k">HX-1 duty</div><div class="v" id="k_q1"></div><div class="s" id="k_q1_s"></div></div>
+        <div class="kpi"><div class="k">HX-2 duty</div><div class="v" id="k_q2"></div><div class="s" id="k_q2_s"></div></div>
+        <div class="kpi"><div class="k">Tank heat loss</div><div class="v" id="k_loss"></div><div class="s" id="k_loss_s"></div></div>
+        <div class="kpi"><div class="k">Tank average</div><div class="v" id="k_tavg"></div><div class="s" id="k_tavg_s"></div></div>
+        <div class="kpi"><div class="k">Sample point</div><div class="v" id="k_samp"></div><div class="s" id="k_samp_s"></div></div>
+        <div class="kpi"><div class="k">System out</div><div class="v" id="k_out"></div><div class="s" id="k_out_s"></div></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h3>Temperature history</h3>
+          <div class="legend" id="trend_legend"></div>
+        </div>
+        <canvas id="trend" class="chart" data-h="260" aria-label="Temperature history chart"></canvas>
+      </section>
+
+      <div class="pair">
+        <section class="card">
+          <div class="card-head"><h3 id="p1_title">HX-1 profile</h3>
+            <div class="legend"><span><i style="background:var(--hot)"></i>Primary</span><span><i style="background:var(--cold)"></i>Cooling water</span></div></div>
+          <canvas id="prof1" class="chart" data-h="190" aria-label="HX-1 temperature profile"></canvas>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3 id="p2_title">HX-2 profile</h3>
+            <div class="legend"><span><i style="background:var(--s-amber)"></i>Feed to tank</span><span><i style="background:var(--s-teal)"></i>Tank return</span></div></div>
+          <canvas id="prof2" class="chart" data-h="190" aria-label="HX-2 temperature profile"></canvas>
+        </section>
+      </div>
+
+      <section class="notes">
+        <h3>How the model works</h3>
+        <p><b>Flow path:</b> the primary fluid passes through the HX-1 inner tube, where the cooling water cools it. It then passes through the HX-2 inner tube and enters the top of the tank.
+          Fluid leaves from the tank bottom, goes back through the HX-2 annulus in counterflow, and exits the system. The mid-height valve takes a sample out of the system,
+          so the flow back through HX-2 equals the primary flow minus the sample flow.</p>
+        <p><b>Exchangers:</b> each tube and annulus is split into 60 well-mixed cells, the same transient model as v1.0 (2 L in the tube and 4 L in the annulus per unit).
+          Each unit has its own UA. Swap exchanges the two units, and each keeps the fluid it was holding.</p>
+        <p><b>Tank:</b> 24 horizontal layers with plug flow downward. Heat is lost to ambient through each layer's share of the wall, plus the lid and base,
+          with <code>U = 1 / (R·0.1761 + 0.17)</code> W/m²K. The 0.17 m²K/W term covers the inside and outside surface films, so even R-0 has finite losses.
+          In Stratified mode, layers exchange heat by conduction, and any layer warmer than the one above mixes upward (buoyancy).
+          Stirred mode keeps the tank uniform.</p>
+        <p><b>Skip to steady state:</b> solves both exchangers' own steady-state equations directly, then steps only the tank, with large time steps, until nothing changes. It lands exactly where the live model would settle.
+          This matters because a large, well-insulated tank can take days to settle.</p>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  const FLUIDS = {
+    water:  { name: 'Water',            cp: 4180, rho: 998 },
+    glycol: { name: '40% glycol–water', cp: 3550, rho: 1055 },
+    oil:    { name: 'Thermal oil',      cp: 2150, rho: 870 },
+  };
+  const NX = 60, NL = 24, K = NL / 2, VOL_I = 0.002, VOL_A = 0.004, U_REF = 1000;
+  const RSI_PER_R = 0.1761, R_FILM = 0.17, K_WATER = 0.6, MAX_STEPS = 20000;
+  const LW = 1000, LH = 590; // schematic logical size; scaled uniformly to the card width
+
+  const P = { Tp_in: 85, mp: 0.05, fp: 'water', Tcw_in: 15, mcw: 0.06, UA_A: 300, UA_B: 200,
+              V: 300, HD: 2, R: 2, Tamb: 22, mixed: false, valve: false, sLpm: 1.5, speed: 100 };
+  const PRESETS = [
+    { label: 'Bare steel tank', R: 0,  V: 300, Tamb: 15 },
+    { label: 'Well insulated',  R: 20, V: 300 },
+    { label: 'Big tank, slow feed', V: 1500, mp: 0.02 },
+    { label: 'No cooling water', mcw: 0 },
+  ];
+
+  const mkUnit = (name, key) => ({ name, key,
+    ti: new Float64Array(NX), ta: new Float64Array(NX), nti: new Float64Array(NX), nta: new Float64Array(NX),
+    pi: Array.from({ length: 34 }, () => ({ p: Math.random(), y: (Math.random() * 2 - 1) * 5 })),
+    pa: Array.from({ length: 56 }, () => ({ p: Math.random(), y: (Math.random() < .5 ? -1 : 1) * (16 + Math.random() * 13) })) });
+  const unitA = mkUnit('A', 'UA_A'), unitB = mkUnit('B', 'UA_B');
+  let pos = [unitA, unitB];
+  let tank = new Float64Array(NL), ntank = new Float64Array(NL);
+  let G = null;
+  let simT = 0, rate = 0, effSpeed = 0, collected = 0, settledAt = null, changeT = 0;
+  const trend = { t: [], s: Array.from({ length: 7 }, () => []), dt: 2, next: 0 };
+
+  const $ = id => document.getElementById(id);
+  const fmt = (v, d = 1) => (Math.abs(v) < 0.5 * 10 ** -d ? 0 : v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmtDur = s => s < 120 ? `${fmt(s, s < 10 ? 1 : 0)} s` : s < 7200 ? `${fmt(s / 60, 1)} min` : s < 172800 ? `${fmt(s / 3600, 1)} h` : `${fmt(s / 86400, 1)} d`;
+  const fmtW = w => Math.abs(w) >= 1000 ? `${fmt(w / 1000, 2)} <small>kW</small>` : `${fmt(w, 0)} <small>W</small>`;
+
+  // ---------- physics ----------
+  function flows() {
+    const f = FLUIDS[P.fp];
+    const req = P.valve ? P.sLpm * f.rho / 60000 : 0;
+    const ms = Math.min(req, P.mp);
+    return { cp: f.cp, rho: f.rho, mp: P.mp, mcw: P.mcw, ms, mo: P.mp - ms, limited: req > P.mp + 1e-12 };
+  }
+
+  function tankGeom() {
+    const V = P.V / 1000, D = Math.cbrt(4 * V / (Math.PI * P.HD)), H = P.HD * D;
+    const side = Math.PI * D * H, cap = Math.PI * D * D / 4;
+    const RSI = P.R * RSI_PER_R, U = 1 / (RSI + R_FILM);
+    const g = new Float64Array(NL).fill(U * side / NL);
+    g[0] += U * cap; g[NL - 1] += U * cap;
+    return { V, D, H, A: side + 2 * cap, RSI, U, UA: U * (side + 2 * cap), g, kc: K_WATER * cap / (H / NL) };
+  }
+
+  // Counterflow FV step: inner flows left→right, annulus right→left
+  function stepHX(u, dt, UA, mi, cpi, rhoi, Ti_in, ma, cpa, rhoa, Ta_in) {
+    const Mi = rhoi * VOL_I / NX, Ma = rhoa * VOL_A / NX, ua = UA / NX;
+    const ai = mi / Mi, bi = ua / (Mi * cpi), aa = ma / Ma, ba = ua / (Ma * cpa);
+    const ti = u.ti, ta = u.ta, nti = u.nti, nta = u.nta;
+    for (let i = 0; i < NX; i++) {
+      const d = ti[i] - ta[i];
+      nti[i] = ti[i] + dt * (ai * ((i ? ti[i - 1] : Ti_in) - ti[i]) - bi * d);
+      nta[i] = ta[i] + dt * (aa * ((i < NX - 1 ? ta[i + 1] : Ta_in) - ta[i]) + ba * d);
+    }
+    u.ti = nti; u.nti = ti; u.ta = nta; u.nta = ta;
+  }
+
+  // Tank layers, 0 = top. Feed enters the top; the sample leaves from layer K; the rest leaves from the bottom.
+  function stepTank(dt, Tin, fl) {
+    const Ml = fl.rho * G.V / NL, c = dt / (Ml * fl.cp);
+    for (let j = 0; j < NL; j++) {
+      const f = j <= K ? fl.mp : fl.mo;
+      const up = j ? tank[j - 1] : Tin;
+      let cond = 0;
+      if (j > 0) cond += G.kc * (tank[j - 1] - tank[j]);
+      if (j < NL - 1) cond += G.kc * (tank[j + 1] - tank[j]);
+      ntank[j] = tank[j] + c * (f * fl.cp * (up - tank[j]) - G.g[j] * (tank[j] - P.Tamb) + cond);
+    }
+    [tank, ntank] = [ntank, tank];
+    if (P.mixed) {
+      let s = 0; for (let j = 0; j < NL; j++) s += tank[j];
+      tank.fill(s / NL);
+    } else {
+      // buoyancy: a layer warmer than the one above it mixes upward
+      for (let pass = 0; pass < NL; pass++) {
+        let changed = false;
+        for (let j = 0; j < NL - 1; j++) {
+          if (tank[j + 1] > tank[j] + 1e-9) { const m = (tank[j] + tank[j + 1]) / 2; tank[j] = m; tank[j + 1] = m; changed = true; }
+        }
+        if (!changed) break;
+      }
+    }
+  }
+
+  function step(dt) {
+    const fl = flows(), w = FLUIDS.water, [h1, h2] = pos;
+    const T1 = h1.ti[NX - 1], Ttin = h2.ti[NX - 1], Tbot = tank[NL - 1];
+    stepHX(h1, dt, P[h1.key], fl.mp, fl.cp, fl.rho, P.Tp_in, fl.mcw, w.cp, w.rho, P.Tcw_in);
+    stepHX(h2, dt, P[h2.key], fl.mp, fl.cp, fl.rho, T1, fl.mo, fl.cp, fl.rho, Tbot);
+    stepTank(dt, Ttin, fl);
+    if (P.valve) collected += fl.ms / fl.rho * 1000 * dt;
+  }
+
+  function stepChange() {
+    let d = 0;
+    for (const u of pos) for (let i = 0; i < NX; i++) d = Math.max(d, Math.abs(u.ti[i] - u.nti[i]), Math.abs(u.ta[i] - u.nta[i]));
+    for (let j = 0; j < NL; j++) d = Math.max(d, Math.abs(tank[j] - ntank[j]));
+    return d;
+  }
+
+  function tankRate(fl) {
+    let gmax = 0; for (const g of G.g) gmax = Math.max(gmax, g);
+    return (fl.mp * fl.cp + gmax + 2 * G.kc) / (fl.rho * G.V / NL * fl.cp);
+  }
+  function maxDt() {
+    const fl = flows(), w = FLUIDS.water;
+    const hx = (UA, mi, cpi, rhoi, ma, cpa, rhoa) => {
+      const Mi = rhoi * VOL_I / NX, Ma = rhoa * VOL_A / NX, ua = UA / NX;
+      return Math.max(mi / Mi + ua / (Mi * cpi), ma / Ma + ua / (Ma * cpa));
+    };
+    const r = Math.max(hx(P[pos[0].key], fl.mp, fl.cp, fl.rho, fl.mcw, w.cp, w.rho),
+                       hx(P[pos[1].key], fl.mp, fl.cp, fl.rho, fl.mo, fl.cp, fl.rho), tankRate(fl));
+    return 0.8 / r;
+  }
+
+  // Steady state of the FV exchanger itself. Linear in the inlets, so solve once for Ti_in = 1, Ta_in = 0:
+  // then T = Ta_in + (Ti_in − Ta_in)·α. Unknowns interleaved (ti0, ta0, ti1, …) give a band of width 2.
+  function hxShape(UA, Ci, Ca) {
+    const n = 2 * NX, A = new Float64Array(n * n), b = new Float64Array(n), ua = UA / NX;
+    for (let i = 0; i < NX; i++) {
+      const h = 2 * i, a = h + 1;
+      A[h * n + h] = Ci + ua; A[h * n + a] = -ua;
+      if (i) A[h * n + h - 2] = -Ci; else b[h] = Ci;
+      A[a * n + a] = Ca + ua; A[a * n + h] = -ua;
+      if (i < NX - 1) A[a * n + a + 2] = -Ca;
+    }
+    // banded elimination without pivoting (the system is diagonally dominant, so no fill-in outside the band)
+    for (let k = 0; k < n; k++) {
+      const piv = A[k * n + k], cmax = Math.min(n - 1, k + 2);
+      for (let r = k + 1; r <= cmax; r++) {
+        const f = A[r * n + k] / piv;
+        if (!f) continue;
+        for (let c = k; c <= cmax; c++) A[r * n + c] -= f * A[k * n + c];
+        b[r] -= f * b[k];
+      }
+    }
+    const x = new Float64Array(n);
+    for (let k = n - 1; k >= 0; k--) {
+      let v = b[k];
+      for (let c = k + 1; c <= Math.min(n - 1, k + 2); c++) v -= A[k * n + c] * x[c];
+      x[k] = v / A[k * n + k];
+    }
+    const ai = new Float64Array(NX), aa = new Float64Array(NX);
+    for (let i = 0; i < NX; i++) { ai[i] = x[2 * i]; aa[i] = x[2 * i + 1]; }
+    return { ai, aa };
+  }
+
+  function readings() {
+    const [h1, h2] = pos;
+    return [P.Tp_in, h1.ti[NX - 1], h2.ti[NX - 1], tank[K], tank[NL - 1], h2.ta[0], h1.ta[0]];
+  }
+  function logPoint(vals) {
+    trend.t.push(simT);
+    vals.forEach((v, i) => trend.s[i].push(v));
+    if (trend.t.length > 600) {
+      trend.t = trend.t.filter((_, i) => i % 2 === 0);
+      trend.s = trend.s.map(a => a.filter((_, i) => i % 2 === 0));
+      trend.dt *= 2;
+    }
+    trend.next = simT + trend.dt;
+  }
+
+  function skipToSteady() {
+    const fl = flows(), w = FLUIDS.water, t0 = performance.now();
+    const dtT = 0.5 / tankRate(fl);
+    const s1 = hxShape(P[pos[0].key], fl.mp * fl.cp, fl.mcw * w.cp);
+    const s2 = hxShape(P[pos[1].key], fl.mp * fl.cp, fl.mo * fl.cp);
+    const T1 = P.Tcw_in + (P.Tp_in - P.Tcw_in) * s1.ai[NX - 1];
+    const Tcwo = P.Tcw_in + (P.Tp_in - P.Tcw_in) * s1.aa[0];
+    for (let it = 0; it < 2e6; it++) {
+      const Tb = tank[NL - 1], Ttin = Tb + (T1 - Tb) * s2.ai[NX - 1];
+      stepTank(dtT, Ttin, fl);
+      simT += dtT;
+      if (P.valve) collected += fl.ms / fl.rho * 1000 * dtT;
+      if (simT >= trend.next) logPoint([P.Tp_in, T1, Ttin, tank[K], tank[NL - 1], Tb + (T1 - Tb) * s2.aa[0], Tcwo]);
+      let d = 0; for (let j = 0; j < NL; j++) d = Math.max(d, Math.abs(tank[j] - ntank[j]));
+      if (d / dtT < 2e-7 || performance.now() - t0 > 700) break;
+    }
+    const Tb = tank[NL - 1];
+    for (let i = 0; i < NX; i++) {
+      pos[0].ti[i] = P.Tcw_in + (P.Tp_in - P.Tcw_in) * s1.ai[i];
+      pos[0].ta[i] = P.Tcw_in + (P.Tp_in - P.Tcw_in) * s1.aa[i];
+      pos[1].ti[i] = Tb + (T1 - Tb) * s2.ai[i];
+      pos[1].ta[i] = Tb + (T1 - Tb) * s2.aa[i];
+    }
+    logPoint(readings());
+    changeT = simT; settledAt = null;
+  }
+
+  function restartCold() {
+    for (const u of [unitA, unitB]) { u.ti.fill(P.Tamb); u.ta.fill(P.Tamb); }
+    tank.fill(P.Tamb);
+    simT = 0; collected = 0; changeT = 0; settledAt = null;
+    trend.t = []; trend.s = trend.s.map(() => []); trend.dt = 2; trend.next = 0;
+    logPoint(readings());
+  }
+
+  // ---------- controls ----------
+  const sliders = ['Tp_in', 'mp', 'Tcw_in', 'mcw', 'UA_A', 'UA_B', 'V', 'HD', 'R', 'Tamb', 'sLpm'];
+  for (const [k, f] of Object.entries(FLUIDS)) $('fp').add(new Option(f.name, k));
+  $('fp').addEventListener('change', e => { P.fp = e.target.value; apply(); });
+  for (const id of sliders) $(id).addEventListener('input', e => { P[id] = +e.target.value; apply(); });
+  $('mix_strat').addEventListener('click', () => { P.mixed = false; apply(); });
+  $('mix_stir').addEventListener('click', () => { P.mixed = true; apply(); });
+  $('swap').addEventListener('click', () => { pos.reverse(); apply(); });
+  const toggleValve = () => { P.valve = !P.valve; if (P.valve) collected = 0; apply(); };
+  $('valve').addEventListener('click', toggleValve);
+  $('skip').addEventListener('click', () => { skipToSteady(); syncControls(); });
+  $('restart').addEventListener('click', () => { restartCold(); syncControls(); });
+  for (const b of $('speed').querySelectorAll('button')) b.addEventListener('click', () => { P.speed = +b.dataset.speed; syncControls(); });
+  for (const pr of PRESETS) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = pr.label;
+    b.addEventListener('click', () => { const { label, ...v } = pr; Object.assign(P, v); apply(); });
+    $('presets').append(b);
+  }
+
+  function apply() {
+    G = tankGeom();
+    changeT = simT; settledAt = null;
+    syncControls();
+  }
+
+  function syncControls() {
+    for (const id of sliders) $(id).value = P[id];
+    $('fp').value = P.fp;
+    const f = FLUIDS[P.fp], fl = flows();
+    $('o_Tp_in').textContent = `${fmt(P.Tp_in, 0)} °C`;
+    $('o_mp').textContent = `${fmt(P.mp, 3)} kg/s`;
+    $('n_mp').textContent = `${fmt(P.mp / f.rho * 60000, 1)} L/min · tank turnover ${fmtDur(G.V * f.rho / P.mp)}`;
+    $('o_Tcw_in').textContent = `${fmt(P.Tcw_in, 0)} °C`;
+    $('o_mcw').textContent = `${fmt(P.mcw, 3)} kg/s`;
+    $('n_mcw').textContent = P.mcw > 0 ? `${fmt(P.mcw / FLUIDS.water.rho * 60000, 1)} L/min` : 'Off: no cooling';
+    for (const u of [unitA, unitB]) {
+      $('o_' + u.key).textContent = `${fmt(P[u.key], 0)} W/K`;
+      $('n_' + u.key).textContent = `≈ ${fmt(P[u.key] / U_REF, 2)} m² · now in ${pos[0] === u ? 'HX-1' : 'HX-2'}`;
+    }
+    $('role1').textContent = `Unit ${pos[0].name} · ${fmt(P[pos[0].key], 0)} W/K`;
+    $('role2').textContent = `Unit ${pos[1].name} · ${fmt(P[pos[1].key], 0)} W/K`;
+    $('p1_title').textContent = `HX-1 cooler · Unit ${pos[0].name}`;
+    $('p2_title').textContent = `HX-2 recuperator · Unit ${pos[1].name}`;
+    $('o_V').textContent = `${fmt(P.V, 0)} L`;
+    $('n_V').textContent = `Ø ${fmt(G.D, 2)} m × ${fmt(G.H, 2)} m tall · ${fmt(G.A, 2)} m² surface`;
+    $('o_HD').textContent = fmt(P.HD, 1);
+    $('o_R').textContent = `R-${fmt(P.R, P.R % 1 ? 1 : 0)}`;
+    $('n_R').textContent = `RSI ${fmt(G.RSI, 2)} m²K/W · U ${fmt(G.U, 2)} W/m²K · loss ${fmt(G.UA, 1)} W/K`;
+    $('o_Tamb').textContent = `${fmt(P.Tamb, 0)} °C`;
+    $('mix_strat').setAttribute('aria-pressed', !P.mixed);
+    $('mix_stir').setAttribute('aria-pressed', P.mixed);
+    $('valve').setAttribute('aria-pressed', P.valve);
+    $('valve').textContent = P.valve ? 'Close sample valve' : 'Open sample valve';
+    $('o_sLpm').textContent = `${fmt(P.sLpm, 1)} L/min`;
+    $('sample_warn').hidden = !(P.valve && fl.limited);
+    $('sample_warn').textContent = `The valve is set above the primary feed (${fmt(P.mp / f.rho * 60000, 1)} L/min), so the sample takes the whole feed and nothing flows back through HX-2.`;
+    for (const b of $('speed').querySelectorAll('button')) b.setAttribute('aria-pressed', +b.dataset.speed === P.speed);
+  }
+
+  // ---------- drawing helpers ----------
+  const STOPS = [[0, [44, 75, 209]], [0.3, [47, 164, 196]], [0.55, [232, 211, 90]], [0.78, [239, 138, 45]], [1, [215, 48, 31]]];
+  const range = () => { const lo = Math.min(P.Tcw_in, P.Tamb); return [lo, Math.max(P.Tp_in, lo + 5)]; };
+  function cmap(T) {
+    const [lo, hi] = range();
+    const t = Math.min(1, Math.max(0, (T - lo) / (hi - lo)));
+    for (let j = 1; j < STOPS.length; j++) {
+      if (t <= STOPS[j][0]) {
+        const [t0, c0] = STOPS[j - 1], [t1, c1] = STOPS[j], f = (t - t0) / (t1 - t0);
+        return `rgb(${c0.map((c, k) => Math.round(c + (c1[k] - c) * f)).join(',')})`;
+      }
+    }
+    return 'rgb(215,48,31)';
+  }
+
+  let tok = {};
+  function readTokens() {
+    const cs = getComputedStyle(document.documentElement);
+    for (const k of ['bg', 'panel', 'raised', 'ink', 'muted', 'line', 'wall', 'insul', 'hot', 'cold', 'steel', 'ok', 'warn',
+                     's-amber', 's-rose', 's-green', 's-teal', 's-violet'])
+      tok[k] = cs.getPropertyValue('--' + k).trim();
+  }
+
+  // Schematic: uniform scale from logical units, so the aspect ratio never drifts
+  function fitScaled(cv) {
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, s = w / LW, h = LH * s;
+    cv.style.height = h + 'px';
+    const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+    if (cv.width !== bw) cv.width = bw;
+    if (cv.height !== bh) cv.height = bh;
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr * s, 0, 0, dpr * s, 0, 0);
+    return { ctx, s };
+  }
+  // Charts: fixed CSS height from data-h
+  function fitChart(cv) {
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = +cv.dataset.h;
+    cv.style.height = h + 'px';
+    const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+    if (cv.width !== bw) cv.width = bw;
+    if (cv.height !== bh) cv.height = bh;
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w, h };
+  }
+
+  function arrow(ctx, x, y, dir, size, color) {
+    const v = { r: [1, 0], l: [-1, 0], u: [0, -1], d: [0, 1] }[dir];
+    const px = -v[1], py = v[0];
+    ctx.fillStyle = color; ctx.beginPath();
+    ctx.moveTo(x + v[0] * size, y + v[1] * size);
+    ctx.lineTo(x - v[0] * size + px * size * 0.8, y - v[1] * size + py * size * 0.8);
+    ctx.lineTo(x - v[0] * size - px * size * 0.8, y - v[1] * size - py * size * 0.8);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function bubble(ctx, x, y, num, value, label, color) {
+    const r = 15;
+    ctx.fillStyle = tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - r, y); ctx.lineTo(x + r, y); ctx.stroke();
+    ctx.fillStyle = tok.ink; ctx.textAlign = 'center';
+    ctx.font = '600 9.5px "Barlow", sans-serif';
+    ctx.textBaseline = 'alphabetic'; ctx.fillText('TI', x, y - 3.5);
+    ctx.textBaseline = 'top'; ctx.fillText(num, x, y + 2.5);
+    ctx.font = '500 13px "JetBrains Mono", monospace'; ctx.fillStyle = color;
+    ctx.textBaseline = 'top'; ctx.fillText(value, x, y + r + 4);
+    ctx.font = '600 9.5px "Barlow", sans-serif'; ctx.fillStyle = tok.muted;
+    ctx.textBaseline = 'bottom'; ctx.fillText(label, x, y - r - 3);
+  }
+
+  const phases = {};
+  function pipe(ctx, id, pts, T, pxPerSec, dt) {
+    ctx.lineJoin = 'round'; ctx.lineCap = 'butt';
+    const path = () => { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); };
+    path(); ctx.strokeStyle = tok.ink; ctx.lineWidth = 15; ctx.stroke();
+    path(); ctx.strokeStyle = cmap(T); ctx.lineWidth = 11; ctx.stroke();
+    if (pxPerSec > 0) {
+      phases[id] = ((phases[id] || 0) + pxPerSec * dt) % 160;
+      path(); ctx.setLineDash([5, 11]); ctx.lineDashOffset = -phases[id];
+      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    }
+  }
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const visRate = (m, rho, vol) => Math.min(0.45, m / (rho * vol) * P.speed);
+
+  const RO = 34, RT = 12, RI = 9, SW = 7; // shell / tube outer / tube inner half-heights; stub inset
+  function drawHX(ctx, u, x0, x1, cy, vi, va, dt, title, sub) {
+    const L = x1 - x0, seg = L / NX;
+    ctx.globalAlpha = 0.5;
+    for (let i = 0; i < NX; i++) {
+      const xs = x0 + i * seg;
+      ctx.fillStyle = cmap(u.ta[i]);
+      ctx.fillRect(xs, cy - RO, seg + 0.6, RO - RT);
+      ctx.fillRect(xs, cy + RT, seg + 0.6, RO - RT);
+      ctx.fillStyle = cmap(u.ti[i]);
+      ctx.fillRect(xs, cy - RI, seg + 0.6, 2 * RI);
+    }
+    ctx.globalAlpha = 1;
+    const adv = reduceMotion ? 0 : dt;
+    const dot = (q, arr, dirn, v) => {
+      q.p += dirn * v * adv; if (q.p > 1) q.p -= 1; if (q.p < 0) q.p += 1;
+      const i = Math.min(NX - 1, Math.floor(q.p * NX));
+      ctx.fillStyle = cmap(arr[i]);
+      ctx.beginPath(); ctx.arc(x0 + q.p * L, cy + q.y, 2.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    };
+    ctx.strokeStyle = tok.panel; ctx.lineWidth = 0.8;
+    for (const q of u.pi) dot(q, u.ti, 1, vi);
+    for (const q of u.pa) dot(q, u.ta, -1, va);
+    ctx.fillStyle = tok.wall;
+    ctx.fillRect(x0, cy - RT, L, RT - RI);
+    ctx.fillRect(x0, cy + RI, L, RT - RI);
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2;
+    ctx.strokeRect(x0, cy - RO, L, 2 * RO);
+    // heat flux through the tube wall
+    const span = Math.max(1e-6, range()[1] - range()[0]);
+    for (let m = 0; m < 7; m++) {
+      const p = (m + 0.5) / 7, i = Math.min(NX - 1, Math.floor(p * NX)), d = u.ti[i] - u.ta[i];
+      const a = Math.min(1, Math.abs(d) / span * 2);
+      if (a < 0.04) continue;
+      ctx.globalAlpha = 0.25 + 0.75 * a;
+      arrow(ctx, x0 + p * L, cy - RT - 5, d > 0 ? 'u' : 'd', 2 + 2.5 * a, tok.ink);
+      arrow(ctx, x0 + p * L, cy + RT + 5, d > 0 ? 'd' : 'u', 2 + 2.5 * a, tok.ink);
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = tok.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.font = '600 14px "Barlow Condensed", sans-serif';
+    ctx.fillText(title, (x0 + x1) / 2, cy + RO + 8);
+    ctx.font = '500 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.muted;
+    ctx.fillText(sub, (x0 + x1) / 2, cy + RO + 25);
+  }
+
+  const drops = [];
+  let valveRect = null;
+  function drawSchematic(dt) {
+    const cv = $('sch');
+    const { ctx } = fitScaled(cv);
+    ctx.clearRect(0, 0, LW, LH);
+    const fl = flows(), w = FLUIDS.water, [h1, h2] = pos;
+    const cy = 150;
+    const A0 = 100, A1 = 360, B0 = 500, B1 = 760;
+    const viP = visRate(fl.mp, fl.rho, VOL_I);
+
+    drawHX(ctx, h1, A0, A1, cy, viP, visRate(fl.mcw, w.rho, VOL_A), dt, `HX-1 · COOLER · UNIT ${h1.name}`, `UA ${fmt(P[h1.key], 0)} W/K`);
+    drawHX(ctx, h2, B0, B1, cy, viP, visRate(fl.mo, fl.rho, VOL_A), dt, `HX-2 · RECUPERATOR · UNIT ${h2.name}`, `UA ${fmt(P[h2.key], 0)} W/K`);
+
+    // Tank geometry in logical units (bottom fixed, aspect follows H/D)
+    const xT = 850, tBot = 520;
+    let th = Math.min(270, 130 * P.HD), tw = th / P.HD;
+    if (tw > 130) { tw = 130; th = tw * P.HD; }
+    const tTop = tBot - th, tL = xT - tw / 2, tR = xT + tw / 2;
+    const ins = 2 + P.R * 0.3;
+    const layerY = j => tTop + (j + 0.5) * th / NL;
+    const ySamp = layerY(K);
+
+    const pxs = m => m > 1e-9 ? 40 + 300 * visRate(m, fl.rho, VOL_I) : 0;
+    const T1 = h1.ti[NX - 1], Ttin = h2.ti[NX - 1], Tbot = tank[NL - 1], Tsys = h2.ta[0], Tcwo = h1.ta[0];
+    const stubL = x => x + SW + 7, stubR = x => x - SW - 7;
+
+    // pipes
+    pipe(ctx, 'pin', [[18, cy], [A0 + 2, cy]], P.Tp_in, pxs(fl.mp), dt);
+    pipe(ctx, 'cwin', [[stubR(A1), 34], [stubR(A1), cy - RO + 2]], P.Tcw_in, pxs(fl.mcw), dt);
+    pipe(ctx, 'cwout', [[stubL(A0), cy - RO + 2], [stubL(A0), 34]], Tcwo, pxs(fl.mcw), dt);
+    pipe(ctx, 'link', [[A1 - 2, cy], [B0 + 2, cy]], T1, pxs(fl.mp), dt);
+    pipe(ctx, 'feed', [[B1 - 2, cy], [xT, cy], [xT, tTop + 2]], Ttin, pxs(fl.mp), dt);
+    pipe(ctx, 'ret', [[xT, tBot - 2], [xT, 548], [stubR(B1), 548], [stubR(B1), cy + RO - 2]], Tbot, pxs(fl.mo), dt);
+    pipe(ctx, 'out', [[stubL(B0), cy + RO - 2], [stubL(B0), 300], [425, 300]], Tsys, pxs(fl.mo), dt);
+    const spoutX = 985;
+    pipe(ctx, 'samp', [[tR - 2, ySamp], [spoutX, ySamp], [spoutX, ySamp + 24]], tank[K], P.valve ? pxs(fl.ms) : 0, dt);
+
+    // pipe-end arrows and stream labels
+    ctx.font = '600 10.5px "Barlow", sans-serif'; ctx.fillStyle = tok.muted; ctx.textBaseline = 'bottom';
+    ctx.textAlign = 'left'; ctx.fillText('PRIMARY IN', 14, cy - 12);
+    arrow(ctx, 40, cy, 'r', 4.5, tok.raised);
+    ctx.textAlign = 'center';
+    ctx.fillText('CW IN', stubR(A1), 28); arrow(ctx, stubR(A1), 48, 'd', 4.5, tok.raised);
+    ctx.fillText('CW OUT', stubL(A0), 28); arrow(ctx, stubL(A0), 48, 'u', 4.5, tok.raised);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText('SYSTEM OUT', 416, 300);
+    if (fl.mo > 1e-9) arrow(ctx, 440, 300, 'l', 4.5, tok.raised);
+    arrow(ctx, (A1 + B0) / 2, cy, 'r', 4.5, tok.raised);
+    arrow(ctx, xT, (cy + tTop) / 2, 'd', 4.5, tok.raised);
+    if (fl.mo > 1e-9) arrow(ctx, stubR(B1), 420, 'u', 4.5, tok.raised);
+
+    // tank: insulation jacket, then layers clipped to a rounded body
+    ctx.fillStyle = tok.insul;
+    roundRect(ctx, tL - ins, tTop - ins, tw + 2 * ins, th + 2 * ins, 12 + ins); ctx.fill();
+    ctx.save();
+    roundRect(ctx, tL, tTop, tw, th, 12); ctx.clip();
+    for (let j = 0; j < NL; j++) { ctx.fillStyle = cmap(tank[j]); ctx.fillRect(tL, tTop + j * th / NL, tw, th / NL + 0.6); }
+    ctx.restore();
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2;
+    roundRect(ctx, tL, tTop, tw, th, 12); ctx.stroke();
+    // sample-level tick marks
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(tL + 4, ySamp); ctx.lineTo(tR - 4, ySamp); ctx.stroke(); ctx.setLineDash([]);
+    // layer readouts
+    ctx.font = '500 11.5px "JetBrains Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const [j, dy] of [[0, 9], [K, -10], [NL - 1, -9]]) {
+      const y = j === K ? ySamp + dy : layerY(j) + dy;
+      const s = `${fmt(tank[j], 1)}°`;
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeText(s, xT, y);
+      ctx.fillStyle = '#fff'; ctx.fillText(s, xT, y);
+    }
+    // heat loss to ambient, right wall
+    const lossMax = Math.max(1e-9, G.U * 0.4 * (range()[1] - range()[0]));
+    for (const j of [3, NL - 4]) {
+      const q = G.U * (tank[j] - P.Tamb), a = Math.min(1, Math.abs(q) / lossMax);
+      if (a < 0.05) continue;
+      ctx.globalAlpha = 0.3 + 0.7 * a;
+      const y = layerY(j), x = tR + ins + 5;
+      ctx.strokeStyle = tok.muted; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x, y);
+      for (let k = 1; k <= 12; k++) ctx.lineTo(x + k * 1.6, y + Math.sin(k / 2) * 2.5);
+      ctx.stroke();
+      arrow(ctx, x + 22, y, q > 0 ? 'r' : 'l', 3.5, tok.muted);
+      ctx.globalAlpha = 1;
+    }
+    ctx.font = '600 14px "Barlow Condensed", sans-serif'; ctx.fillStyle = tok.ink;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillText(`TANK · ${fmt(P.V, 0)} L`, xT + 14, tTop - ins - 18);
+    ctx.font = '500 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.muted;
+    ctx.fillText(`R-${fmt(P.R, P.R % 1 ? 1 : 0)}${P.mixed ? ' · stirred' : ''}`, xT + 14, tTop - ins - 4);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+    ctx.fillText(`Ambient ${fmt(P.Tamb, 0)} °C`, LW - 6, 8);
+
+    // sample valve: bow-tie body with a handle (inline with pipe = open)
+    const vx = Math.max(tR + ins + 28, (tR + spoutX) / 2), vy = ySamp;
+    valveRect = [vx - 18, vy - 30, 36, 50];
+    ctx.fillStyle = P.valve ? tok.ok : tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(vx - 11, vy - 9); ctx.lineTo(vx + 11, vy + 9); ctx.lineTo(vx + 11, vy - 9); ctx.lineTo(vx - 11, vy + 9); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(vx, vy - 17); ctx.stroke();
+    ctx.lineWidth = 3.5; ctx.strokeStyle = P.valve ? tok.ok : tok.warn;
+    ctx.beginPath();
+    if (P.valve) { ctx.moveTo(vx - 11, vy - 18); ctx.lineTo(vx + 11, vy - 18); }
+    else { ctx.moveTo(vx, vy - 29); ctx.lineTo(vx, vy - 17); }
+    ctx.stroke();
+    ctx.font = '600 9.5px "Barlow", sans-serif'; ctx.fillStyle = P.valve ? tok.ok : tok.warn;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(P.valve ? 'OPEN' : 'CLOSED', vx, vy + 13);
+    // droplets
+    if (P.valve && fl.ms > 0) {
+      if (!reduceMotion) {
+        const spawn = Math.min(40, 6 + 2000 * fl.ms) * dt;
+        if (Math.random() < spawn % 1 || spawn >= 1) for (let n = 0; n < Math.max(1, Math.floor(spawn)); n++) drops.push({ y: 0, v: 20 + Math.random() * 10 });
+      }
+      ctx.fillStyle = cmap(tank[K]);
+      if (reduceMotion) ctx.fillRect(spoutX - 1.5, ySamp + 25, 3, 50);
+    }
+    for (let i = drops.length - 1; i >= 0; i--) {
+      const d = drops[i];
+      d.v += 400 * dt; d.y += d.v * dt;
+      if (d.y > 70 || !P.valve) { drops.splice(i, 1); continue; }
+      ctx.fillStyle = cmap(tank[K]);
+      ctx.beginPath(); ctx.ellipse(spoutX, ySamp + 26 + d.y, 2.2, 3.4, 0, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // instrument tags
+    bubble(ctx, 58, cy + 52, '101', `${fmt(P.Tp_in, 1)}°`, 'PRIMARY IN', tok.hot);
+    bubble(ctx, (A1 + B0) / 2, cy + 52, '102', `${fmt(T1, 1)}°`, 'AFTER HX-1', tok['s-amber']);
+    bubble(ctx, xT - 38, cy + 52, '103', `${fmt(Ttin, 1)}°`, 'TANK IN', tok['s-rose']);
+    bubble(ctx, xT + 48, 548, '104', `${fmt(Tbot, 1)}°`, 'TANK OUT', tok['s-teal']);
+    bubble(ctx, 470, 348, '105', `${fmt(Tsys, 1)}°`, 'SYSTEM OUT', tok['s-violet']);
+    bubble(ctx, stubR(A1) + 46, 70, '201', `${fmt(P.Tcw_in, 1)}°`, 'CW IN', tok.cold);
+    bubble(ctx, stubL(A0) - 46, 70, '202', `${fmt(Tcwo, 1)}°`, 'CW OUT', tok.cold);
+    bubble(ctx, vx + 2, ySamp - 76, '301', `${fmt(tank[K], 1)}°`, 'SAMPLE', tok['s-green']);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  // ---------- charts ----------
+  const SERIES = [
+    { name: 'Primary in',  c: 'hot' },
+    { name: 'After HX-1',  c: 's-amber' },
+    { name: 'Tank in',     c: 's-rose' },
+    { name: 'Sample (mid)', c: 's-green' },
+    { name: 'Tank out',    c: 's-teal' },
+    { name: 'System out',  c: 's-violet' },
+    { name: 'CW out',      c: 'cold' },
+  ];
+  $('trend_legend').innerHTML = SERIES.map((s, i) => `<span><i style="background:var(--${s.c})"></i>${s.name}<b id="lg${i}"></b></span>`).join('');
+
+  function niceStep(span, n) {
+    const raw = span / n, p = 10 ** Math.floor(Math.log10(raw));
+    return [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw) || 10 * p;
+  }
+
+  function yAxis(ctx, m, w, ph, lo, hi) {
+    const step = niceStep(hi - lo, 5);
+    const a = Math.floor(lo / step) * step, b = Math.ceil(hi / step) * step;
+    const Y = T => m.t + (1 - (T - a) / (b - a)) * ph;
+    ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.muted;
+    ctx.strokeStyle = tok.line; ctx.lineWidth = 1; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let T = a; T <= b + 1e-9; T += step) {
+      ctx.beginPath(); ctx.moveTo(m.l, Math.round(Y(T)) + 0.5); ctx.lineTo(w - m.r, Math.round(Y(T)) + 0.5); ctx.stroke();
+      ctx.fillText(`${+T.toFixed(1)}°`, m.l - 6, Y(T));
+    }
+    return Y;
+  }
+
+  function drawTrend() {
+    const { ctx, w, h } = fitChart($('trend'));
+    ctx.clearRect(0, 0, w, h);
+    const m = { l: 46, r: 14, t: 10, b: 26 }, pw = w - m.l - m.r, ph = h - m.t - m.b;
+    const n = trend.t.length;
+    if (n < 2) return;
+    let lo = Infinity, hi = -Infinity;
+    for (const s of trend.s) for (const v of s) { if (v < lo) lo = v; if (v > hi) hi = v; }
+    const pad = Math.max(1, (hi - lo) * 0.05);
+    const Y = yAxis(ctx, m, w, ph, lo - pad, hi + pad);
+    const tmax = Math.max(trend.t[n - 1], 1);
+    const [unit, div] = tmax < 180 ? ['s', 1] : tmax < 3 * 3600 ? ['min', 60] : tmax < 3 * 86400 ? ['h', 3600] : ['d', 86400];
+    const step = niceStep(tmax / div, 6) * div;
+    const X = t => m.l + t / tmax * pw;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let t = 0; t <= tmax + 1e-9; t += step) {
+      ctx.strokeStyle = tok.line; ctx.beginPath(); ctx.moveTo(Math.round(X(t)) + 0.5, m.t); ctx.lineTo(Math.round(X(t)) + 0.5, m.t + ph); ctx.stroke();
+      ctx.fillText(`${+(t / div).toFixed(2)} ${unit}`, X(t), m.t + ph + 6);
+    }
+    SERIES.forEach((s, k) => {
+      const ys = trend.s[k];
+      ctx.strokeStyle = tok[s.c]; ctx.lineWidth = k === 3 ? 2.5 : 1.8;
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(trend.t[i]), Y(ys[i]));
+      ctx.stroke();
+      ctx.fillStyle = tok[s.c];
+      ctx.beginPath(); ctx.arc(X(trend.t[n - 1]), Y(ys[n - 1]), 3, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+
+  function drawProfile(id, u, ci, ca, endL, endR) {
+    const { ctx, w, h } = fitChart($(id));
+    ctx.clearRect(0, 0, w, h);
+    const m = { l: 42, r: 12, t: 10, b: 34 }, pw = w - m.l - m.r, ph = h - m.t - m.b;
+    const [lo, hi] = range();
+    let a = Math.min(lo, ...u.ti, ...u.ta), b = Math.max(hi, ...u.ti, ...u.ta);
+    const Y = yAxis(ctx, m, w, ph, a, b);
+    const X = x => m.l + x * pw;
+    const xs = Array.from({ length: NX }, (_, i) => (i + 0.5) / NX);
+    ctx.fillStyle = tok.muted; ctx.font = '500 11px "Barlow", sans-serif'; ctx.textBaseline = 'top';
+    ctx.textAlign = 'left'; ctx.fillText(endL, m.l, m.t + ph + 8);
+    ctx.textAlign = 'right'; ctx.fillText(endR, w - m.r, m.t + ph + 8);
+    ctx.fillStyle = tok[ci]; ctx.globalAlpha = 0.08;
+    ctx.beginPath(); xs.forEach((x, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(x), Y(u.ti[i])));
+    for (let i = NX - 1; i >= 0; i--) ctx.lineTo(X(xs[i]), Y(u.ta[i]));
+    ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    for (const [arr, c, d] of [[u.ti, ci, 'r'], [u.ta, ca, 'l']]) {
+      ctx.strokeStyle = tok[c]; ctx.lineWidth = 2.2;
+      ctx.beginPath(); xs.forEach((x, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(x), Y(arr[i]))); ctx.stroke();
+      arrow(ctx, X(xs[NX >> 1]), Y(arr[NX >> 1]), d, 5, tok[c]);
+    }
+  }
+
+  // ---------- readouts ----------
+  function updateReadouts() {
+    const fl = flows(), [h1, h2] = pos;
+    const T1 = h1.ti[NX - 1], Ttin = h2.ti[NX - 1];
+    const q1 = fl.mp * fl.cp * (P.Tp_in - T1), q2 = fl.mp * fl.cp * (T1 - Ttin);
+    let loss = 0, sum = 0;
+    for (let j = 0; j < NL; j++) { loss += G.g[j] * (tank[j] - P.Tamb); sum += tank[j]; }
+    $('k_q1').innerHTML = fmtW(q1);
+    $('k_q1_s').textContent = P.mcw > 0 ? `CW warms ${fmt(h1.ta[0] - P.Tcw_in, 1)} °C` : 'Cooling water off';
+    $('k_q2').innerHTML = fmtW(q2);
+    $('k_q2_s').textContent = fl.mo > 1e-9 ? `Return warms ${fmt(h2.ta[0] - tank[NL - 1], 1)} °C` : 'No return flow';
+    $('k_loss').innerHTML = fmtW(loss);
+    $('k_loss_s').textContent = `${fmt(G.UA, 1)} W/K to ${fmt(P.Tamb, 0)} °C air`;
+    $('k_tavg').innerHTML = `${fmt(sum / NL, 1)} <small>°C</small>`;
+    $('k_tavg_s').textContent = P.mixed ? 'Stirred, uniform' : `Top ${fmt(tank[0], 1)} · bottom ${fmt(tank[NL - 1], 1)}`;
+    $('k_samp').innerHTML = `${fmt(tank[K], 1)} <small>°C</small>`;
+    $('k_samp_s').textContent = P.valve ? `Drawing ${fmt(fl.ms / fl.rho * 60000, 1)} L/min` : 'Valve closed';
+    $('k_out').innerHTML = fl.mo > 1e-9 ? `${fmt(h2.ta[0], 1)} <small>°C</small>` : '—';
+    $('k_out_s').textContent = fl.mo > 1e-9 ? `${fmt(fl.mo / fl.rho * 60000, 2)} L/min` : 'All flow leaves as sample';
+    $('r_sampleT').textContent = `${fmt(tank[K], 1)} °C`;
+    $('r_collected').textContent = `${fmt(collected, collected < 100 ? 2 : 0)} L`;
+    readings().forEach((v, i) => { $('lg' + i).textContent = `${fmt(v, 1)}°`; });
+    const [lo, hi] = range();
+    $('ramp_lo').textContent = `${fmt(lo, 0)} °C`;
+    $('ramp_hi').textContent = `${fmt(hi, 0)} °C`;
+  }
+
+  function updateStatus() {
+    const pill = $('pill'), perMin = rate * 60;
+    if (perMin < 0.01) {
+      if (settledAt === null) settledAt = simT;
+      pill.className = 'pill ok';
+      pill.textContent = 'Steady';
+    } else {
+      settledAt = null;
+      pill.className = 'pill busy';
+      pill.textContent = `Settling · ${perMin < 1 ? fmt(perMin, 3) : fmt(perMin, 1)} °C/min`;
+    }
+    const sp = effSpeed < P.speed * 0.9 ? ` · running ≈${fmt(effSpeed, 0)}×` : ` · ${fmt(P.speed, 0)}×`;
+    $('simclock').textContent = `t = ${fmtDur(simT)}${sp}`;
+  }
+
+  // ---------- canvas interaction ----------
+  const toLogical = e => { const cv = $('sch'), s = cv.clientWidth / LW; return [e.offsetX / s, e.offsetY / s]; };
+  const hitValve = ([x, y]) => valveRect && x >= valveRect[0] && x <= valveRect[0] + valveRect[2] && y >= valveRect[1] && y <= valveRect[1] + valveRect[3];
+  $('sch').addEventListener('click', e => { if (hitValve(toLogical(e))) toggleValve(); });
+  $('sch').addEventListener('mousemove', e => { $('sch').style.cursor = hitValve(toLogical(e)) ? 'pointer' : 'default'; });
+  $('sch').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleValve(); } });
+
+  // ---------- loop ----------
+  let last = performance.now(), frame = 0;
+  function tick(now) {
+    const dtReal = Math.min(0.05, (now - last) / 1000); last = now;
+    if (frame % 30 === 0) readTokens();
+    const want = dtReal * P.speed, dm = maxDt();
+    let n = Math.ceil(want / dm);
+    const capped = n > MAX_STEPS;
+    if (capped) n = MAX_STEPS;
+    const dt = capped ? dm : want / Math.max(1, n);
+    for (let k = 0; k < n; k++) {
+      step(dt); simT += dt;
+      if (simT >= trend.next) logPoint(readings());
+    }
+    rate = n ? stepChange() / dt : 0;
+    effSpeed = dtReal > 0 ? n * dt / dtReal : P.speed;
+    drawSchematic(dtReal);
+    if (frame % 3 === 0) {
+      drawTrend();
+      drawProfile('prof1', pos[0], 'hot', 'cold', 'primary in · CW out', 'primary out · CW in');
+      drawProfile('prof2', pos[1], 's-amber', 's-teal', 'feed in · return out', 'feed out · return in');
+    }
+    if (frame % 5 === 0) { updateReadouts(); updateStatus(); }
+    frame++;
+    requestAnimationFrame(tick);
+  }
+
+  readTokens();
+  G = tankGeom();
+  restartCold();
+  skipToSteady();
+  apply();
+  updateReadouts();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
