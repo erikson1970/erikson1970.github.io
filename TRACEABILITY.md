@@ -437,6 +437,26 @@ PASS_WITH_MINOR_ISSUES. No gatekeeper findings; ISSUE-015, ISSUE-016 and
 ISSUE-017 tabled — see `ISSUES.md` § Milestone council reviews. Merged to
 `main` at the site owner's request.
 
+## Milestone 9 — Plant models and HVAC sections
+
+Goal (user request, 2026-10-12): publish the interactive plant models as
+sub-pages of a `projects/plant_models/` section, and the heat pump analysis
+under a `projects/HVAC-stuff/` section, both reachable from the landing page.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M9-1 | `projects/plant_models/index.html` exists and links each plant model as a sub-page | User request | Met | Six sub-directories (`counterflow-hx/`, `hx-tank-loop-v2/`, `hx-tank-loop-v3/`, `pwr-plant-v4/`, `pwr-plant-v5/`, `pwr-plant-v5-1/`), each with `index.html`, linked from the section page |
+| M9-2 | Heat pump analysis nested under `projects/HVAC-stuff/` | User request | Met | `projects/HVAC-stuff/index.html` links `ground-source-heat-pump/index.html` |
+| M9-3 | Both sections reachable from the root landing page | AGENTS.md § Repository structure ("link it from the root landing page") | Met | Two new `project-card` entries in root `index.html` |
+| M9-4 | Pages are complete HTML documents and navigable back up the tree | Static-site norm | Met | Every new page starts with `<!DOCTYPE html>`, has one `<title>`, and a breadcrumb to its section and to the root; scripted link check found 0 broken relative links |
+| M9-5 | No backend, database, auth, API keys or runtime Python | AGENTS.md § Project intent | Met | Each page is one self-contained HTML file; only external load is Google Fonts; inline scripts parse (`new Function` check on all seven) |
+| M9-6 | `README.md`/`AGENTS.md` describe the new sections | Process norm (docs must match reality) | Met | Root `README.md` structure tree and project list, `AGENTS.md` § Repository structure, a `README.md` in each section |
+| M9-7 | Page sources traceable | Process norm (cf. AGENTS.md § Source of truth) | Partial | Pages are copies of files developed outside this repo (`Energy-Flow/visualization/`); each section `README.md` records the origin. No build step, so the copy in this repo is the published source |
+
+### Milestone 9 council review
+
+_Pending — see below._
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
