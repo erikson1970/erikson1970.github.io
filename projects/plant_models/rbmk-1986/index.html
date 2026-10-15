@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RBMK-1000 Night Shift</title>
+<meta name="description" content="A minimal RBMK-1000 teaching model of the 26 April 1986 Chernobyl excursion: positive void coefficient, xenon pit, positive scram from graphite-tipped rods, ending at the first steam explosion.">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.site-crumb{font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:10px 20px 0;max-width:1400px;margin:0 auto;opacity:.8}
+.site-crumb a{color:inherit}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: unit control room. Narrator strip and clock on top, live core/loop mimic, readouts, operator panel,
+   then trend recorders and notes. The mimic and panel share the PWR lab's language, with a cooler graphite palette. */
+:root {
+  --bg: #eceeef;
+  --panel: #f7f8f8;
+  --raised: #ffffff;
+  --ink: #1b2024;
+  --muted: #5d666d;
+  --line: #d0d5d8;
+  --graphite: #6f767c;
+  --water: #2f78b7;
+  --steam: #b9c3ca;
+  --absorber: #1f2326;
+  --hot: #c4471c;
+  --void: #c08a00;
+  --xenon: #6d4fc2;
+  --rod: #39505e;
+  --ok: #2e7d4f;
+  --ok-bg: #e1f1e7;
+  --warn: #9a5a06;
+  --warn-bg: #fbefd9;
+  --danger: #b42318;
+  --danger-bg: #fbe3e0;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121517; --panel: #181d20; --raised: #1e2428; --ink: #e3e8eb; --muted: #919ca3; --line: #2c3439;
+    --graphite: #8d969c; --water: #5ea9ea; --steam: #56636c; --absorber: #0b0d0e; --hot: #f27a3e; --void: #e3b23c;
+    --xenon: #a98ff0; --rod: #9fb6c4; --ok: #5cc48f; --ok-bg: #12301f; --warn: #e7ad48; --warn-bg: #33270f;
+    --danger: #ff8a7a; --danger-bg: #3a1714; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121517; --panel: #181d20; --raised: #1e2428; --ink: #e3e8eb; --muted: #919ca3; --line: #2c3439;
+  --graphite: #8d969c; --water: #5ea9ea; --steam: #56636c; --absorber: #0b0d0e; --hot: #f27a3e; --void: #e3b23c;
+  --xenon: #a98ff0; --rod: #9fb6c4; --ok: #5cc48f; --ok-bg: #12301f; --warn: #e7ad48; --warn-bg: #33270f;
+  --danger: #ff8a7a; --danger-bg: #3a1714; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1380px; margin: 0 auto; padding-inline: 20px; padding-block: 18px 40px; display: flex; flex-direction: column; gap: 14px; }
+@media (max-width: 480px) { .wrap { padding-inline: 16px; } }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; }
+.eyebrow { margin: 0 0 2px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; text-wrap: balance; }
+h1 .ver { font-family: var(--f-mono); font-size: .42em; font-weight: 500; color: var(--muted); vertical-align: .55em; margin-left: 6px; }
+.clock { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.clock .t { font-family: var(--f-mono); font-size: 26px; font-weight: 500; letter-spacing: .02em; }
+.clock .d { font-size: 12px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-weight: 600; font-size: 13px; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.ok { color: var(--ok); background: var(--ok-bg); }
+.pill.busy { color: var(--warn); background: var(--warn-bg); }
+.pill.bad { color: var(--danger); background: var(--danger-bg); }
+
+.narr { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--rod); border-radius: 8px; padding: 10px 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: center; }
+@media (max-width: 760px) { .narr { grid-template-columns: minmax(0, 1fr); } }
+.narr .cap { font-size: 15px; min-height: 2.9em; }
+.narr .cap b { font-family: var(--f-mono); font-weight: 500; margin-right: 6px; }
+.narr .cap .hid { display: block; font-size: 13px; color: var(--muted); margin-top: 3px; }
+.narr .btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+
+.btn { font: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 6px 11px; cursor: pointer; min-height: 34px; }
+.btn:hover { border-color: var(--rod); }
+.btn.primary { background: var(--rod); color: var(--bg); border-color: var(--rod); }
+.btn.az5 { background: var(--danger); color: #fff; border-color: var(--danger); font-family: var(--f-display); font-size: 20px; letter-spacing: .08em; padding: 8px 18px; min-height: 48px; width: 100%; }
+.btn.az5[aria-pressed="true"] { filter: saturate(.6); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--raised); }
+.seg button { flex: 1; font: inherit; font-size: 13px; font-weight: 500; color: var(--muted); background: transparent; border: 0; padding: 6px 4px; cursor: pointer; min-height: 32px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--rod); color: var(--bg); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--rod); outline-offset: 2px; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-bottom: 6px; }
+.card-head h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; letter-spacing: .02em; }
+.sch-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#sch { display: block; width: 100%; min-width: 860px; }
+canvas.chart { display: block; width: 100%; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+.legend b { font-family: var(--f-mono); font-weight: 500; color: var(--ink); margin-left: 3px; }
+.hint { font-size: 12px; color: var(--muted); }
+
+.kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+@media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi { background: var(--panel); padding: 9px 11px; min-width: 0; }
+.kpi .k { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 19px; font-weight: 500; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.kpi .s { font-size: 11.5px; color: var(--muted); }
+.kpi.alm { box-shadow: inset 0 3px 0 var(--warn); }
+.kpi.trip { box-shadow: inset 0 3px 0 var(--danger); }
+.meter { position: relative; height: 7px; background: var(--line); border-radius: 4px; margin-top: 5px; overflow: hidden; }
+.meter i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--rod); }
+.meter b { position: absolute; top: -1px; bottom: -1px; width: 2px; background: var(--danger); }
+.meter b.w { background: var(--warn); }
+
+.panel { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1150px) { .panel { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .panel { grid-template-columns: minmax(0, 1fr); } }
+.grp { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.grp h4 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 17px; display: flex; justify-content: space-between; gap: 8px; }
+.grp h4 b { font-family: var(--f-mono); font-size: 12px; font-weight: 500; color: var(--muted); }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: baseline; }
+.ctl .lab { font-size: 13px; color: var(--muted); }
+.ctl output { font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 4px 0 0; accent-color: var(--rod); }
+.ctl small { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-family: var(--f-mono); }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.check input { width: 16px; height: 16px; margin: 0; accent-color: var(--rod); }
+.pumps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.pumps button { font: inherit; font-family: var(--f-mono); font-size: 12px; padding: 5px 2px; border: 1px solid var(--line); border-radius: 5px; background: var(--raised); color: var(--muted); cursor: pointer; min-height: 40px; line-height: 1.2; }
+.pumps button[aria-pressed="true"] { background: var(--water); color: #fff; border-color: var(--water); }
+.pumps button small { display: block; font-size: 10px; opacity: .85; }
+.opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; }
+@media (max-width: 620px) { .opts { grid-template-columns: minmax(0, 1fr); } }
+
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1100px) { .duo { grid-template-columns: minmax(0, 1fr); } }
+.log { margin: 0; padding: 0; list-style: none; font-size: 12.5px; display: flex; flex-direction: column; gap: 3px; max-height: 220px; overflow-y: auto; }
+.log li { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; }
+.log time { font-family: var(--f-mono); color: var(--muted); }
+.log .trip { color: var(--danger); }
+.log .alm { color: var(--warn); }
+.notes { font-size: 13.5px; color: var(--muted); }
+.notes > div { max-width: 84ch; }
+.notes h3 { font-family: var(--f-display); font-weight: 600; font-size: 18px; color: var(--ink); margin: 6px 0 6px; }
+.notes p { margin: 0 0 8px; }
+.notes b { color: var(--ink); font-weight: 600; }
+.notes table { border-collapse: collapse; font-size: 13px; margin: 4px 0 10px; }
+.notes td, .notes th { border-bottom: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; }
+
+.over { position: fixed; inset: 0; background: rgba(10, 12, 13, .72); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
+.over .box { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-top: 5px solid var(--danger); border-radius: 10px; max-width: 640px; width: 100%; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; max-height: 90vh; overflow-y: auto; }
+.over h2 { margin: 0; font-family: var(--f-display); font-size: 28px; }
+.over .stats { font-family: var(--f-mono); font-size: 13.5px; display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; }
+.over .cost { font-size: 13.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+</style>
+</head>
+<body>
+<nav class="site-crumb" aria-label="Breadcrumb"><a href="../../../">erikson1970</a> / <a href="../">Plant models</a> / <span>RBMK-1000 Night Shift</span></nav>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Graphite-moderated, boiling-water channel reactor · minimal teaching model</p>
+      <h1>RBMK-1000 Night Shift <span class="ver">v1.0</span></h1>
+    </div>
+    <div class="clock">
+      <span class="d" id="clockD">Free play</span>
+      <span class="t" id="clockT">00:00:00</span>
+      <span id="pill" class="pill ok">Stable</span>
+    </div>
+  </header>
+
+  <section class="narr" aria-live="polite">
+    <div class="cap" id="cap"><b>Free play.</b> The unit is at full power, 3200 MWt, with a normal margin of rods in the core. Run the night of 25–26 April 1986 with <i>Replay the night</i>, or operate the plant yourself.</div>
+    <div class="btns">
+      <button type="button" class="btn primary" id="bReplay">Replay the night</button>
+      <button type="button" class="btn" id="bPause">Pause</button>
+      <button type="button" class="btn" id="bBranch">Take the controls</button>
+      <button type="button" class="btn" id="bReset">Reset to full power</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h3>Core and main circulation circuit</h3>
+      <div class="seg" role="group" aria-label="Simulation speed" id="speed">
+        <button type="button" data-v="0.1">0.1×</button><button type="button" data-v="1">1×</button><button type="button" data-v="10">10×</button><button type="button" data-v="300">300×</button><button type="button" data-v="3000">3000×</button><button type="button" data-v="auto">Auto</button>
+      </div></div>
+    <div class="sch-wrap"><canvas id="sch" aria-label="Mimic of the core in four axial layers with local power, steam void and xenon, a representative manual control rod and regulating rod, the flux shape, steam drums, turbine stop valves, turbine generator 8 and the eight main circulation pumps"></canvas></div>
+  </section>
+
+  <section class="kpis" aria-label="Plant readouts">
+    <div class="kpi" id="kb_p"><div class="k">Thermal power</div><div class="v" id="k_p"></div><div class="s" id="s_p"></div></div>
+    <div class="kpi" id="kb_rho"><div class="k">Reactivity</div><div class="v" id="k_rho"></div><div class="s" id="s_rho"></div></div>
+    <div class="kpi" id="kb_orm"><div class="k">Operating reactivity margin</div><div class="v" id="k_orm"></div><div class="meter"><i id="m_orm"></i><b id="m_orm15"></b><b class="w" id="m_orm30"></b></div><div class="s" id="s_orm"></div></div>
+    <div class="kpi" id="kb_void"><div class="k">Core steam void</div><div class="v" id="k_void"></div><div class="s" id="s_void"></div></div>
+    <div class="kpi"><div class="k">Power coefficient</div><div class="v" id="k_pc"></div><div class="s" id="s_pc"></div></div>
+    <div class="kpi"><div class="k">Core flow</div><div class="v" id="k_flow"></div><div class="s" id="s_flow"></div></div>
+    <div class="kpi" id="kb_sub"><div class="k">Inlet subcooling</div><div class="v" id="k_sub"></div><div class="s" id="s_sub"></div></div>
+    <div class="kpi" id="kb_pres"><div class="k">Drum pressure</div><div class="v" id="k_pres"></div><div class="s" id="s_pres"></div></div>
+    <div class="kpi"><div class="k">Xenon-135</div><div class="v" id="k_xe"></div><div class="s" id="s_xe"></div></div>
+    <div class="kpi" id="kb_fuel"><div class="k">Peak fuel enthalpy</div><div class="v" id="k_fuel"></div><div class="s" id="s_fuel"></div></div>
+  </section>
+
+  <section class="panel" aria-label="Operator panel">
+    <div class="grp">
+      <h4>Control rods <b id="h_rods"></b></h4>
+      <label class="ctl"><span class="lab">Manual &amp; emergency rods fully in</span><output id="o_bank"></output>
+        <input type="range" id="nIn" min="0" max="163" step="1"><small id="n_bank"></small></label>
+      <div class="ctl" style="grid-template-columns:1fr"><span class="lab">Regulating rods (12)</span></div>
+      <div class="seg" role="group" aria-label="Regulating rod mode" id="arMode"><button type="button" data-v="auto">Auto power</button><button type="button" data-v="manual">Manual</button></div>
+      <label class="ctl"><span class="lab">Power setpoint</span><output id="o_pset"></output>
+        <input type="range" id="pset" min="20" max="3200" step="10"><small id="n_ar"></small></label>
+      <button type="button" class="btn az5" id="az5" aria-pressed="false">AZ-5</button>
+    </div>
+    <div class="grp">
+      <h4>Main circulation pumps <b id="h_pumps"></b></h4>
+      <div class="pumps" id="pumps"></div>
+      <p class="hint" style="margin:0">Dashed pumps are fed from turbine generator 8 and slow down with it when the turbine is tripped. Left loop 1–4, right loop 5–8.</p>
+      <label class="ctl"><span class="lab">Feedwater</span><output id="o_fw"></output>
+        <input type="range" id="fwMan" min="0" max="3" step="0.05"><small id="n_fw"></small></label>
+      <div class="seg" role="group" aria-label="Feedwater mode" id="fwMode"><button type="button" data-v="auto">Auto level</button><button type="button" data-v="manual">Manual × steam</button></div>
+    </div>
+    <div class="grp">
+      <h4>Turbine &amp; protection <b id="h_tsv"></b></h4>
+      <div class="seg" role="group" aria-label="Turbine 8 stop valves" id="tsv"><button type="button" data-v="1">Stop valves open</button><button type="button" data-v="0">Closed (test)</button></div>
+      <label class="check"><input type="checkbox" id="tripArm"> Turbine-trip scram armed</label>
+      <label class="check"><input type="checkbox" id="lvlArm"> Low drum level / pressure scram armed</label>
+      <label class="check"><input type="checkbox" id="showOrm"> Show ORM live (it was not, in 1986)</label>
+      <p class="hint" style="margin:0">The high-power scram (110%) cannot be bypassed. The emergency core cooling system was isolated for the test; it plays no part before the explosion and is not modelled.</p>
+    </div>
+    <div class="grp">
+      <h4>Design &amp; scenario <b id="h_var"></b></h4>
+      <label class="check"><input type="checkbox" id="postRods"> Post-1986 rods: no water column under the graphite, 12 s insertion</label>
+      <label class="check"><input type="checkbox" id="postCore"> Post-1986 core: extra absorbers, void worth cut to about 0.7 β</label>
+      <p class="hint" style="margin:6px 0 0">Replay branches, set before pressing <i>Replay the night</i>:</p>
+      <div class="opts">
+        <label class="check"><input type="checkbox" id="o700"> Hold 700 MW (test plan)</label>
+        <label class="check"><input type="checkbox" id="oPumps"> Don't start pumps 4 and 8</label>
+        <label class="check"><input type="checkbox" id="oTrip"> Leave turbine-trip scram armed</label>
+        <label class="check"><input type="checkbox" id="oOrm"> Insert rods to ORM 15 at 01:22</label>
+      </div>
+    </div>
+  </section>
+
+  <div class="duo">
+    <section class="card">
+      <div class="card-head"><h3>Power (log)</h3><div class="seg" role="group" aria-label="Trend window" id="win"><button type="button" data-v="all">Whole run</button><button type="button" data-v="1800">30 min</button><button type="button" data-v="90">90 s</button></div></div>
+      <canvas id="tPow" class="chart" data-h="210" aria-label="Thermal power on a log scale"></canvas>
+      <div class="legend" id="lgPow"></div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h3>Reactivity, in β</h3><div class="legend" id="lgRho"></div></div>
+      <canvas id="tRho" class="chart" data-h="210" aria-label="Reactivity components in units of beta"></canvas>
+    </section>
+    <section class="card">
+      <div class="card-head"><h3>Void, subcooling and flow</h3><div class="legend" id="lgTh"></div></div>
+      <canvas id="tTh" class="chart" data-h="190" aria-label="Core void fraction, inlet subcooling and core flow"></canvas>
+    </section>
+    <section class="card">
+      <div class="card-head"><h3>Margin, rods and xenon</h3><div class="legend" id="lgOrm"></div></div>
+      <canvas id="tOrm" class="chart" data-h="190" aria-label="Operating reactivity margin, rod insertion and xenon"></canvas>
+    </section>
+    <section class="card">
+      <div class="card-head"><h3>Axial power shape</h3><span class="hint">Share of power per layer, bottom to top</span></div>
+      <canvas id="tShape" class="chart" data-h="190" aria-label="Axial power share in the four layers over time"></canvas>
+    </section>
+    <section class="card">
+      <div class="card-head"><h3>Event log</h3><span class="hint">Plant clock</span></div>
+      <ul class="log" id="log"></ul>
+    </section>
+  </div>
+
+  <section class="card notes">
+    <div>
+      <h3>What this model is</h3>
+      <p><b>A minimal teaching model, not a design tool.</b> Every number is a generic, publicly available, textbook-scale figure. The model is built to show <i>why</i> the 26 April 1986 excursion happened: the positive void coefficient at low power and low margin, the xenon pit after the power reduction, the flux pushed toward the bottom of the core, and control rods whose graphite displacers added reactivity in their first seconds of travel. It stops at the first steam explosion; nothing after that is modelled.</p>
+      <h3>How it works</h3>
+      <p><b>Neutronics.</b> One point-kinetics amplitude with six delayed-neutron groups (β = 0.0048 for burned uranium–plutonium fuel, neutron generation time 1 ms), solved implicitly with time steps that shrink to a fraction of a millisecond when the core approaches prompt criticality. The core is split into four axial layers of 1.75 m. Each layer has its own steam void, fuel temperature, iodine and xenon, and rod composition. Their reactivities are weighted by the square of the local flux (importance), and the flux shape leans toward layers with more reactivity, within about half a second.</p>
+      <p><b>Reactivity.</b> Void: the whole-core worth of going from water to steam is about +4.5 β when only a handful of rods are in, falling to about +1.3 β with a normal rod margin, because absorbers compete with water for neutrons. Doppler: −1.2 × 10⁻⁵ per °C of fuel temperature. Xenon: about −2.8% Δk at full-power equilibrium, tracked per layer. Graphite temperature changes slowly (about a 30-minute time constant) and adds a small positive reactivity as it warms. The power coefficient shown is computed, not entered: negative at full power, strongly positive at 200 MW with a low margin.</p>
+      <p><b>Rods.</b> 163 manual and emergency rods move as one bank; 12 regulating rods hold power in Auto. Each rod is a 6.2 m absorber above a 1.25 m gap and a 4.5 m graphite displacer. Fully withdrawn, the displacer sits in the middle of the core with 1.25 m of water below it. As a rod starts in, the displacer pushes that water out of the bottom of the channel (more reactivity) while the absorber only begins to enter the top. With the flux bottom-peaked, the first few seconds of a scram add reactivity. Full travel takes 18 s. The operating reactivity margin (ORM) is the importance-weighted absorber in the core, in equivalent fully inserted rods. The rules called for at least 15, and about 30 for normal operation.</p>
+      <p><b>Circuit.</b> One average boiling channel in eight axial nodes. Inlet water is drum water mixed with feedwater, so low feedwater and high flow put the inlet within a degree or two of boiling. Steam void comes from a drift-flux relation, which is steepest at qualities below 1%. Eight main circulation pumps in two loops share a common system curve; four of them are fed from turbine generator 8 and slow with it after its stop valves close. The drum has its own pressure and level, with dump and safety valves.</p>
+      <p><b>The end point.</b> The model declares a steam explosion when the hottest layer's fuel passes 1.0 MJ/kg or channel pressure passes 10 MPa. At that point pressure tubes rupture, the reactor space over-pressurises and the upper shield lifts.</p>
+      <h3>Things to try</h3>
+      <table>
+        <tr><th>Try</th><th>What should happen</th></tr>
+        <tr><td>Replay the night as it happened</td><td>The xenon pit forces rods out; at 200 MW the margin is about 7 rods; the turbine trip slows four pumps; AZ-5 drives power up, prompt critical within seconds.</td></tr>
+        <tr><td>AZ-5 at full power (free play)</td><td>Power rises by about a third for a second or two, then falls away: a mild positive scram, like the one seen at the Ignalina RBMK in 1983. With about 30 rods in and an even flux shape, the absorbers win quickly.</td></tr>
+        <tr><td>Replay with <i>Hold 700 MW</i></td><td>More Doppler, less void, more margin. The test runs and AZ-5 shuts the reactor down.</td></tr>
+        <tr><td>Replay with <i>Insert rods to ORM 15</i></td><td>Power cannot be held at 200 MW, which is why the rule was there; AZ-5 shuts the reactor down.</td></tr>
+        <tr><td>Replay with post-1986 rods or core</td><td>No positive scram, or too little void feedback to run away.</td></tr>
+        <tr><td>Replay without starting pumps 4 and 8</td><td>Still an explosion here: the margin is almost as low. Extra flow made things worse in 1986, but not by enough to change the outcome on its own.</td></tr>
+        <tr><td>Replay with the turbine-trip scram armed</td><td>Not enough on its own: the scram comes 36 s earlier, but at the same low margin, so the graphite tips still kick the core prompt critical. The margin and the rod design matter more than the trigger.</td></tr>
+      </table>
+      <h3>Two official views</h3>
+      <p>The first Soviet account and IAEA report INSAG-1 (1986) put most weight on operator violations: running below the test plan's power, too few rods in, safety signals bypassed. INSAG-7 (1992) revisited the evidence and found the design itself to be the root cause: the positive void coefficient, the positive scram effect, and an operating margin that the operators could not see live and that had not been flagged as a safety limit. Both reports criticised the safety culture of the time. This model tries to show both, without blaming individuals.</p>
+    </div>
+  </section>
+</div>
+
+<div class="over" id="over" hidden>
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="overH">
+    <h2 id="overH">Steam explosion</h2>
+    <div class="stats" id="overStats"></div>
+    <p id="overWhy" style="margin:0"></p>
+    <p class="cost">Two plant workers died as a result of the night of 26 April 1986. Of 134 people diagnosed with acute radiation syndrome, 28 died within months. Many more were affected, including thousands of thyroid cancers in people exposed as children, and the long-term toll is still studied. This model exists to understand how it happened and how RBMK reactors were changed afterwards.</p>
+    <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="btn primary" id="overReplay">Replay with different choices</button>
+      <button type="button" class="btn" id="overReset">Reset to full power</button>
+      <button type="button" class="btn" id="overClose">Look at the trends</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  // ================= constants (generic, public, textbook-scale) =================
+  const P_NOM = 3200e6, NL = 4, LZ = 1.75, HC = 7;
+  const BF = [0.033, 0.219, 0.196, 0.395, 0.115, 0.042], LAM = [0.0124, 0.0305, 0.111, 0.301, 1.14, 3.01];
+  const BETA = 0.0048, BI = BF.map(f => f * BETA), GEN = 1e-3, SRC = 1e-9;
+  const N_BANK = 163, N_AR = 12, A1 = 4e-4, G1 = 1.0e-4;          // per-rod absorber and displacer worths
+  const ABS_LEN = 6.2, GAP = 1.25, DISP = 4.5;
+  const ALPHA_D = -1.2e-5;
+  const VW_LOW = 4.5 * BETA, VW_NORM = 1.3 * BETA, VW_POST = 0.7 * BETA, ORM_LOW = 7, ORM_NORM = 30;
+  const G_I = 0.0639, G_X = 0.0023, L_I = 2.87e-5, L_X = 2.09e-5, SIG_PHI = 1.1e-4;
+  const ALPHA_G = 1.5e-5, TG_REF = 650, TAU_G = 1800, tgEq = f => 280 + 370 * Math.max(0, f) ** 0.8;  // graphite: slow, positive
+  const xeEq = f => (G_I + G_X) * f / (L_X + SIG_PHI * f), iEq = f => G_I * f / L_I;
+  const X1 = xeEq(1), K_XE = 0.028 / X1;
+  const DECAY = [[0.025, 4], [0.018, 80], [0.014, 1500], [0.008, 25000]], DH = DECAY.reduce((a, d) => a + d[0], 0);
+  const CF = 190e3 / NL * 300, HF = CF / 5, CP_FUEL = 300;          // J/K per layer, W/K, J/kg·K
+  const SHAPE0 = [1.0, 1.08, 1.0, 0.92], S_SHAPE = 60, TAU_SHAPE = 0.5;
+  const NT = 8;                                                      // thermal-hydraulic nodes
+  const FW_H = 697, P_SET = 6.9, K_P = 6000, TURB_MAX = 1760, DUMP_MAX = 1600, SAFE_MAX = 5000;
+  const H0P = 9.63e7, KP = 1, RSYS = 0.01402, RHO_IN = 760;          // pump curve: Q in m³/h
+  const TG8_TAU = 160, PUMP_TG8 = [false, true, false, true, false, true, false, true];
+  const ROD_V = HC / 18, ROD_V_POST = HC / 12, AR_V = 0.4, ROD_RATE = 0.15; // rods per second, moved one at a time
+  const DAY0 = Date.UTC(1986, 3, 25, 0, 0, 0) / 1000;               // plant clock origin, 25 Apr 1986 00:00
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+  // steam tables, 5–12 MPa: p MPa, Tsat °C, hf, hg kJ/kg, rho_f, rho_g kg/m³
+  const ST = [[5, 263.9, 1154.5, 2794.2, 777.4, 25.35], [6, 275.6, 1213.9, 2784.6, 757.9, 30.83], [7, 285.8, 1267.4, 2772.6, 739.8, 36.54],
+    [8, 295.0, 1317.3, 2758.7, 722.4, 42.51], [9, 303.3, 1363.7, 2742.9, 705.5, 48.80], [10, 311.0, 1408.1, 2725.5, 688.4, 55.46], [12, 324.7, 1491.5, 2685.4, 652.6, 69.90]];
+  function sat(p) {
+    p = clamp(p, 5, 12); let i = 1; while (i < ST.length - 1 && ST[i][0] < p) i++;
+    const a = ST[i - 1], b = ST[i], f = (p - a[0]) / (b[0] - a[0]), L = c => a[c] + (b[c] - a[c]) * f;
+    return { T: L(1), hf: L(2), hfg: L(3) - L(2), rf: L(4), rg: L(5) };
+  }
+
+  // rod geometry: fraction of each layer occupied by absorber / displacer for a rod inserted d metres
+  function rodComp(d, withDisp, postRods) {
+    const abs = [], disp = [];
+    const a0 = HC - d, d0 = postRods ? -d : GAP - d, d1 = postRods ? GAP + DISP - d : GAP + DISP - d;
+    for (let k = 0; k < NL; k++) {
+      const z0 = k * LZ, z1 = z0 + LZ, ov = (u, v) => Math.max(0, Math.min(z1, v) - Math.max(z0, u)) / LZ;
+      abs.push(ov(a0, a0 + ABS_LEN));
+      disp.push(withDisp ? ov(d0, d1) : 0);
+    }
+    return { abs, disp };
+  }
+  const voidWorth = (orm, postCore) => postCore ? VW_POST : VW_LOW + (VW_NORM - VW_LOW) * clamp((orm - ORM_LOW) / (ORM_NORM - ORM_LOW), 0, 1);
+
+  // ================= state =================
+  const OPT0 = { nIn: 26, arMode: 'auto', pset: 3200, arPos: 3.5, pumps: [true, true, true, false, true, true, true, false],
+    fwMode: 'auto', fwMan: 1, tsv: true, tripArm: true, lvlArm: true, showOrm: true, postRods: false, postCore: false, speed: 'auto' };
+  const P = structuredClone(OPT0);
+  let S, rho0 = 0;
+
+  function blank() {
+    return { t: 3960, n: 1, c: BI.map((b, i) => b / (GEN * LAM[i])), D: DECAY.map(([a]) => a), w: SHAPE0.map(x => x / 4), Tf: Array(NL).fill(600),
+      void: Array(NL).fill(0.3), xi: Array(NL).fill(iEq(1)), xx: Array(NL).fill(X1), nIn: P.nIn, dW: 0, ar: P.arPos, Tg: TG_REF, az5: false, az5t: null,
+      ps: P.pumps.map(v => v ? 1 : 0), tg8: 50, tg8coast: false, p: P_SET, dp: 0, lvl: 50, Q: 48000, G: 10130, hin: 1200, sub: 15, Wgen: 1530, Wfw: 1530,
+      Wout: 1530, Wturb: 1530, Wdump: 0, nodeVoid: Array(NT).fill(0), rhoK: Array(NL).fill(0), parts: {}, rho: 0, dln: 0, Pth: P_NOM, ef: 0, orm: 30,
+      exploded: null, trips: [], pc: 0, lastP: P_NOM, peak: 0, settling: false };
+  }
+
+  // ---------------- thermal hydraulics (quasi-static channel) ----------------
+  function pumpFlow(ps) {
+    let lo = 0, hi = H0P;
+    for (let it = 0; it < 44; it++) {
+      const H = (lo + hi) / 2;
+      let q = 0; for (const s of ps) q += Math.sqrt(Math.max(0, H0P * s * s - H) / KP);
+      if (q > Math.sqrt(H / RSYS)) lo = H; else hi = H;
+    }
+    return Math.max(2500, Math.sqrt(((lo + hi) / 2) / RSYS));   // natural circulation floor
+  }
+  function channel(s, Pk) {
+    const st = sat(s.p), G = s.G, hfw = FW_H;
+    const mix = clamp(s.Wfw / G, 0, 0.6);
+    s.hin = st.hf - mix * (st.hf - hfw);
+    s.sub = (st.hf - s.hin) / 5.4;
+    let h = s.hin * 1e3, x = 0;
+    const tgt = [];
+    const ratio = st.rg / st.rf, flux = G / 4.5;
+    for (let j = 0; j < NT; j++) {
+      const q = Pk[j >> 1] / 2;
+      const hm = h + q / 2 / G;
+      h += q / G;
+      x = Math.max(0, (hm / 1e3 - st.hf) / st.hfg);
+      const a = x <= 0 ? 0 : x / (1.1 * (x + (1 - x) * ratio) + st.rg * 0.2 / flux);
+      s.nodeVoid[j] = Math.min(0.98, a);
+      tgt.push(s.nodeVoid[j]);
+    }
+    const xe = Math.max(0, (h / 1e3 - st.hf) / st.hfg);
+    s.Wgen = G * xe;
+    return tgt;
+  }
+
+  // ---------------- reactivity ----------------
+  function localRho(s) {
+    // manual/emergency rods: nIn fully inserted, the rest withdrawn (displacer mid-core) and moving together on AZ-5
+    const rb = rodComp(s.dW, true, P.postRods), ra = rodComp(s.ar, false, P.postRods), nW = N_BANK - s.nIn;
+    const vw = voidWorth(s.orm, P.postCore);
+    const out = [], parts = { rod: [], void: [], dop: [], xe: [], gr: [] };
+    for (let k = 0; k < NL; k++) {
+      const rod = -A1 * s.nIn + nW * (-A1 * rb.abs[k] + G1 * rb.disp[k]) + N_AR * (-A1 * ra.abs[k]);
+      const vd = vw * s.void[k], dp = ALPHA_D * (s.Tf[k] - 285), xe = -K_XE * s.xx[k], gr = ALPHA_G * (s.Tg - TG_REF);
+      parts.rod.push(rod); parts.void.push(vd); parts.dop.push(dp); parts.xe.push(xe); parts.gr.push(gr);
+      out.push(rho0 + rod + vd + dp + xe + gr);
+    }
+    // operating reactivity margin: importance-weighted absorber, in equivalent full rods
+    const imp = importance(s.w);
+    let orm = 0; for (let k = 0; k < NL; k++) orm += imp[k] * (s.nIn + nW * rb.abs[k] + N_AR * ra.abs[k]);
+    s.orm = orm;
+    return { out, parts, imp };
+  }
+  function importance(w) { let s2 = 0; for (const x of w) s2 += x * x; return w.map(x => x * x / s2); }
+  function globalRho(s) {
+    const { out, parts, imp } = localRho(s);
+    s.rhoK = out;
+    let r = 0; const sum = { rod: 0, void: 0, dop: 0, xe: 0, gr: 0 };
+    for (let k = 0; k < NL; k++) { r += imp[k] * out[k]; for (const c in sum) sum[c] += imp[k] * parts[c][k]; }
+    sum.base = rho0; s.parts = sum; s.rho = r; s.imp = imp;
+    return r;
+  }
+  function shapeTarget(s) {
+    const m = s.rhoK.reduce((a, b) => a + b) / NL;
+    const t = SHAPE0.map((c, k) => c * Math.exp(S_SHAPE * clamp(s.rhoK[k] - m, -0.06, 0.06)));
+    const sm = t.reduce((a, b) => a + b); return t.map(x => x / sm);
+  }
+
+  // ---------------- one plant step ----------------
+  const events = [];
+  function logEvent(kind, text) { if (S.settling) return; events.unshift({ t: S.t, kind, text }); if (events.length > 80) events.pop(); }
+  function scram(cause) {
+    if (S.az5) return;
+    S.az5 = true; S.az5t = S.t; P.arMode = 'manual';
+    logEvent('trip', `AZ-5: ${cause}. All rods driving in.`);
+  }
+
+  function step(dt) {
+    const s = S;
+    // --- pumps, TG-8 coastdown, flow
+    if (!P.tsv && !s.tg8coast) { s.tg8coast = true; logEvent('alm', 'Turbine 8 stop valves closed: turbine generator 8 coasting down with four pumps on its bus'); if (P.tripArm) scram('turbine trip'); }
+    if (P.tsv && s.tg8coast) { s.tg8coast = false; }
+    s.tg8 = s.tg8coast ? s.tg8 * Math.exp(-dt / TG8_TAU) : Math.min(50, s.tg8 + dt * 2);
+    for (let i = 0; i < 8; i++) {
+      const tgt = P.pumps[i] ? (PUMP_TG8[i] && s.tg8coast ? s.tg8 / 50 : 1) : 0;
+      s.ps[i] += (tgt - s.ps[i]) * (1 - Math.exp(-dt / (tgt > s.ps[i] ? 3 : 2)));
+    }
+    s.Q = pumpFlow(s.ps); s.G = s.Q * RHO_IN / 3600;
+
+    // --- kinetics: implicit Euler on n and six precursor groups
+    const rho = globalRho(s), n0 = s.n;
+    let num = n0 + dt * SRC, den = 1 - dt * (rho - BETA) / GEN;
+    for (let i = 0; i < 6; i++) { const f = 1 / (1 + LAM[i] * dt); num += dt * LAM[i] * s.c[i] * f; den -= dt * dt * LAM[i] * BI[i] / GEN * f; }
+    s.n = Math.max(1e-12, num / den);
+    for (let i = 0; i < 6; i++) s.c[i] = (s.c[i] + dt * BI[i] / GEN * s.n) / (1 + LAM[i] * dt);
+    const dl = (Math.log(s.n) - Math.log(n0)) / dt; s.dln += (dl - s.dln) * (1 - Math.exp(-dt / 0.5));
+    for (let k = 0; k < DECAY.length; k++) { const [a, tau] = DECAY[k]; s.D[k] += (a * s.n - s.D[k]) * (1 - Math.exp(-dt / tau)); }
+    s.Pth = P_NOM * ((1 - DH) * s.n + s.D.reduce((a, b) => a + b));
+
+    // --- flux shape, layer power, fuel, void, xenon
+    const wt = shapeTarget(s);
+    for (let k = 0; k < NL; k++) s.w[k] += (wt[k] - s.w[k]) * (1 - Math.exp(-dt / TAU_SHAPE));
+    const sw = s.w.reduce((a, b) => a + b); for (let k = 0; k < NL; k++) s.w[k] /= sw;
+    const Pk = s.w.map(x => x * s.Pth);
+    const vt = channel(s, Pk), st = sat(s.p);
+    for (let k = 0; k < NL; k++) {
+      const vtk = (vt[2 * k] + vt[2 * k + 1]) / 2;
+      s.void[k] += (vtk - s.void[k]) * (1 - Math.exp(-dt / 0.3));
+      const Tc = st.T - Math.max(0, s.sub) * (1 - k / NL);
+      s.Tf[k] += dt * (Pk[k] - HF * (s.Tf[k] - Tc)) / CF;
+      if (!s.settling) {
+        const f = s.n * NL * s.w[k];
+        s.xi[k] += dt * (G_I * f - L_I * s.xi[k]);
+        s.xx[k] += dt * (G_X * f + L_I * s.xi[k] - L_X * s.xx[k] - SIG_PHI * f * s.xx[k]);
+      }
+    }
+    s.ef = Math.max(...s.Tf) * CP_FUEL / 1e6;   // MJ/kg (from 0 °C)
+    if (!s.settling) s.Tg += (tgEq(s.Pth / P_NOM) - s.Tg) * (1 - Math.exp(-dt / TAU_G));
+
+    // --- drum, turbine, dumps, feedwater
+    s.Wturb = P.tsv ? clamp(s.Wgen + 2500 * (s.p - P_SET), 0, TURB_MAX) : 0;
+    s.Wdump = DUMP_MAX * clamp((s.p - 7.0) / 0.3, 0, 1) + SAFE_MAX * clamp((s.p - 7.9) / 0.25, 0, 1);
+    s.Wout = s.Wturb + s.Wdump;
+    s.Wfw = P.fwMode === 'manual' ? P.fwMan * Math.max(s.Wgen, 60) : clamp(s.Wgen + 25 * (50 - s.lvl), 0, 2600);
+    s.p = clamp(s.p + dt * (s.Wgen - s.Wout) / K_P, 5.2, 11.5);
+    s.lvl = clamp(s.lvl + dt * (s.Wfw - s.Wgen) / 600, 0, 100);
+    const dpT = 0.45 * (s.Wgen / 3000) ** 2;
+    s.dp += (dpT - s.dp) * (1 - Math.exp(-dt / 0.15));
+
+    // --- rods
+    const v = P.postRods ? ROD_V_POST : ROD_V;
+    if (s.az5) { s.dW = Math.min(HC, s.dW + v * dt); s.ar = Math.min(HC, s.ar + v * dt); }
+    else {
+      const dB = P.nIn - s.nIn; s.nIn += Math.sign(dB) * Math.min(Math.abs(dB), ROD_RATE * dt);
+      if (P.arMode === 'auto') {
+        const err = (s.Pth - P.pset * 1e6) / (P.pset * 1e6), dem = clamp(0.8 * err + 4 * s.dln, -1, 1) * AR_V;
+        s.ar = clamp(s.ar + dem * dt, 0, HC);
+      } else { const dA = P.arPos - s.ar; s.ar += Math.sign(dA) * Math.min(Math.abs(dA), AR_V * dt); }
+    }
+
+    // --- protection and end point
+    if (!s.settling && !s.exploded) {
+      if (s.Pth > 1.1 * P_NOM) scram('high power');
+      if (P.lvlArm && (s.lvl < 20 || s.p < 5.6)) scram(s.lvl < 20 ? 'low drum level' : 'low steam pressure');
+      const pch = s.p + s.dp;
+      if (s.ef > 1.0 || pch > 10) {
+        s.exploded = { t: s.t, cause: s.ef > 1.0 ? 'fuel enthalpy above 1 MJ/kg' : 'channel pressure above 10 MPa', peak: s.peak, ef: s.ef, pch, voidMax: Math.max(...s.void) };
+        logEvent('trip', `Steam explosion: ${s.exploded.cause}`);
+      }
+    }
+    s.peak = Math.max(s.peak, s.Pth);
+    s.t += dt;
+  }
+
+  // adaptive time step: shrinks hard as reactivity approaches and passes prompt critical
+  function maxDt() {
+    const s = S; let dt = 0.5;
+    if (s.rho > 0.2 * BETA) dt = Math.min(dt, 0.04 * GEN / Math.max(s.rho, 1e-6));
+    if (Math.abs(s.dln) > 0.02 || s.az5 || s.tg8coast) dt = Math.min(dt, 0.02);
+    if (Math.abs(s.dln) > 1) dt = Math.min(dt, 0.002);
+    return Math.max(dt, 2e-5);
+  }
+  function advance(sec, budgetMs = 30) {
+    const t0 = performance.now(), end = S.t + sec;
+    while (S.t < end - 1e-9 && !S.exploded) {
+      step(Math.min(maxDt(), end - S.t));
+      if (S.t >= trend.next || (S.t >= fine.next && S.t > fine.from)) logPoint();
+      if (performance.now() - t0 > budgetMs) return false;
+    }
+    return true;
+  }
+
+  // ---------------- static solve: steady state at power fraction f ----------------
+  function settle(f, opts = {}) {
+    const s = S; s.settling = true;
+    s.n = f; s.c = BI.map((b, i) => b * f / (GEN * LAM[i])); s.D = DECAY.map(([a]) => a * f);
+    s.Pth = P_NOM * f;
+    for (let it = 0; it < 80; it++) {
+      s.Q = pumpFlow(s.ps); s.G = s.Q * RHO_IN / 3600;
+      const Pk = s.w.map(x => x * s.Pth);
+      s.Wfw = s.Wgen;
+      const vt = channel(s, Pk), st = sat(s.p);
+      for (let k = 0; k < NL; k++) {
+        s.void[k] = (vt[2 * k] + vt[2 * k + 1]) / 2;
+        s.Tf[k] = st.T - Math.max(0, s.sub) * (1 - k / NL) + Pk[k] / HF;
+        if (opts.xenonEq) { const fl = f * NL * s.w[k]; s.xi[k] = iEq(fl); s.xx[k] = xeEq(fl); }
+      }
+      globalRho(s);
+      if (opts.calibrate) rho0 -= s.rho * 0.7;
+      s.w = shapeTarget(s).map((x, k) => 0.5 * x + 0.5 * s.w[k]);
+    }
+    globalRho(s);
+    s.Wout = s.Wturb = s.Wgen; s.Wfw = s.Wgen; s.lvl = 50; s.dp = 0.45 * (s.Wgen / 3000) ** 2;
+    s.settling = false;
+  }
+
+  // reference: full power, equilibrium xenon, normal margin (bank at 1.2 m, regulating rods mid-range) defines rho0
+  function fullPower() {
+    Object.assign(P, structuredClone(OPT0), { speed: P.speed, postRods: P.postRods, postCore: P.postCore });
+    S = blank(); rho0 = 0;
+    settle(1, { xenonEq: true, calibrate: true });
+    settle(1, { xenonEq: true, calibrate: true });
+    P.nIn = S.nIn; P.arPos = S.ar;
+  }
+
+  // ================= replay of the night =================
+  const T = (d, h, m, sec = 0) => (d - 25) * 86400 + h * 3600 + m * 60 + sec;
+  const SCRIPT = [
+    { t: T(25, 1, 6), cap: 'Power reduction begins for the planned rundown test.', hid: 'Xenon starts to build as power falls; the iodine made at full power keeps feeding it for hours.' },
+    { t: T(25, 13, 5), cap: 'Power reaches 1600 MWt. One turbine generator is taken off line.' },
+    { t: T(25, 14, 0), cap: 'The emergency core cooling system is isolated, as the test procedure required. The Kyiv grid controller asks the plant to stay on line.', hid: 'The unit sits at half power for nine hours. Xenon rises to a new, higher level.' },
+    { t: T(25, 23, 10), cap: 'The grid controller releases the unit. Power reduction resumes.' },
+    { t: T(26, 0, 5), cap: '26 April, 00:05: power is at 720 MWt, inside the test plan\'s 700–1000 MW range. Xenon is building fast.', hid: 'Below 1000 MW the RBMK\'s power coefficient turns positive.' },
+    { t: T(26, 0, 28), cap: '00:28: control is switched to the global automatic regulator. The setpoint is not held, and power collapses to about 30 MWt.', hid: 'At 30 MW, xenon burnout almost stops. The xenon pit deepens by the minute.' },
+    { t: T(26, 0, 34), cap: 'The crew starts pulling manual rods to recover power, rather than shutting down and waiting out the xenon.', hid: 'Every rod pulled removes margin. The live ORM was not displayed; it came from a printout.' },
+    { t: T(26, 1, 0), cap: '01:00: power is stabilised at about 200 MWt, far below the test plan. The test is to go ahead anyway.' },
+    { t: T(26, 1, 3), cap: '01:03 and 01:07: the two standby main circulation pumps are started. All eight now run.', hid: 'Core flow rises above its limit. The inlet water creeps toward boiling, voids fall, and more rods come out to compensate.' },
+    { t: T(26, 1, 19), cap: '01:19: drum level is low. Feedwater is raised about threefold. Low-level and low-pressure trips are blocked.', hid: 'Colder water reduces voids, so the regulators withdraw rods further.' },
+    { t: T(26, 1, 21, 50), cap: '01:21:50: feedwater is cut back. The inlet water is now within a degree or two of boiling.' },
+    { t: T(26, 1, 22, 30), cap: '01:22:30: a printout shows the operating reactivity margin at about 7 equivalent rods. The rules required at least 15.', hid: 'Nearly every rod is fully out: the graphite displacers sit mid-core with water columns beneath them.' },
+    { t: T(26, 1, 23, 4), cap: '01:23:04: the test starts. Turbine 8 stop valves close. Four pumps coast down with the turbine generator.', hid: 'The turbine-trip scram had been blocked so the test could be repeated.' },
+    { t: T(26, 1, 23, 40), cap: '01:23:40: AZ-5 is pressed. All rods begin to drive in at 0.4 m/s.', hid: 'For the first seconds, graphite displacers push water out of the bottom of the core.' },
+  ];
+  const R = { on: false, idx: 0, opts: {} };
+  function psetSchedule(t, o) {
+    const lin = (a, b, va, vb) => va + (vb - va) * clamp((t - a) / (b - a), 0, 1);
+    if (t < T(25, 13, 5)) return lin(T(25, 1, 6), T(25, 13, 5), 3200, 1600);
+    if (t < T(25, 23, 10)) return 1600;
+    if (o.hold700) return t < T(26, 0, 5) ? lin(T(25, 23, 10), T(26, 0, 5), 1600, 720) : 720;
+    if (t < T(26, 0, 5)) return lin(T(25, 23, 10), T(26, 0, 5), 1600, 720);
+    if (t < T(26, 0, 28)) return lin(T(26, 0, 5), T(26, 0, 28), 720, 500);
+    if (t < T(26, 0, 34)) return 30;
+    if (t < T(26, 0, 39)) return lin(T(26, 0, 34), T(26, 0, 39), 30, 160);
+    return lin(T(26, 0, 39), T(26, 1, 0), 160, 200);
+  }
+  function replayStart() {
+    fullPower();
+    R.on = true; R.idx = 0; R.paused = false;
+    R.opts = { hold700: $('o700').checked, noPumps: $('oPumps').checked, tripArm: $('oTrip').checked, orm15: $('oOrm').checked };
+    P.tripArm = R.opts.tripArm; P.lvlArm = true; P.speed = 'auto'; P.showOrm = $('showOrm').checked;
+    S.t = T(25, 1, 6) - 30; events.length = 0; resetTrend();
+    logEvent('info', `Replay started${Object.entries(R.opts).filter(([, v]) => v).length ? ' with branches: ' + Object.entries(R.opts).filter(([, v]) => v).map(([k]) => ({ hold700: 'hold 700 MW', noPumps: 'no extra pumps', tripArm: 'turbine-trip scram armed', orm15: 'ORM 15 before the test' })[k]).join(', ') : ''}`);
+    syncControls();
+  }
+  // the crew's hand on the manual rods: keep the regulating rods mid-range, as operators did, until rods run out
+  function replayDrive(dt) {
+    const s = S, t = s.t, o = R.opts;
+    while (R.idx < SCRIPT.length && t >= SCRIPT[R.idx].t) {
+      const e = SCRIPT[R.idx++];
+      const skip = (o.hold700 && (e.t === T(26, 0, 28) || e.t === T(26, 0, 34) || e.t === T(26, 1, 0))) || (o.noPumps && e.t === T(26, 1, 3));
+      if (!skip) { setCaption(e.cap, e.hid); logEvent('info', e.cap.replace(/^\d\d:\d\d(:\d\d)?: /, '')); }
+      if (e.t === T(26, 1, 3) && !o.noPumps) { P.pumps[3] = true; }
+      if (e.t === T(26, 1, 19)) { P.fwMode = 'manual'; P.fwMan = 3; P.lvlArm = false; }
+      if (e.t === T(26, 1, 21, 50)) { P.fwMode = 'manual'; P.fwMan = 0.75; }
+      if (e.t === T(26, 1, 22, 30) && o.orm15) { R.ormHold = true; logEvent('alm', 'Branch: rods inserted to restore the margin to 15 equivalent rods'); }
+      if (e.t === T(26, 1, 23, 4)) { P.tsv = false; }
+      if (e.t === T(26, 1, 23, 40)) { scram('button pressed by the shift'); }
+    }
+    if (t >= T(26, 1, 7) && !o.noPumps) P.pumps[7] = true;
+    if (!s.az5) {
+      P.arMode = 'auto'; P.pset = psetSchedule(t, o);
+      if (R.ormHold) { if (s.orm < 15.5) P.nIn = Math.min(N_BANK, s.nIn + 1); }
+      else if (!(t >= T(26, 0, 28) && t < T(26, 0, 34))) {
+        // operators pull a rod when the regulating rods run low, insert one when they run deep
+        const vb = clamp(0.02 * (s.ar - 3.5), -0.1, 0.1);
+        P.nIn = clamp(s.nIn + vb * Math.max(dt, 1), 0, N_BANK);
+      }
+    }
+  }
+  function autoSpeed() {
+    const t = S.t;
+    if (!R.on) return 1;
+    if (S.az5) return 0.15;
+    if (t >= T(26, 1, 22, 50)) return 1;
+    if (t >= T(26, 1, 18)) return 10;
+    if (t >= T(26, 0, 26)) return 120;
+    return 3000;
+  }
+
+  // ================= trends =================
+  const SER = {
+    pow: [['Thermal MW', 'hot', () => S.Pth / 1e6]],
+    rho: [['Total', 'ink', () => S.rho / BETA], ['Rods', 'rod', () => S.parts.rod / BETA], ['Void', 'void', () => S.parts.void / BETA], ['Doppler', 'hot', () => S.parts.dop / BETA], ['Xenon', 'xenon', () => S.parts.xe / BETA], ['Graphite', 'graphite', () => S.parts.gr / BETA]],
+    th: [['Void %', 'void', () => avgVoid() * 100], ['Subcooling °C', 'water', () => S.sub], ['Flow ×1000 m³/h', 'rod', () => S.Q / 1000]],
+    orm: [['ORM rods', 'ok', () => S.orm], ['Manual rods in', 'rod', () => S.nIn], ['Xenon % of eq.', 'xenon', () => avgXe() * 100 / 4]],
+    shape: [['Bottom', 'hot', () => S.w[0] * 100], ['Lower mid', 'void', () => S.w[1] * 100], ['Upper mid', 'water', () => S.w[2] * 100], ['Top', 'xenon', () => S.w[3] * 100]],
+  };
+  const avgVoid = () => S.void.reduce((a, b) => a + b) / NL;
+  const avgXe = () => S.xx.reduce((a, b) => a + b) / NL / X1 * 4;
+  const trend = { t: [], v: {}, dt: 20, next: 0 }, fine = { t: [], v: {}, next: 0, from: 0 };
+  function resetTrend() {
+    for (const b of [trend, fine]) { b.t = []; for (const k in SER) b.v[k] = SER[k].map(() => []); }
+    trend.dt = 20; trend.next = S.t; fine.next = S.t; fine.from = S.t;
+  }
+  function push(b) { b.t.push(S.t); for (const k in SER) SER[k].forEach((s, i) => b.v[k][i].push(s[2]())); }
+  function logPoint() {
+    if (S.t >= trend.next) {
+      push(trend); trend.next = S.t + trend.dt;
+      if (trend.t.length > 1600) { const keep = (_, i) => i % 2 === 0; trend.t = trend.t.filter(keep); for (const k in SER) trend.v[k] = trend.v[k].map(a => a.filter(keep)); trend.dt *= 2; }
+    }
+    if (S.t >= fine.next) {
+      push(fine); fine.next = S.t + (S.az5 || Math.abs(S.dln) > 0.5 ? 0.01 : 0.1);
+      while (fine.t.length && fine.t[0] < S.t - 1800) { fine.t.shift(); for (const k in SER) for (const a of fine.v[k]) a.shift(); }
+    }
+  }
+
+  // ================= formatting, controls =================
+  const $ = id => document.getElementById(id);
+  const fmt = (v, d = 0) => (Math.abs(v) < 0.5 * 10 ** -d ? 0 : v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fMW = w => { const mw = w / 1e6; return mw >= 10000 ? `${fmt(mw / 1000, 1)} GW` : mw >= 100 ? `${fmt(mw)} MW` : `${fmt(mw, 1)} MW`; };
+  const clock = t => { const d = new Date((DAY0 + t) * 1000); return { d: `${d.getUTCDate()} April 1986`, t: d.toISOString().slice(11, 19) + (S && (S.az5 || Math.abs(S.dln) > 0.5) ? '.' + String(d.getUTCMilliseconds()).padStart(3, '0').slice(0, 1) : '') }; };
+  function setCaption(cap, hid) {
+    const tc = clock(S.t).t.slice(0, 8);
+    $('cap').innerHTML = `<b>${tc}</b>${cap}${hid ? `<span class="hid">What the instruments didn't show: ${hid}</span>` : ''}`;
+  }
+
+  for (const id of ['nIn', 'pset', 'fwMan']) $(id).addEventListener('input', e => { P[id] = +e.target.value; if (id === 'nIn' || id === 'pset') takeOver(); syncControls(); });
+  const segs = {
+    arMode: v => { P.arMode = v; P.arPos = S.ar; takeOver(); }, fwMode: v => { P.fwMode = v; takeOver(); },
+    tsv: v => { P.tsv = v === '1'; takeOver(); logEvent('info', P.tsv ? 'Turbine 8 stop valves opened' : 'Turbine 8 stop valves closed by the operator'); },
+    speed: v => { P.speed = v === 'auto' ? 'auto' : +v; }, win: v => { WIN = v === 'all' ? 'all' : +v; },
+  };
+  let WIN = 'all';
+  for (const [id, f] of Object.entries(segs)) for (const b of $(id).querySelectorAll('button')) b.addEventListener('click', () => { f(b.dataset.v); syncControls(); });
+  for (const id of ['tripArm', 'lvlArm', 'showOrm', 'postRods', 'postCore']) $(id).addEventListener('change', e => { P[id] = e.target.checked; if (id === 'postCore' || id === 'postRods') logEvent('info', `${id === 'postRods' ? 'Post-1986 rods' : 'Post-1986 core'} ${e.target.checked ? 'selected' : 'cleared'}`); syncControls(); });
+  $('pumps').innerHTML = P.pumps.map((_, i) => `<button type="button" data-i="${i}" style="${PUMP_TG8[i] ? 'border-style:dashed' : ''}">MCP ${i + 1}<small id="ps${i}"></small></button>`).join('');
+  for (const b of $('pumps').querySelectorAll('button')) b.addEventListener('click', () => { const i = +b.dataset.i; P.pumps[i] = !P.pumps[i]; takeOver(); logEvent('info', `Pump ${i + 1} ${P.pumps[i] ? 'started' : 'stopped'}`); syncControls(); });
+  $('az5').addEventListener('click', () => { if (!S.exploded) scram('button pressed'); syncControls(); });
+  $('bReplay').addEventListener('click', () => { $('over').hidden = true; replayStart(); });
+  $('bPause').addEventListener('click', () => { R.paused = !R.paused; syncControls(); });
+  $('bBranch').addEventListener('click', () => takeOver(true));
+  $('bReset').addEventListener('click', () => { $('over').hidden = true; doReset(); });
+  $('overReplay').addEventListener('click', () => { $('over').hidden = true; document.querySelector('.panel').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  $('overReset').addEventListener('click', () => { $('over').hidden = true; doReset(); });
+  $('overClose').addEventListener('click', () => { $('over').hidden = true; document.querySelector('.duo').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  function takeOver(explicit) {
+    if (!R.on) return;
+    R.on = false; P.speed = P.speed === 'auto' ? 1 : P.speed;
+    setCaption(explicit ? 'You have the controls. The replay script has stopped; the plant carries on from here.' : 'You touched a control, so the replay has handed the plant to you.');
+    logEvent('alm', 'Replay stopped: operator has the controls');
+    syncControls();
+  }
+  function doReset() {
+    R.on = false; fullPower(); S.t = 0; events.length = 0; resetTrend(); logPoint();
+    $('cap').innerHTML = '<b>Free play.</b> The unit is at full power, 3200 MWt, with a normal margin of rods in the core. Run the night of 25–26 April 1986 with <i>Replay the night</i>, or operate the plant yourself.';
+    logEvent('info', 'Reset to full power, equilibrium xenon, six pumps');
+    syncControls();
+  }
+  function setSeg(id, v) { for (const b of $(id).querySelectorAll('button')) b.setAttribute('aria-pressed', b.dataset.v === String(v)); }
+  function syncControls() {
+    if (document.activeElement !== $('nIn')) $('nIn').value = P.nIn;
+    if (document.activeElement !== $('pset')) $('pset').value = P.pset;
+    if (document.activeElement !== $('fwMan')) $('fwMan').value = P.fwMan;
+    setSeg('arMode', P.arMode); setSeg('fwMode', P.fwMode); setSeg('tsv', P.tsv ? 1 : 0); setSeg('speed', P.speed); setSeg('win', WIN);
+    for (const id of ['tripArm', 'lvlArm', 'showOrm', 'postRods', 'postCore']) $(id).checked = P[id];
+    $('o_bank').textContent = `${fmt(P.nIn)} of 163`;
+    $('o_pset').textContent = `${fmt(P.pset)} MW`;
+    $('o_fw').textContent = P.fwMode === 'manual' ? `${fmt(P.fwMan, 2)} × steam` : 'auto';
+    $('az5').setAttribute('aria-pressed', S.az5); $('az5').textContent = S.az5 ? 'AZ-5 · rods driving in' : 'AZ-5';
+    $('bPause').textContent = R.paused ? 'Resume' : 'Pause';
+    $('bBranch').disabled = !R.on;
+    for (const b of $('pumps').querySelectorAll('button')) b.setAttribute('aria-pressed', P.pumps[+b.dataset.i]);
+    $('h_var').textContent = P.postRods || P.postCore ? 'modified' : '1986 design';
+  }
+
+  // ================= drawing =================
+  let tok = {};
+  function readTokens() { const cs = getComputedStyle(document.documentElement); for (const k of ['bg', 'panel', 'raised', 'ink', 'muted', 'line', 'graphite', 'water', 'steam', 'absorber', 'hot', 'void', 'xenon', 'rod', 'ok', 'warn', 'danger']) tok[k] = cs.getPropertyValue('--' + k).trim(); }
+  function fit(cv, W, H) {
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, sc = W ? w / W : 1, h = W ? H * sc : +cv.dataset.h;
+    cv.style.height = h + 'px';
+    if (cv.width !== Math.round(w * dpr)) cv.width = Math.round(w * dpr);
+    if (cv.height !== Math.round(h * dpr)) cv.height = Math.round(h * dpr);
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr * sc, 0, 0, dpr * sc, 0, 0); ctx.clearRect(0, 0, W || w, W ? H : h);
+    return { ctx, w: W || w, h: W ? H : h };
+  }
+  const lab = (ctx, t, x, y, al = 'center', size = 13, c = tok.ink, wt = 600) => { ctx.font = `${wt} ${size}px "Barlow Condensed", sans-serif`; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); };
+  const sm = (ctx, t, x, y, al = 'center', c = tok.muted) => { ctx.font = '500 10.5px "JetBrains Mono", monospace'; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); };
+  function heat(f) { // 0..1 → blue..yellow..red
+    const st = [[0, [44, 75, 209]], [0.35, [47, 164, 196]], [0.6, [232, 211, 90]], [0.8, [239, 138, 45]], [1, [215, 48, 31]]];
+    f = clamp(f, 0, 1); for (let j = 1; j < st.length; j++) if (f <= st[j][0]) { const [a, c0] = st[j - 1], [b, c1] = st[j], u = (f - a) / (b - a); return `rgb(${c0.map((c, i) => Math.round(c + (c1[i] - c) * u)).join(',')})`; }
+    return 'rgb(215,48,31)';
+  }
+  const SW = 1240, SH = 520;
+  let phase = 0;
+  function drawSch(dt) {
+    const { ctx } = fit($('sch'), SW, SH), s = S;
+    phase = (phase + dt) % 1000;
+    // core
+    const cx0 = 70, cx1 = 330, cy0 = 60, cy1 = 460, lh = (cy1 - cy0) / NL;
+    lab(ctx, 'CORE · 1661 CHANNELS · 7 m', (cx0 + cx1) / 2, 30);
+    for (let k = 0; k < NL; k++) {
+      const y1 = cy1 - k * lh, y0 = y1 - lh, pk = s.Pth * s.w[k];
+      const f = clamp((Math.log10(Math.max(pk / 1e6, 1)) - 0) / Math.log10(P_NOM / 4 / 1e6 * 30), 0, 1);
+      ctx.fillStyle = tok.graphite; ctx.fillRect(cx0, y0, cx1 - cx0, lh);
+      for (let c = 0; c < 18; c++) {
+        const x = cx0 + 8 + c * (cx1 - cx0 - 16) / 17;
+        ctx.fillStyle = heat(f); ctx.fillRect(x - 3, y0 + 2, 6, lh - 4);
+      }
+      // bubbles
+      const nb = Math.round(s.void[k] * 40);
+      ctx.fillStyle = 'rgba(255,255,255,.75)';
+      for (let b = 0; b < nb; b++) { const x = cx0 + 8 + ((b * 37) % 17) * (cx1 - cx0 - 16) / 17, yy = y1 - 3 - ((b * 53 + phase * 40 * (1 + s.void[k])) % (lh - 6)); ctx.beginPath(); ctx.arc(x, yy, 1.7, 0, Math.PI * 2); ctx.fill(); }
+      ctx.strokeStyle = tok.ink; ctx.lineWidth = 1; ctx.strokeRect(cx0, y0, cx1 - cx0, lh);
+      sm(ctx, `${fMW(pk)}`, cx0 - 6, y0 + lh / 2 - 14, 'right', tok.ink);
+      sm(ctx, `void ${fmt(s.void[k] * 100)}%`, cx0 - 6, y0 + lh / 2, 'right');
+      sm(ctx, `Xe ${fmt(s.xx[k] / X1 * 100)}%`, cx0 - 6, y0 + lh / 2 + 14, 'right', tok.xenon);
+    }
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2.5; ctx.strokeRect(cx0, cy0, cx1 - cx0, cy1 - cy0);
+    sm(ctx, 'bottom', cx1 + 6, cy1 - 8, 'left'); sm(ctx, 'top', cx1 + 6, cy0 + 8, 'left');
+    // rods: representative manual rod and regulating rod, drawn against the core height
+    const zY = z => cy1 - z / HC * (cy1 - cy0);
+    const drawRod = (x, d, disp, name) => {
+      const a0 = HC - d, d0 = P.postRods ? -d : GAP - d, d1 = GAP + DISP - d;
+      ctx.fillStyle = tok.water; ctx.fillRect(x - 7, cy0, 14, cy1 - cy0);
+      if (disp) { const y0 = zY(clamp(d1, 0, HC)), y1 = zY(clamp(d0, 0, HC)); if (y1 > y0) { ctx.fillStyle = tok.graphite; ctx.fillRect(x - 7, y0, 14, y1 - y0); ctx.strokeStyle = tok.ink; ctx.lineWidth = 1; ctx.strokeRect(x - 7, y0, 14, y1 - y0); } }
+      const ya = zY(clamp(a0, 0, HC)); if (ya > cy0) { ctx.fillStyle = tok.absorber; ctx.fillRect(x - 7, cy0, 14, ya - cy0); }
+      ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; ctx.strokeRect(x - 7, cy0, 14, cy1 - cy0);
+      lab(ctx, name, x, cy1 + 16, 'center', 12); sm(ctx, `${fmt(d, 2)} m`, x, cy1 + 31, 'center', tok.ink);
+    };
+    drawRod(375, s.dW, true, 'WITHDRAWN'); drawRod(420, s.ar, false, 'REG.');
+    sm(ctx, 'absorber', 445, cy0 + 10, 'left', tok.ink); sm(ctx, 'graphite', 445, cy0 + 26, 'left', tok.graphite); sm(ctx, 'water', 445, cy0 + 42, 'left', tok.water);
+    // flux shape bars
+    lab(ctx, 'POWER SHAPE', 510, 30);
+    for (let k = 0; k < NL; k++) { const y1 = cy1 - k * lh, w = s.w[k] * 260; ctx.fillStyle = tok.hot; ctx.globalAlpha = 0.8; ctx.fillRect(470, y1 - lh * 0.7, w, lh * 0.4); ctx.globalAlpha = 1; sm(ctx, `${fmt(s.w[k] * 100)}%`, 474 + w, y1 - lh * 0.5, 'left', tok.ink); }
+    // circuit: channel outlet → drums → turbine; downcomer → pumps → inlet
+    const pipe = (pts, col, wdt = 7) => { ctx.lineJoin = 'round'; ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.strokeStyle = tok.ink; ctx.lineWidth = wdt + 3; ctx.stroke(); ctx.strokeStyle = col; ctx.lineWidth = wdt; ctx.stroke(); };
+    pipe([[200, cy0], [200, 46], [650, 46], [650, 70]], tok.steam);
+    pipe([[860, 90], [960, 90]], tok.steam, 6);
+    pipe([[700, 140], [700, 490], [200, 490], [200, cy1]], tok.water);
+    pipe([[1180, 110], [880, 110]], tok.water, 4);
+    // drums
+    ctx.fillStyle = tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(620, 70, 240, 70, 30) : ctx.rect(620, 70, 240, 70); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = tok.water; ctx.globalAlpha = 0.7; ctx.fillRect(624, 140 - 66 * s.lvl / 100, 232, 66 * s.lvl / 100); ctx.globalAlpha = 1;
+    lab(ctx, 'STEAM DRUMS', 740, 60); sm(ctx, `${fmt(s.p, 2)} MPa · level ${fmt(s.lvl)}%`, 740, 156, 'center', tok.ink);
+    sm(ctx, `feed ${fmt(s.Wfw)} kg/s · ${fmt(165)} °C`, 1180, 124, 'right');
+    // turbine stop valve and TG-8
+    ctx.fillStyle = P.tsv ? tok.ok : tok.danger; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(900, 80); ctx.lineTo(920, 100); ctx.lineTo(920, 80); ctx.lineTo(900, 100); ctx.closePath(); ctx.fill(); ctx.stroke();
+    sm(ctx, P.tsv ? 'STOP VALVES OPEN' : 'STOP VALVES SHUT', 910, 68, 'center', P.tsv ? tok.ok : tok.danger);
+    ctx.fillStyle = tok.raised; ctx.beginPath(); ctx.moveTo(960, 76); ctx.lineTo(1060, 64); ctx.lineTo(1060, 116); ctx.lineTo(960, 104); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(1095, 90, 22, 0, Math.PI * 2); ctx.fillStyle = s.tg8 > 45 ? tok.rod : tok.warn; ctx.fill(); ctx.stroke();
+    lab(ctx, 'G', 1095, 90, 'center', 15, tok.bg);
+    lab(ctx, 'TURBINE GENERATOR 8', 1010, 140, 'center', 12);
+    sm(ctx, `${fmt(s.tg8, 1)} Hz${s.tg8coast ? ' · coasting' : ''}`, 1010, 156, 'center', s.tg8coast ? tok.warn : tok.ink);
+    sm(ctx, `dump ${fmt(s.Wdump)} kg/s`, 860, 175, 'left');
+    // pumps
+    lab(ctx, 'MAIN CIRCULATION PUMPS', 960, 395);
+    for (let i = 0; i < 8; i++) {
+      const x = 760 + (i % 4) * 70, y = i < 4 ? 430 : 480;
+      pipe([[x, y], [700, y]], tok.water, 3);
+      ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fillStyle = s.ps[i] > 0.05 ? tok.water : tok.raised; ctx.fill();
+      ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; if (PUMP_TG8[i]) ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+      lab(ctx, String(i + 1), x, y, 'center', 12, s.ps[i] > 0.05 ? '#fff' : tok.ink);
+      sm(ctx, `${fmt(s.ps[i] * 100)}%`, x + 20, y - 14, 'left');
+    }
+    sm(ctx, `core flow ${fmt(s.Q / 1000, 1)}k m³/h · inlet ${fmt(sat(s.p).T - s.sub, 1)} °C (${fmt(s.sub, 1)} °C below boiling)`, 450, 506, 'center', tok.ink);
+    if (s.az5) lab(ctx, `AZ-5  +${fmt(s.t - s.az5t, 2)} s`, 1200, 30, 'right', 16, tok.danger, 700);
+  }
+
+  function drawTrend(id, key, kind) {
+    const { ctx, w, h } = fit($(id));
+    const m = { l: 56, r: 10, t: 8, b: 22 }, pw = w - m.l - m.r, ph = h - m.t - m.b;
+    const useFine = WIN !== 'all' && fine.t.length > 1, B = useFine ? fine : trend;
+    let i0 = 0; const n = B.t.length; if (n < 2) return;
+    if (useFine) { const tmin = B.t[n - 1] - WIN; while (i0 < n - 1 && B.t[i0] < tmin) i0++; }
+    const ts = B.t.slice(i0), vs = B.v[key].map(a => a.slice(i0));
+    const cv = kind === 'log' ? v => Math.log10(Math.max(v, 0.1)) : v => v;
+    let lo = Infinity, hi = -Infinity; for (const a of vs) for (const v of a) { const c = cv(v); if (c < lo) lo = c; if (c > hi) hi = c; }
+    if (kind === 'log') { lo = Math.floor(Math.min(lo, 1)); hi = Math.ceil(Math.max(hi, Math.log10(3200)) + 0.05); }
+    else { if (hi - lo < 1) { lo -= 0.5; hi += 0.5; } const pad = (hi - lo) * 0.08; lo -= pad; hi += pad; }
+    const Y = v => m.t + (1 - (cv(v) - lo) / (hi - lo)) * ph, t0 = ts[0], t1 = ts[ts.length - 1], X = t => m.l + (t - t0) / Math.max(1e-6, t1 - t0) * pw;
+    ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.muted; ctx.strokeStyle = tok.line; ctx.lineWidth = 1; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    if (kind === 'log') for (let d = lo; d <= hi; d++) { const y = m.t + (1 - (d - lo) / (hi - lo)) * ph; ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(w - m.r, y); ctx.stroke(); ctx.fillText(d >= 3 ? `${10 ** (d - 3)} GW` : `${10 ** d} MW`, m.l - 5, y); }
+    else { const st = [0.5, 1, 2, 5, 10, 20, 25, 50, 100].find(x => (hi - lo) / x <= 5) || 200; for (let v = Math.ceil(lo / st) * st; v <= hi; v += st) { const y = Y(v); ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(w - m.r, y); ctx.stroke(); ctx.fillText(`${+v.toFixed(1)}`, m.l - 5, y); } }
+    if (kind === 'log') { const y = Y(3200); ctx.strokeStyle = tok.muted; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(w - m.r, y); ctx.stroke(); ctx.setLineDash([]); }
+    if (key === 'rho') { const y = Y(1); ctx.strokeStyle = tok.danger; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(w - m.r, y); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = tok.danger; ctx.textAlign = 'left'; ctx.fillText('prompt critical', m.l + 4, y - 7); }
+    if (key === 'orm') { for (const [v, c] of [[15, 'danger'], [30, 'warn']]) { const y = Y(v); ctx.strokeStyle = tok[c]; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(w - m.r, y); ctx.stroke(); ctx.setLineDash([]); } }
+    // time axis labels
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = tok.muted;
+    for (let j = 0; j <= 4; j++) { const t = t0 + (t1 - t0) * j / 4; ctx.fillText(R.on || S.t > 3000 ? clock(t).t.slice(0, (t1 - t0) < 120 ? 8 : 5) : `${fmt((t - t0) / 60, 1)} min`, m.l + pw * j / 4, h - m.b + 5); }
+    SER[key].forEach(([, c], k) => {
+      ctx.strokeStyle = tok[c]; ctx.lineWidth = k === 0 && key === 'rho' ? 2.4 : 1.8; ctx.beginPath();
+      vs[k].forEach((v, j) => (j ? ctx.lineTo : ctx.moveTo).call(ctx, X(ts[j]), Y(v))); ctx.stroke();
+    });
+  }
+  for (const [key, id] of [['pow', 'lgPow'], ['rho', 'lgRho'], ['th', 'lgTh'], ['orm', 'lgOrm']])
+    $(id).innerHTML = SER[key].map(([n, c], i) => `<span><i style="background:var(--${c})"></i>${n}<b id="${id}${i}"></b></span>`).join('');
+
+  // power coefficient: measured continuously as d(rho_feedback)/dP around the current state
+  function powerCoef() {
+    const s = S, keep = JSON.stringify([s.void, s.Tf, s.nodeVoid, s.Wgen, s.hin, s.sub]);
+    const P0 = s.Pth, f0 = s.parts.void + s.parts.dop, dP = Math.max(5e6, P0 * 0.02);
+    const Pk = s.w.map(x => x * (P0 + dP)); const vt = channel(s, Pk), st = sat(s.p);
+    const vw = voidWorth(s.orm, P.postCore); let fb = 0;
+    for (let k = 0; k < NL; k++) { const v = (vt[2 * k] + vt[2 * k + 1]) / 2, Tf = st.T - Math.max(0, s.sub) * (1 - k / NL) + Pk[k] / HF; fb += s.imp[k] * (vw * v + ALPHA_D * (Tf - 285)); }
+    let fb0 = 0; { const Pk0 = s.w.map(x => x * P0), vt0 = channel(s, Pk0); for (let k = 0; k < NL; k++) { const v = (vt0[2 * k] + vt0[2 * k + 1]) / 2, Tf = st.T - Math.max(0, s.sub) * (1 - k / NL) + Pk0[k] / HF; fb0 += s.imp[k] * (vw * v + ALPHA_D * (Tf - 285)); } }
+    const [a, b, c, d, e, f] = JSON.parse(keep); s.void = a; s.Tf = b; s.nodeVoid = c; s.Wgen = d; s.hin = e; s.sub = f;
+    return (fb - fb0) / (dP / 1e6);
+  }
+
+  function readouts() {
+    const s = S, pc = powerCoef(); s.pc = pc;
+    const per = Math.abs(s.dln) > 1e-4 ? 1 / s.dln : Infinity;
+    $('k_p').innerHTML = `${fMW(s.Pth).replace(/ (MW|GW)/, ' <small>$1</small>')}`;
+    $('s_p').textContent = `${fmt(s.Pth / P_NOM * 100, s.Pth < 0.1 * P_NOM ? 1 : 0)}% · period ${Number.isFinite(per) && Math.abs(per) < 1e4 ? fmt(per, Math.abs(per) < 10 ? 2 : 0) + ' s' : '∞'}`;
+    $('kb_p').className = 'kpi' + (s.Pth > 1.1 * P_NOM ? ' trip' : '');
+    $('k_rho').innerHTML = `${fmt(s.rho / BETA, 2)} <small>β</small>`;
+    $('s_rho').textContent = s.rho >= BETA ? 'PROMPT CRITICAL' : s.rho > 0.5 * BETA ? 'fast rise' : `rods ${fmt(s.parts.rod / BETA, 1)} · void +${fmt(s.parts.void / BETA, 1)} β`;
+    $('kb_rho').className = 'kpi' + (s.rho >= BETA ? ' trip' : s.rho > 0.3 * BETA ? ' alm' : '');
+    const show = P.showOrm || !R.on;
+    $('k_orm').innerHTML = show ? `${fmt(s.orm, 1)} <small>rods</small>` : '<small>not displayed</small>';
+    $('m_orm').style.width = `${clamp(s.orm / 50, 0, 1) * 100}%`; $('m_orm15').style.left = '30%'; $('m_orm30').style.left = '60%';
+    $('s_orm').textContent = show ? (s.orm < 15 ? 'below the 15-rod minimum' : s.orm < 30 ? 'below the 30 rods required' : 'normal margin') : 'printout only, every few minutes';
+    $('kb_orm').className = 'kpi' + (s.orm < 15 ? ' trip' : s.orm < 30 ? ' alm' : '');
+    $('k_void').innerHTML = `${fmt(avgVoid() * 100, 1)} <small>%</small>`;
+    $('s_void').textContent = `void worth ${fmt(voidWorth(s.orm, P.postCore) / BETA, 1)} β (0→100%)`;
+    $('kb_void').className = 'kpi' + (avgVoid() > 0.6 ? ' trip' : '');
+    $('k_pc').innerHTML = `${pc >= 0 ? '+' : ''}${fmt(pc * 1e6 / BETA * 1000, 2)} <small>mβ/MW</small>`;
+    $('s_pc').textContent = pc > 0 ? 'positive: power feeds on itself' : 'negative: self-limiting';
+    $('k_flow').innerHTML = `${fmt(s.Q / 1000, 1)} <small>k m³/h</small>`;
+    $('s_flow').textContent = `${P.pumps.filter(Boolean).length} pumps · TG-8 ${fmt(s.tg8, 1)} Hz`;
+    $('k_sub').innerHTML = `${fmt(s.sub, 1)} <small>°C</small>`;
+    $('s_sub').textContent = `inlet ${fmt(sat(s.p).T - s.sub, 1)} °C · feed ${fmt(s.Wfw)} kg/s`;
+    $('kb_sub').className = 'kpi' + (s.sub < 3 ? ' alm' : '');
+    $('k_pres').innerHTML = `${fmt(s.p, 2)} <small>MPa</small>`;
+    $('s_pres').textContent = `channel ${fmt(s.p + s.dp, 2)} MPa · level ${fmt(s.lvl)}%`;
+    $('kb_pres').className = 'kpi' + (s.p + s.dp > 8.5 ? ' trip' : '');
+    $('k_xe').innerHTML = `${fmt(avgXe() * 100 / 4)} <small>% eq.</small>`;
+    $('s_xe').textContent = `top ${fmt(s.xx[3] / X1 * 100)}% · bottom ${fmt(s.xx[0] / X1 * 100)}% · worth ${fmt(s.parts.xe / BETA, 1)} β`;
+    $('k_fuel').innerHTML = `${fmt(s.ef, 2)} <small>MJ/kg</small>`;
+    $('s_fuel').textContent = `hottest layer ${fmt(Math.max(...s.Tf))} °C · limit 1.0`;
+    $('kb_fuel').className = 'kpi' + (s.ef > 0.8 ? ' trip' : s.ef > 0.5 ? ' alm' : '');
+    $('h_rods').textContent = s.az5 ? 'AZ-5' : `${P.arMode} · reg. ${fmt(s.ar, 1)} m`;
+    $('n_bank').textContent = s.az5 ? `withdrawn rods ${fmt(s.dW, 2)} m in, driving at 0.4 m/s` : `${fmt(s.nIn, 1)} in · ${fmt(N_BANK - s.nIn, 0)} fully withdrawn`;
+    $('n_ar').textContent = P.arMode === 'auto' ? `regulating rods ${fmt(s.ar, 2)} m in, holding ${fmt(P.pset)} MW` : 'regulating rods held';
+    $('n_fw').textContent = `${fmt(s.Wfw)} kg/s feed · ${fmt(s.Wgen)} kg/s steam`;
+    $('h_pumps').textContent = `${fmt(s.Q / 1000, 1)}k m³/h`;
+    $('h_tsv').textContent = P.tsv ? 'on line' : 'tripped';
+    for (let i = 0; i < 8; i++) $('ps' + i).textContent = `${fmt(s.ps[i] * 100)}%${PUMP_TG8[i] ? ' TG8' : ''}`;
+    for (const [key, id] of [['pow', 'lgPow'], ['rho', 'lgRho'], ['th', 'lgTh'], ['orm', 'lgOrm']]) SER[key].forEach((sr, i) => { $(id + i).textContent = fmt(sr[2](), key === 'pow' ? 0 : 1); });
+    const pill = $('pill');
+    if (s.exploded) { pill.className = 'pill bad'; pill.textContent = 'Destroyed'; }
+    else if (s.rho >= BETA) { pill.className = 'pill bad'; pill.textContent = 'Prompt critical'; }
+    else if (s.az5) { pill.className = 'pill busy'; pill.textContent = 'Scram in progress'; }
+    else if (Math.abs(s.dln) > 0.01) { pill.className = 'pill busy'; pill.textContent = s.dln > 0 ? 'Power rising' : 'Power falling'; }
+    else { pill.className = 'pill ok'; pill.textContent = 'Stable'; }
+    const c = clock(s.t); $('clockT').textContent = c.t; $('clockD').textContent = R.on || s.t > 3000 ? c.d + (R.on ? ' · replay' : '') : 'Free play';
+    $('log').innerHTML = events.map(e => `<li><time>${clock(e.t).t.slice(0, 8)}</time><span class="${e.kind}">${e.text}</span></li>`).join('') || '<li><time></time><span>No events yet.</span></li>';
+  }
+  function showExplosion() {
+    const x = S.exploded, az = S.az5t;
+    $('overStats').innerHTML = `<span>Time</span><span>${clock(x.t).t}${az ? ` (AZ-5 + ${fmt(x.t - az, 1)} s)` : ''}</span><span>Peak power</span><span>${fMW(x.peak)} · ${fmt(x.peak / P_NOM, 0)} × nominal</span><span>Cause</span><span>${x.cause}</span><span>Fuel</span><span>${fmt(x.ef, 2)} MJ/kg in the hottest layer</span><span>Channel pressure</span><span>${fmt(x.pch, 1)} MPa</span><span>Steam void</span><span>${fmt(x.voidMax * 100)}% in the worst layer</span>`;
+    $('overWhy').textContent = `With about ${fmt(R.lastOrm ?? S.orm, 0)} equivalent rods of margin and the core close to boiling, a small rise in power made more steam, and steam added reactivity. The graphite tips of the rods entering from fully withdrawn added more at the bottom of the core in the first seconds. Fuel heated faster than Doppler feedback could stop it, the water flashed to steam, pressure tubes ruptured and the upper shield lifted. In this model the run stops here.`;
+    $('over').hidden = false;
+  }
+
+  // ================= main loop =================
+  let last = performance.now(), frame = 0, shown = false;
+  function tick(now) {
+    const dtR = Math.min(0.05, (now - last) / 1000); last = now;
+    if (frame % 30 === 0) readTokens();
+    if (!R.paused && !S.exploded) {
+      const sp = P.speed === 'auto' ? autoSpeed() : P.speed;
+      let left = dtR * sp; const t0 = performance.now();
+      while (left > 1e-9 && performance.now() - t0 < 28 && !S.exploded) {
+        const chunk = Math.min(left, R.on ? 5 : 30);
+        if (R.on) replayDrive(chunk);
+        const ok = advance(chunk, 28 - (performance.now() - t0));
+        left -= chunk; if (!ok) break;
+      }
+      if (R.on && S.t < T(26, 1, 23, 40)) R.lastOrm = S.orm;
+    }
+    if (S.exploded && !shown) { shown = true; readouts(); showExplosion(); }
+    if (!S.exploded) shown = false;
+    drawSch(dtR);
+    if (frame % 3 === 0) { drawTrend('tPow', 'pow', 'log'); drawTrend('tRho', 'rho'); drawTrend('tTh', 'th'); drawTrend('tOrm', 'orm'); drawTrend('tShape', 'shape'); }
+    if (frame % 5 === 0) { readouts(); syncControls(); }
+    frame++;
+    requestAnimationFrame(tick);
+  }
+
+  readTokens();
+  fullPower(); S.t = 0; resetTrend(); logPoint();
+  logEvent('info', 'Unit at full power, equilibrium xenon, six main circulation pumps');
+  syncControls(); readouts();
+  globalThis.__rbmk = { get S() { return S; }, P, R, step, advance, maxDt, fullPower, replayStart, replayDrive, settle, globalRho, powerCoef, T, scram, BETA, X1, sat, get rho0() { return rho0; } };
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
