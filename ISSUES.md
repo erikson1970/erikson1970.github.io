@@ -153,7 +153,7 @@ over the new project is still owed.
 - **Status:** Tabled
 - **Filed:** Milestone 9 (2026-10-12)
 
-The seven pages under `projects/plant_models/*/` and
+The pages under `projects/plant_models/*/` (eight as of Milestone 10) and
 `projects/HVAC-stuff/ground-source-heat-pump/` were developed as single
 self-contained HTML files in a separate working folder
 (`Energy-Flow/visualization/`, not in this repo) and copied in, wrapped in a
@@ -164,6 +164,9 @@ checked from here. The Milestone 9 checks (inline scripts parse, relative
 links resolve) were likewise ad hoc and not committed (cf. ISSUE-009).
 Resolve by either treating these copies as the source of truth from now on,
 or vendoring a small wrap/check script under each section.
+- **Note (Milestone 10):** `rbmk-1986/` added the same way; its replay and
+  counterfactual results (M10-2, M10-3) and script parse check (M10-5) come
+  from ad hoc headless runs that are likewise not committed.
 
 ## Resolved
 
@@ -411,3 +414,23 @@ the new landing-page cards match the existing indentation. Tabled: ISSUE-018
 counterflow page carries no version string of its own (the section page calls it
 v1.0, as the v2/v3 pages do); v5.0 and v5.1 share the `pwr-units` localStorage
 key, so the metric/imperial choice carries across them, which is intended.
+
+### Milestone 10 — RBMK-1000 model
+Reviewed 2026-10-14 on branch `feature/rbmk-model` vs. `main` at `e57b2b7`
+by an independent council of three subagent reviewers, one per lens.
+
+| Lens | Verdict |
+|---|---|
+| Content integrity & physics | PASS_WITH_MINOR_ISSUES |
+| Static-site architecture / constraints | PASS_WITH_MINOR_ISSUES |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No gatekeeper findings. Prose and code constants agree; the timeline and
+casualty figures are accurate; both INSAG views are presented. Fixed inline:
+the notes now describe the slow graphite-temperature node instead of calling
+it constant, the grid release moved to 23:10, two captions reworded more
+neutrally, and ISSUE-018 extended to cover this page and its ad hoc checks.
+Noted, not filed: an untracked raw copy `projects/plant_models/rbmk_1986.html`
+(lacking the `[hidden]` rule, so its explosion modal shows at load) sits in
+the working tree; it was never committed and is left for the site owner to
+delete.

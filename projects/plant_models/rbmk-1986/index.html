@@ -279,7 +279,7 @@ canvas.chart { display: block; width: 100%; }
       <p><b>A minimal teaching model, not a design tool.</b> Every number is a generic, publicly available, textbook-scale figure. The model is built to show <i>why</i> the 26 April 1986 excursion happened: the positive void coefficient at low power and low margin, the xenon pit after the power reduction, the flux pushed toward the bottom of the core, and control rods whose graphite displacers added reactivity in their first seconds of travel. It stops at the first steam explosion; nothing after that is modelled.</p>
       <h3>How it works</h3>
       <p><b>Neutronics.</b> One point-kinetics amplitude with six delayed-neutron groups (β = 0.0048 for burned uranium–plutonium fuel, neutron generation time 1 ms), solved implicitly with time steps that shrink to a fraction of a millisecond when the core approaches prompt criticality. The core is split into four axial layers of 1.75 m. Each layer has its own steam void, fuel temperature, iodine and xenon, and rod composition. Their reactivities are weighted by the square of the local flux (importance), and the flux shape leans toward layers with more reactivity, within about half a second.</p>
-      <p><b>Reactivity.</b> Void: the whole-core worth of going from water to steam is about +4.5 β when only a handful of rods are in, falling to about +1.3 β with a normal rod margin, because absorbers compete with water for neutrons. Doppler: −1.2 × 10⁻⁵ per °C of fuel temperature. Xenon: about −2.8% Δk at full-power equilibrium, tracked per layer. Graphite temperature is held constant (its time constant is minutes). The power coefficient shown is computed, not entered: negative at full power, strongly positive at 200 MW with a low margin.</p>
+      <p><b>Reactivity.</b> Void: the whole-core worth of going from water to steam is about +4.5 β when only a handful of rods are in, falling to about +1.3 β with a normal rod margin, because absorbers compete with water for neutrons. Doppler: −1.2 × 10⁻⁵ per °C of fuel temperature. Xenon: about −2.8% Δk at full-power equilibrium, tracked per layer. Graphite temperature changes slowly (about a 30-minute time constant) and adds a small positive reactivity as it warms. The power coefficient shown is computed, not entered: negative at full power, strongly positive at 200 MW with a low margin.</p>
       <p><b>Rods.</b> 163 manual and emergency rods move as one bank; 12 regulating rods hold power in Auto. Each rod is a 6.2 m absorber above a 1.25 m gap and a 4.5 m graphite displacer. Fully withdrawn, the displacer sits in the middle of the core with 1.25 m of water below it. As a rod starts in, the displacer pushes that water out of the bottom of the channel (more reactivity) while the absorber only begins to enter the top. With the flux bottom-peaked, the first few seconds of a scram add reactivity. Full travel takes 18 s. The operating reactivity margin (ORM) is the importance-weighted absorber in the core, in equivalent fully inserted rods. The rules called for at least 15, and about 30 for normal operation.</p>
       <p><b>Circuit.</b> One average boiling channel in eight axial nodes. Inlet water is drum water mixed with feedwater, so low feedwater and high flow put the inlet within a degree or two of boiling. Steam void comes from a drift-flux relation, which is steepest at qualities below 1%. Eight main circulation pumps in two loops share a common system curve; four of them are fed from turbine generator 8 and slow with it after its stop valves close. The drum has its own pressure and level, with dump and safety valves.</p>
       <p><b>The end point.</b> The model declares a steam explosion when the hottest layer's fuel passes 1.0 MJ/kg or channel pressure passes 10 MPa. At that point pressure tubes rupture, the reactor space over-pressurises and the upper shield lifts.</p>
@@ -305,7 +305,7 @@ canvas.chart { display: block; width: 100%; }
     <h2 id="overH">Steam explosion</h2>
     <div class="stats" id="overStats"></div>
     <p id="overWhy" style="margin:0"></p>
-    <p class="cost">Two plant workers died on the night of 26 April 1986. Of 134 people diagnosed with acute radiation syndrome, 28 died within months. Many more were affected, including thousands of thyroid cancers in people exposed as children, and the long-term toll is still studied. This model exists to understand how it happened and how RBMK reactors were changed afterwards.</p>
+    <p class="cost">Two plant workers died as a result of the night of 26 April 1986. Of 134 people diagnosed with acute radiation syndrome, 28 died within months. Many more were affected, including thousands of thyroid cancers in people exposed as children, and the long-term toll is still studied. This model exists to understand how it happened and how RBMK reactors were changed afterwards.</p>
     <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap">
       <button type="button" class="btn primary" id="overReplay">Replay with different choices</button>
       <button type="button" class="btn" id="overReset">Reset to full power</button>
@@ -584,10 +584,10 @@ canvas.chart { display: block; width: 100%; }
     { t: T(25, 1, 6), cap: 'Power reduction begins for the planned rundown test.', hid: 'Xenon starts to build as power falls; the iodine made at full power keeps feeding it for hours.' },
     { t: T(25, 13, 5), cap: 'Power reaches 1600 MWt. One turbine generator is taken off line.' },
     { t: T(25, 14, 0), cap: 'The emergency core cooling system is isolated, as the test procedure required. The Kyiv grid controller asks the plant to stay on line.', hid: 'The unit sits at half power for nine hours. Xenon rises to a new, higher level.' },
-    { t: T(25, 23, 4), cap: 'The grid controller releases the unit. Power reduction resumes.' },
+    { t: T(25, 23, 10), cap: 'The grid controller releases the unit. Power reduction resumes.' },
     { t: T(26, 0, 5), cap: '26 April, 00:05: power is at 720 MWt, inside the test plan\'s 700–1000 MW range. Xenon is building fast.', hid: 'Below 1000 MW the RBMK\'s power coefficient turns positive.' },
     { t: T(26, 0, 28), cap: '00:28: control is switched to the global automatic regulator. The setpoint is not held, and power collapses to about 30 MWt.', hid: 'At 30 MW, xenon burnout almost stops. The xenon pit deepens by the minute.' },
-    { t: T(26, 0, 34), cap: 'The crew starts pulling manual rods to recover power instead of shutting down and waiting out the xenon.', hid: 'Every rod pulled removes margin. The live ORM was not displayed; it came from a printout.' },
+    { t: T(26, 0, 34), cap: 'The crew starts pulling manual rods to recover power, rather than shutting down and waiting out the xenon.', hid: 'Every rod pulled removes margin. The live ORM was not displayed; it came from a printout.' },
     { t: T(26, 1, 0), cap: '01:00: power is stabilised at about 200 MWt, far below the test plan. The test is to go ahead anyway.' },
     { t: T(26, 1, 3), cap: '01:03 and 01:07: the two standby main circulation pumps are started. All eight now run.', hid: 'Core flow rises above its limit. The inlet water creeps toward boiling, voids fall, and more rods come out to compensate.' },
     { t: T(26, 1, 19), cap: '01:19: drum level is low. Feedwater is raised about threefold. Low-level and low-pressure trips are blocked.', hid: 'Colder water reduces voids, so the regulators withdraw rods further.' },
@@ -600,9 +600,9 @@ canvas.chart { display: block; width: 100%; }
   function psetSchedule(t, o) {
     const lin = (a, b, va, vb) => va + (vb - va) * clamp((t - a) / (b - a), 0, 1);
     if (t < T(25, 13, 5)) return lin(T(25, 1, 6), T(25, 13, 5), 3200, 1600);
-    if (t < T(25, 23, 4)) return 1600;
-    if (o.hold700) return t < T(26, 0, 5) ? lin(T(25, 23, 4), T(26, 0, 5), 1600, 720) : 720;
-    if (t < T(26, 0, 5)) return lin(T(25, 23, 4), T(26, 0, 5), 1600, 720);
+    if (t < T(25, 23, 10)) return 1600;
+    if (o.hold700) return t < T(26, 0, 5) ? lin(T(25, 23, 10), T(26, 0, 5), 1600, 720) : 720;
+    if (t < T(26, 0, 5)) return lin(T(25, 23, 10), T(26, 0, 5), 1600, 720);
     if (t < T(26, 0, 28)) return lin(T(26, 0, 5), T(26, 0, 28), 720, 500);
     if (t < T(26, 0, 34)) return 30;
     if (t < T(26, 0, 39)) return lin(T(26, 0, 34), T(26, 0, 39), 30, 160);

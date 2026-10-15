@@ -474,11 +474,15 @@ published as a sub-page of `projects/plant_models/`.
 | M10-2 | Replay of the night reproduces the history qualitatively | Council validation targets | Met | Ad hoc headless runs (not committed, cf. ISSUE-018): ORM ≈ 7 at 01:22:30; AZ-5 drives reactivity to ≈ 2 β and the model ends in a steam explosion 4.3 s after AZ-5 at ≈ 7× nominal (instruments' last reading ≈ 10×) |
 | M10-3 | Counterfactuals behave as the page describes | Council counterfactual list | Met | Same runs: hold 700 MW, ORM 15, post-1986 rods and post-1986 core all end in shutdown; no extra pumps and turbine-trip scram armed still explode, and the page says so |
 | M10-4 | Linked from the plant-models section and docs | AGENTS.md § Repository structure | Met | Card on `projects/plant_models/index.html`; section `README.md`; root `README.md` and landing page text |
-| M10-5 | Static-only, self-contained page | AGENTS.md § Project intent | Met | One HTML file, Google Fonts only; inline script parses |
+| M10-5 | Static-only, self-contained page | AGENTS.md § Project intent | Met | One HTML file, Google Fonts only; inline script parses (ad hoc check, ISSUE-018) |
 
 ### Milestone 10 council review
 
-_Recorded on merge._
+Reviewed 2026-10-14 by an independent council of three subagent reviewers:
+content integrity & physics, static-site constraints and process &
+documentation each PASS_WITH_MINOR_ISSUES. No gatekeeper findings; minor
+nits fixed inline, ISSUE-018 extended — see `ISSUES.md` § Milestone council
+reviews. Merged to `main`.
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
