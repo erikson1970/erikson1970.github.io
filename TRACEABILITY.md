@@ -484,6 +484,26 @@ documentation each PASS_WITH_MINOR_ISSUES. No gatekeeper findings; minor
 nits fixed inline, ISSUE-018 extended — see `ISSUES.md` § Milestone council
 reviews. Merged to `main`.
 
+## Milestone 11 — PWR plant lab v5.2, v5.1 retired
+
+Goal (user request, 2026-10-18): publish PWR plant lab v5.2 (limit board with
+overrides, smarter trip arming, fast rod insertion, maximum power by pump
+line-up, larger pressurizer and charging system, regular and fast rod speeds),
+retire v5.1 from the published site, and replace the "no naval reactor design
+data" statement on every page with one saying all values come from published,
+publicly available sources.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M11-1 | v5.2 published as a sub-page | User request | Met | `projects/plant_models/pwr-plant-v5-2/index.html`, card on `projects/plant_models/index.html` |
+| M11-2 | v5.1 retired | User request | Met | `projects/plant_models/pwr-plant-v5-1/index.html` is now a redirect stub to v5.2; its card is replaced by the v5.2 card |
+| M11-3 | Statement replaced on every page | User request | Met | `grep` for "design data is used or implied" finds nothing in `projects/`; v4, v5 and v5.2 pages and the section page and README carry the new wording |
+| M11-4 | v5.2 behaves as described | Process norm | Met | Ad hoc headless runs (ISSUE-018): all presets 10 min without trips; scram recovery without a low-pressure re-trip; RCP-2 loss at full power runs back to the one-pump limit without a scram |
+
+### Milestone 11 council review
+
+_Recorded on merge._
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
