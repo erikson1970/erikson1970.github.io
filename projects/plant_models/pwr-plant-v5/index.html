@@ -444,7 +444,7 @@ canvas.chart { display: block; width: 100%; }
       <p><b>Steam generator level.</b> Use the <i>Loss of feed</i> drill. The level falls toward the top of the U-tubes at one third of the shell; below that the tubes uncover, heat transfer drops, and the reactor trips at 30%.</p>
       <p><b>Electric plant.</b> Shut TG-1's steam valve and watch its governor fail to hold 3600 rpm until the under-frequency relay opens its breaker. Close the shore breaker first and the bus rides through.</p>
       <h3>How the model works</h3>
-      <p><b>Not a real plant.</b> All values are generic, textbook-scale PWR figures (150 MW thermal, about 155 bar, T<sub>avg</sub> 302 °C) chosen for teaching. No naval reactor design data is used or implied.</p>
+      <p><b>Not a real plant.</b> All values are generic, textbook-scale PWR figures (150 MW thermal, about 155 bar, T<sub>avg</sub> 302 °C) chosen for teaching and derived from published, publicly available sources.</p>
       <p><b>Neutronics (Level 1 + decay heat):</b> point kinetics with six delayed-neutron groups (U-235, β = 0.0065), integrated with the prompt-jump approximation and a small neutron source so a shut-down core sits at about 10⁻⁸ of full power.
         Reactivity is the sum of rod worth (a sigmoid integral worth curve, 8% total), Doppler (−2.5 pcm/°C on a lumped fuel temperature), moderator temperature (−30 pcm/°C at 302 °C on the core coolant, fading linearly to zero at 100 °C as it does in a real core) and xenon-135, all measured from the full-power equilibrium state with rods at 70%.
         Iodine-135 and xenon-135 follow the standard production, decay and burnout equations; equilibrium xenon is worth about 2.6% and peaks roughly 8 hours after a shutdown.

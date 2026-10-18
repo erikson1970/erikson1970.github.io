@@ -12,7 +12,8 @@ hx-tank-loop-v2/      v2.0  cooler + recuperator + stratified storage tank with 
 hx-tank-loop-v3/      v3.1  adds a third exchanger, 300 °C inlet, cooler/recuperator order switch
 pwr-plant-v4/         v4.0  single-loop PWR plant: kinetics, RCPs, pressurizer, steam, electric, seawater
 pwr-plant-v5/         v5.0  six-group kinetics, xenon, rods, SG level, sampling/charging, four panels
-pwr-plant-v5-1/       v5.1  v5.0 plus a loop electric plant (vital/non-vital buses, MGs, DC bus, battery)
+pwr-plant-v5-1/       v5.1  retired: redirects to v5.2
+pwr-plant-v5-2/       v5.2  v5.1 electric plant plus a limit board, smarter trips, fast rod insertion
 rbmk-1986/            v1.0  RBMK-1000 model of the 1986 Chernobyl excursion (void coefficient, xenon, positive scram)
 ```
 
@@ -26,7 +27,7 @@ The models were developed in the separate `Energy-Flow` working folder
 with a breadcrumb back to this section. Older versions are kept so the
 progression stays visible.
 
-All plant values are generic, textbook-scale figures chosen for teaching; the
-PWR and RBMK models use no real plant's design data. The RBMK model's scope
+All plant values are generic, textbook-scale figures chosen for teaching,
+derived from published, publicly available sources. The RBMK model's scope
 was set by a three-lens expert council (neutronics, thermal-hydraulics,
 accident sequence) and it stops at the first steam explosion.
