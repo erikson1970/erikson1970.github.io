@@ -39,7 +39,8 @@ split per project. See `AGENTS.md` for the full development workflow
 - **[Plant models](projects/plant_models/)** — interactive, browser-only
   thermal plant models, from a counterflow heat exchanger and a storage-tank
   loop to a pressurized-water reactor plant with its steam and electric
-  plants, and an RBMK-1000 model of the 1986 Chernobyl excursion. Each
+  plants, an RBMK-1000 model of the 1986 Chernobyl excursion, and a
+  heat-driven refrigeration lab built around Einstein's fridge. Each
   model is a sub-page. See `projects/plant_models/README.md`.
 - **[HVAC stuff](projects/HVAC-stuff/)** — home heating and cooling
   analyses, starting with a ground-source heat pump model for a

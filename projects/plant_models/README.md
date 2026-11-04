@@ -15,7 +15,8 @@ pwr-plant-v5/         v5.0  six-group kinetics, xenon, rods, SG level, sampling/
 pwr-plant-v5-1/       v5.1  retired: redirects to v5.2
 pwr-plant-v5-2/       v5.2  v5.1 electric plant plus a limit board, smarter trips, fast rod insertion
 rbmk-1986/            v1.0  RBMK-1000 model of the 1986 Chernobyl excursion (void coefficient, xenon, positive scram)
-einstein-refrigerator/ v1.0  heat-driven refrigeration: Einstein–Szilard, diffusion, LiBr, NH3–water, adsorption
+einstein-refrigerator/
+                      v1.0  heat-driven refrigeration: Einstein–Szilard, diffusion, LiBr, NH3–water, adsorption
 ```
 
 Each model's `index.html` is one self-contained file: HTML, CSS and JavaScript

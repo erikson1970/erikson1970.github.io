@@ -525,7 +525,15 @@ documented units, with a choice of heat sources and heat sinks; published under
 
 ### Milestone 12 council review
 
-_Recorded on merge._
+Reviewed 2026-11-04 by an independent council reviewer covering all three
+lenses. Content integrity first returned FAIL: each working pair defined `aux`
+twice, so the pressure-equalizing gas (hydrogen, ammonia) was overwritten by the
+auxiliary-power fraction and the diffusion machines lost their gas in the
+fluids panel, mimic and P–T note. Fixed by renaming the numeric key `auxE` in
+the source and the published copy, and re-checked headlessly. Static-site
+constraints PASS; process & documentation PASS_WITH_MINOR_ISSUES (stale
+"not modelled" suggestions, README alignment, root blurbs), all fixed inline.
+See `ISSUES.md` § Milestone council reviews. Merged to `main`.
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 

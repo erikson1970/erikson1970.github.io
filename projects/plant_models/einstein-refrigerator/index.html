@@ -255,8 +255,8 @@ table.t tr.no td { color: var(--muted); }
           <ul id="srcList"></ul>
           <h3>Other combinations worth knowing</h3>
           <p><b>Working pairs:</b> zeolite–water (InvenSor, drives from 45–100 °C), water–lithium chloride (three-phase storage machines), ammonia–lithium nitrate and ammonia–sodium thiocyanate (air-cooled, no rectifier), CaCl₂–ammonia chemisorption (deep freezing), and GAX and triple-effect LiBr cycles (COP up to about 1.7).</p>
-          <p><b>Heat sources:</b> concentrated solar, geothermal brine, district heating return, biogas, fuel-cell and engine exhaust (trigeneration), and nuclear process heat.</p>
-          <p><b>Heat sinks:</b> hybrid wet/dry coolers, lake-source and deep-water cooling, and absorber/condenser heat used for space heating or hot water. In that last case the machine is an absorption heat pump, and its heat output is about 1 + COP times the heat input.</p>
+          <p><b>Heat sources not modelled:</b> biogas and landfill gas, fuel-cell exhaust, and nuclear process heat from small reactors.</p>
+          <p><b>Heat sinks not modelled:</b> hybrid wet/dry coolers and adiabatic pre-cooled air coolers. With the heating-loop sink selected, the machine is an absorption heat pump: its useful heat output is about 1 + COP times the heat input.</p>
         </div>
       </section>
     </main>
@@ -300,25 +300,25 @@ table.t tr.no td { color: var(--muted); }
   // ---------- working pairs, each anchored to a documented machine ----------
   const PAIRS = [
     { id: 'libr1', name: 'LiBr–water, single effect', short: 'LiBr–H₂O 1×', ref: 'water', abs: 'lithium bromide solution', aux: '', kind: 'temp', cool: 'water',
-      unit: 'Yazaki WFC-SC10', Qr: 35.2, COPr: 0.70, COPinf: 0.80, rated: { Tg: 88, Tac: 31, Te: 7 }, B: 1.14, stages: 1, Dmin: 2, TeMin: 5, TgMax: 100, aux: 0.006, col: 'c1',
+      unit: 'Yazaki WFC-SC10', Qr: 35.2, COPr: 0.70, COPinf: 0.80, rated: { Tg: 88, Tac: 31, Te: 7 }, B: 1.14, stages: 1, Dmin: 2, TeMin: 5, TgMax: 100, auxE: 0.006, col: 'c1',
       note: '35 kW water-fired chiller, hot water 70–95 °C (rated 88 °C), cooling water 31 °C, chilled water 7 °C, COP about 0.70. Built in 10–50 kW modules; large machines reach several MW.' },
     { id: 'libr2', name: 'LiBr–water, double effect', short: 'LiBr–H₂O 2×', ref: 'water', abs: 'lithium bromide solution', aux: '', kind: 'temp', cool: 'water',
-      unit: 'Steam-fired double effect (Thermax / Broad class)', Qr: 1055, COPr: 1.40, COPinf: 1.55, rated: { Tg: 170, Tac: 32, Te: 7 }, B: 1.14, stages: 2, Dmin: 3, TeMin: 5, TgMax: 190, aux: 0.004, col: 'c4',
+      unit: 'Steam-fired double effect (Thermax / Broad class)', Qr: 1055, COPr: 1.40, COPinf: 1.55, rated: { Tg: 170, Tac: 32, Te: 7 }, B: 1.14, stages: 2, Dmin: 3, TeMin: 5, TgMax: 190, auxE: 0.004, col: 'c4',
       note: '300 refrigeration-ton (1 MW) class, driven by 8 bar steam (about 170 °C) or a direct burner; COP 1.2–1.5 on steam, about 1.0 on gas (higher heating value). The high-pressure stage condenses its refrigerant to fire the low-pressure stage.' },
     { id: 'nh3', name: 'Ammonia–water', short: 'NH₃–H₂O', ref: 'ammonia', abs: 'water', aux: '', kind: 'fired', cool: 'air',
-      unit: 'Robur GA ACF 60', Qr: 17.7, COPr: 0.71, COPinf: 0.95, rated: { Tg: 175, Tac: 35, Te: 7 }, B: 1.55, stages: 1, Dmin: 4, TeMin: -30, TgMax: 200, aux: 0.042, col: 'c2',
+      unit: 'Robur GA ACF 60', Qr: 17.7, COPr: 0.71, COPinf: 0.95, rated: { Tg: 175, Tac: 35, Te: 7 }, B: 1.55, stages: 1, Dmin: 4, TeMin: -30, TgMax: 200, auxE: 0.042, col: 'c2',
       note: '17.7 kW air-cooled gas chiller, 25 kW gas input, rated at 35 °C air and 7 °C water. Ammonia can go well below 0 °C (industrial units to −40 °C), at the cost of a rectifier to strip water vapour.' },
     { id: 'dar', name: 'Diffusion absorption (Platen–Munters)', short: 'NH₃–H₂O–H₂', ref: 'ammonia', abs: 'water', aux: 'hydrogen', kind: 'fired', cool: 'air',
-      unit: 'RV absorption fridge (Dometic class)', Qr: 0.08, COPr: 0.25, COPinf: 0.32, rated: { Tg: 190, Tac: 25, Te: 3 }, B: 1.6, stages: 1, Dmin: 5, TeMin: -18, TgMax: 210, TacMax: 46, aux: 0, col: 'c5',
+      unit: 'RV absorption fridge (Dometic class)', Qr: 0.08, COPr: 0.25, COPinf: 0.32, rated: { Tg: 190, Tac: 25, Te: 3 }, B: 1.6, stages: 1, Dmin: 5, TeMin: -18, TgMax: 210, TacMax: 46, auxE: 0, col: 'c5',
       note: 'About 80 W of cooling from a 325 W heating element or a propane flame. Hydrogen keeps the total pressure equal, so there is no pump and no valve; a bubble pump lifts the solution. Measured COPs run 0.1–0.3.' },
     { id: 'ein', name: 'Einstein–Szilard', short: 'C₄H₁₀–NH₃–H₂O', ref: 'butane', abs: 'water (absorbs ammonia)', aux: 'ammonia', kind: 'fired', cool: 'air',
-      unit: 'Oxford prototype (Chan & McCulloch, 2016)', Qr: 0.04, COPr: 0.25, COPinf: 0.32, rated: { Tg: 110, Tac: 20, Te: 10 }, B: 1.5, stages: 1, Dmin: 5, TeMin: -5, TgMax: 160, TacMax: 37, aux: 0, col: 'c3',
-      note: 'Patented 1930 (US 1,781,541). Butane evaporates into an ammonia atmosphere; in the condenser-absorber, water absorbs the ammonia and the butane condenses out. The Oxford rebuild reached 8–14 °C and COP 0.25 on about 140 W of heat.' },
+      unit: 'Oxford prototype (Chan & McCulloch, 2016)', Qr: 0.04, COPr: 0.25, COPinf: 0.32, rated: { Tg: 110, Tac: 20, Te: 10 }, B: 1.5, stages: 1, Dmin: 5, TeMin: -5, TgMax: 160, TacMax: 37, auxE: 0, col: 'c3',
+      note: 'Patented 1930 (US 1,781,541). Butane evaporates into an ammonia atmosphere; in the condenser-absorber, water absorbs the ammonia and the butane condenses out. The Oxford rebuild reached 8–14 °C and its best COP was 0.25; its design target was 40 W of cooling.' },
     { id: 'sg', name: 'Silica gel–water adsorption', short: 'SiO₂–H₂O', ref: 'water', abs: 'silica gel (solid, two beds)', aux: '', kind: 'temp', cool: 'water',
-      unit: '10 kW adsorption chiller (Fahrenheit / InvenSor class)', Qr: 10, COPr: 0.55, COPinf: 0.65, rated: { Tg: 75, Tac: 30, Te: 15 }, B: 1.4, stages: 1, Dmin: 2, TeMin: 8, TgMax: 95, aux: 0.03, col: 'c6',
+      unit: '10 kW adsorption chiller (Fahrenheit / InvenSor class)', Qr: 10, COPr: 0.55, COPinf: 0.65, rated: { Tg: 75, Tac: 30, Te: 15 }, B: 1.4, stages: 1, Dmin: 2, TeMin: 8, TgMax: 95, auxE: 0.03, col: 'c6',
       note: 'Two beds swap between desorbing and adsorbing every few minutes. Runs on hot water down to about 55 °C, so it suits data-centre heat and solar flat plates. COP 0.5–0.6; chilled water 12–18 °C.' },
     { id: 'acm', name: 'Activated carbon–methanol', short: 'C–CH₃OH', ref: 'methanol', abs: 'activated carbon (solid)', aux: '', kind: 'temp', cool: 'air',
-      unit: 'Solar ice maker (per m² of collector)', Qr: 0.13, perArea: true, COPr: 0.35, COPinf: 0.45, rated: { Tg: 100, Tac: 25, Te: -5 }, B: 1.5, stages: 1, Dmin: 3, TeMin: -15, TgMax: 130, aux: 0, col: 'c7',
+      unit: 'Solar ice maker (per m² of collector)', Qr: 0.13, perArea: true, COPr: 0.35, COPinf: 0.45, rated: { Tg: 100, Tac: 25, Te: -5 }, B: 1.5, stages: 1, Dmin: 3, TeMin: -15, TgMax: 130, auxE: 0, col: 'c7',
       note: 'Intermittent: the sun drives methanol out of the carbon by day, and at night the cooled carbon re-adsorbs it and makes ice. Field units make 3–10 kg of ice per m² per day, solar COP about 0.1.' },
   ];
   PAIRS.forEach(p => { p.Dr = lift(p, p.rated.Tg, p.rated.Tac, p.rated.Te); p.Dk = (p.Dr - p.Dmin) * (p.COPinf / p.COPr - 1); });
@@ -419,7 +419,7 @@ table.t tr.no td { color: var(--muted); }
     const q = Math.max(0, Math.min(st.load, qMax, qSrc));
     out.q = q; out.limitBy = q >= st.load - 1e-9 ? 'load' : qSrc < qMax ? 'source' : 'machines';
     out.qg = cop > 0 ? q / cop : 0; out.rej = out.qg + q;
-    out.auxE = q * p.aux + out.rej * sink.fan;
+    out.auxE = q * p.auxE + out.rej * sink.fan;
     out.duty = qMax > 0 ? q / qMax : 0;
     // daily totals
     const hrs = src.solar ? Math.min(st.hours, st.sunH) : st.hours;
