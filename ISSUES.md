@@ -153,7 +153,7 @@ over the new project is still owed.
 - **Status:** Tabled
 - **Filed:** Milestone 9 (2026-10-12)
 
-The pages under `projects/plant_models/*/` (nine as of Milestone 11, one of them a redirect stub) and
+The pages under `projects/plant_models/*/` (ten as of Milestone 12, one of them a redirect stub) and
 `projects/HVAC-stuff/ground-source-heat-pump/` were developed as single
 self-contained HTML files in a separate working folder
 (`Energy-Flow/visualization/`, not in this repo) and copied in, wrapped in a
@@ -449,3 +449,18 @@ No gatekeeper findings. Fixed inline: the data-source sentence merged into the
 preceding one on the v4, v5 and v5.2 pages; ISSUE-018 page count updated;
 M11-4 marked as ad hoc evidence. Noted, not filed: the v5.1 redirect stub uses
 a relative canonical link, which browsers accept.
+
+### Milestone 12 — Einstein Refrigerator Lab
+Reviewed 2026-11-04 on branch `feature/einstein-refrigerator` vs. `main` by one
+independent council reviewer covering all three lenses.
+
+| Lens | Verdict |
+|---|---|
+| Content integrity & plausibility | FAIL → fixed on the branch |
+| Static-site architecture / constraints | PASS |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+Gatekeeper (fixed before merge): duplicate `aux` keys in the working-pair table
+hid the pressure-equalizing gas of the Platen–Munters and Einstein–Szilard
+machines. Fixed inline: Oxford prototype note, stale "other combinations"
+text, README alignment, root README and landing-page blurbs.

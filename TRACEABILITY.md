@@ -507,6 +507,34 @@ lenses: content integrity PASS_WITH_MINOR_ISSUES, static-site constraints PASS,
 process & documentation PASS_WITH_MINOR_ISSUES. No gatekeeper findings; minor
 nits fixed inline — see `ISSUES.md` § Milestone council reviews. Merged to `main`.
 
+## Milestone 12 — Einstein Refrigerator Lab
+
+Goal (user request, 2026-11-04): a model of the Einstein refrigerator and related
+heat-driven machines with several working pairs, scaled to real commercial or
+documented units, with a choice of heat sources and heat sinks; published under
+`projects/plant_models/` once working.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M12-1 | Working pairs: ammonia, butane–ammonia–water (Einstein–Szilard), LiBr–water, and other common pairs | User request | Met | Seven pairs: Einstein–Szilard, Platen–Munters NH3–H2O–H2, LiBr–water single and double effect, NH3–water, silica gel–water, activated carbon–methanol |
+| M12-2 | Scaled to actual systems | User request | Met (ad hoc) | Each pair reproduces its anchor unit's rated capacity and COP exactly at the rated point (Yazaki WFC-SC10 35.2 kW / 0.70; Robur GA ACF 60 17.7 kW / 0.71; 1 MW double effect / 1.40; RV fridge 80 W / 0.25; Oxford Einstein–Szilard 40 W / 0.25; 10 kW silica gel / 0.55); ad hoc headless runs, not committed (ISSUE-018) |
+| M12-3 | Heat sources: biomass, fossil fuel, RTG, waste/process heat, plus suggestions | User request | Met | 17 sources incl. gas, propane, kerosene, pellets, steam, electric, CHP jacket water, exhaust, process, data-centre, district heating, geothermal, three solar collector types, Pu-238 and Sr-90 |
+| M12-4 | Heat sinks: air, waste water, river/ocean, plus suggestions | User request | Met | 10 sinks incl. fans, natural convection, cooling tower, river, sea surface, deep sea, sewer, ground loop, heating loop (heat-pump mode), radiative sky |
+| M12-5 | Linked from the plant-models section | AGENTS.md § Repository structure | Met | Card on `projects/plant_models/index.html`, entry in the section `README.md` |
+| M12-6 | Static-only, self-contained page | AGENTS.md § Project intent | Met | One HTML file, Google Fonts only; inline script parses |
+
+### Milestone 12 council review
+
+Reviewed 2026-11-04 by an independent council reviewer covering all three
+lenses. Content integrity first returned FAIL: each working pair defined `aux`
+twice, so the pressure-equalizing gas (hydrogen, ammonia) was overwritten by the
+auxiliary-power fraction and the diffusion machines lost their gas in the
+fluids panel, mimic and P–T note. Fixed by renaming the numeric key `auxE` in
+the source and the published copy, and re-checked headlessly. Static-site
+constraints PASS; process & documentation PASS_WITH_MINOR_ISSUES (stale
+"not modelled" suggestions, README alignment, root blurbs), all fixed inline.
+See `ISSUES.md` § Milestone council reviews. Merged to `main`.
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
