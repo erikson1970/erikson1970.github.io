@@ -464,3 +464,18 @@ Gatekeeper (fixed before merge): duplicate `aux` keys in the working-pair table
 hid the pressure-equalizing gas of the Platen–Munters and Einstein–Szilard
 machines. Fixed inline: Oxford prototype note, stale "other combinations"
 text, README alignment, root README and landing-page blurbs.
+
+### Milestone 13 — Einstein Refrigerator Lab v1.1
+Reviewed 2026-11-04 on branch `feature/einstein-v1-1` vs. `main` by one
+independent council reviewer covering all three lenses.
+
+| Lens | Verdict |
+|---|---|
+| Content integrity & plausibility | FAIL → fixed on the branch |
+| Static-site architecture / constraints | PASS |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+Gatekeeper (fixed before merge): unbounded crystallization temperature at the
+solution heat exchanger cold end. Minor, fixed: parallel-flow sign, unit-count
+leak after presets, rectifier vapour temperature, traceability wording. Open
+minor: condenser share in the Sankey is a fixed ratio (approximation).

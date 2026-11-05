@@ -293,7 +293,7 @@ table.tubes td.l { min-width: 220px; }
           <ul>
             <li>Low heating, cooling or chilled-water flow widens the stream's temperature change and lowers its film coefficient (h ∝ flow<sup>0.8</sup>).</li>
             <li>Low chilled-water flow can freeze the refrigerant water and trip the machine.</li>
-            <li>Too little solution flow starves the absorber and, in LiBr machines, cools and concentrates the strong solution until it crystallizes, unless the anti-crystallization control holds the generator back.</li>
+            <li>Too little solution flow starves the absorber and, in LiBr machines lets the strong solution leave the generator closer to the heating-fluid temperature, so it comes out more concentrated. Combined with a cold sink or a hot drive, it crosses the solubility line and crystallizes in the solution heat exchanger, unless the anti-crystallization control holds the generator back.</li>
             <li>Too much solution flow carries sensible heat around the loop and lowers COP.</li>
             <li>Diffusion machines stall when the bubble pump gets too little heat or the fridge is out of level. Their pressure-gas charge sets the hottest sink they can work against.</li>
             <li>Air leaking into vacuum machines blankets the absorber.</li>
@@ -495,7 +495,8 @@ table.tubes td.l { min-width: 220px; }
     // (or a parallel-flow exchanger) cools it further toward the solubility line
     let xtal = false;
     if (p.stages && p.abs.includes('bromide')) {
-      const shxAr = st.arr.shx === 'parallel' ? 4 : 0, Tcold = Tac + 10 - 12 * (1 / fs - 1) - shxAr;
+      // a less effective (parallel-flow) exchanger leaves the strong solution warmer; it can never leave colder than the weak solution entering (≈ absorber)
+      const shxAr = st.arr.shx === 'parallel' ? 4 : 0, Tcold = Tac + 10 + shxAr;
       // double effect: the strong solution leaves the low-pressure generator, fired by high-stage vapour at about half the drive temperature
       // slow solution leaves the generator closer to the heating-fluid inlet temperature, so it comes out stronger
       const app = 6 * Math.min(1, fs);
@@ -652,7 +653,7 @@ table.tubes td.l { min-width: 220px; }
     S.units = 0; S.units = solve(pairById(S.pair), S).n || 0;
     srcExtra(); syncInputs(); recalc();
   }
-  function clearPreset() { presetIdx = -1; }
+  function clearPreset() { presetIdx = -1; S.units = 0; }
   function resetFaults(redraw = true) {
     S.fl = { hot: 1, cool: 1, chill: 1, sol: 1, gas: 1, rect: 1 }; S.nc = 0; S.foul = 0; S.tilt = 0; S.xguard = true;
     S.arr = { gen: 'counter', abs: 'counter', mass: 'counter', cond: 'counter', evap: 'counter', shx: 'counter' };
@@ -769,7 +770,7 @@ table.tubes td.l { min-width: 220px; }
       const wv = libr ? 0 : 0.003 + (S.fl.rect < 1 ? 0.06 * (1 - S.fl.rect) ** 1.5 : 0);
       const vap = libr ? [[1, 'water']] : [[1 - wv, 'NH3'], [wv, 'water']];
       T = [
-        { n: 1, from: 'G', to: 'C', path: [[600, 100], [500, 100]], b: [550, 100], kind: 'vap', phase: 'vapour', mix: vap, rich: '', T: Tg - (libr ? 0 : 20), P: pc, what: libr ? 'Water vapour boiled out of the solution' : 'Ammonia vapour after the rectifier strips most of the water' },
+        { n: 1, from: 'G', to: 'C', path: [[600, 100], [500, 100]], b: [550, 100], kind: 'vap', phase: 'vapour', mix: vap, rich: '', T: libr ? Tg : Tac + 35, P: pc, what: libr ? 'Water vapour boiled out of the solution' : 'Ammonia vapour after the rectifier strips most of the water' },
         { n: 2, from: 'C', to: 'E', path: [[340, 160], [340, 300]], b: [340, 200], kind: 'liq', phase: 'liquid', mix: vap, rich: '', T: Tc, P: pc, valve: [340, 250], what: 'Condensed refrigerant, throttled from high to low pressure' },
         { n: 3, from: 'E', to: 'A', path: [[500, 340], [600, 340]], b: [550, 340], kind: 'vap', phase: 'vapour', mix: vap, rich: '', T: Tei, P: pe, what: 'Low-pressure refrigerant vapour drawn into the absorber' },
         { n: 4, from: 'A', to: 'G', path: [[770, 300], [770, 160]], b: [770, 282], kind: 'sol', phase: 'solution', mix: rich, rich: 'rich', T: Ta, P: pe, pump: [770, 258], what: libr ? 'Weak solution, rich in water, pumped up through the heat exchanger' : 'Strong aqua-ammonia, rich in refrigerant, pumped to the generator' },

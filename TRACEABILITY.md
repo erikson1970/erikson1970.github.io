@@ -545,7 +545,7 @@ make every example breakable by adjusting its flows or conditions.
 
 | Req | Requirement | Source | Status | Evidence |
 |---|---|---|---|---|
-| M13-1 | Counter/parallel flow modelled for generator, absorber (heat and mass), condenser, evaporator, solution heat exchanger; directions animated | User request | Met (ad hoc) | ε-NTU per exchanger in `exchangers()`; segmented controls; lanes in every vessel and the SHX; headless checks not committed (ISSUE-018) |
+| M13-1 | Counter/parallel flow modelled for generator, absorber (heat and mass), condenser, evaporator, solution heat exchanger; directions animated | User request | Met (ad hoc) | ε-NTU per exchanger in `exchangers()`; segmented controls; direction lanes in every vessel (adsorbent beds show loading instead) and the SHX; headless checks not committed (ISSUE-018) |
 | M13-2 | Contents and rich/poor mix of each tube shown | User request | Met | Numbered tubes with mix bars on the diagram and a tube table (from → to, contents, mix, state, temperature, pressure) for all four machine topologies |
 | M13-3 | Sankey with scaled bands adjacent to the block diagram | User request | Met | `drawSankey()`; beside the diagram at ≥ 1560 px, below it on narrower screens |
 | M13-4 | Isometric size comparison with a known object | User request | Met | `drawSize()`; person, kitchen fridge, fire truck, Cape-style house, village church; automatic choice |
@@ -554,7 +554,16 @@ make every example breakable by adjusting its flows or conditions.
 
 ### Milestone 13 council review
 
-_Recorded on merge._
+Reviewed 2026-11-04 by an independent council reviewer covering all three
+lenses. Content integrity first returned FAIL: the LiBr crystallization check
+let the strong solution leave the solution heat exchanger colder than the
+cooling water, and parallel flow pushed it the wrong way. Fixed: the cold-end
+temperature is now bounded at absorber + 5 K with parallel flow leaving it
+warmer, and crystallization comes from stronger solution (low flow, cold sink,
+hot drive). Also fixed inline: unit count no longer carries over after a
+preset, the ammonia rectifier outlet temperature, and the prose. Static-site
+PASS; process & docs PASS_WITH_MINOR_ISSUES (wording). See `ISSUES.md`
+§ Milestone council reviews. Merged to `main`.
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
