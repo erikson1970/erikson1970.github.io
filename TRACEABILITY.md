@@ -535,6 +535,27 @@ constraints PASS; process & documentation PASS_WITH_MINOR_ISSUES (stale
 "not modelled" suggestions, README alignment, root blurbs), all fixed inline.
 See `ISSUES.md` § Milestone council reviews. Merged to `main`.
 
+## Milestone 13 — Einstein Refrigerator Lab v1.1
+
+Goal (user request, 2026-11-04): model counterflow and parallel flow wherever heat or
+mass is exchanged and show stream directions in the animation; show what is in each
+tube between the stages and whether it is rich or poor; add an energy Sankey beside
+the block diagram and a simple isometric size comparison with a familiar object;
+make every example breakable by adjusting its flows or conditions.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M13-1 | Counter/parallel flow modelled for generator, absorber (heat and mass), condenser, evaporator, solution heat exchanger; directions animated | User request | Met (ad hoc) | ε-NTU per exchanger in `exchangers()`; segmented controls; lanes in every vessel and the SHX; headless checks not committed (ISSUE-018) |
+| M13-2 | Contents and rich/poor mix of each tube shown | User request | Met | Numbered tubes with mix bars on the diagram and a tube table (from → to, contents, mix, state, temperature, pressure) for all four machine topologies |
+| M13-3 | Sankey with scaled bands adjacent to the block diagram | User request | Met | `drawSankey()`; beside the diagram at ≥ 1560 px, below it on narrower screens |
+| M13-4 | Isometric size comparison with a known object | User request | Met | `drawSize()`; person, kitchen fridge, fire truck, Cape-style house, village church; automatic choice |
+| M13-5 | Each example breakable by flows or conditions | User request | Met (ad hoc) | Flows-and-faults panel (heating, cooling, chilled, solution / bubble pump / bed cycle, pressure-gas charge, rectifier, air leak, fouling, level, anti-crystallization); presets lock unit count; 4,760 fault combinations finite (ISSUE-018) |
+| M13-6 | Static-only, self-contained page | AGENTS.md § Project intent | Met | One HTML file, Google Fonts only |
+
+### Milestone 13 council review
+
+_Recorded on merge._
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
