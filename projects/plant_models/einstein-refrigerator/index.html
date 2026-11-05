@@ -76,6 +76,16 @@ h1 .ver { font-family: var(--f-mono); font-size: .42em; font-weight: 500; color:
 .group.k { border-top: 3px solid var(--steel); }
 .group.l { border-top: 3px solid var(--cold); }
 .group.p { border-top: 3px solid var(--vapour); }
+.group.f2 { border-top: 3px solid var(--danger); }
+.chk { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); min-height: 30px; }
+.chk input { accent-color: var(--copper); width: 18px; height: 18px; }
+.arr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; font-size: 12.5px; }
+.arr > span { color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 12px; padding: 4px 9px; min-height: 30px; border: 0; background: var(--raised); color: var(--ink); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--steel); color: #fff; }
+.reset { font: inherit; font-size: 13px; padding: 6px 10px; min-height: 34px; border-radius: 6px; border: 1px solid var(--line); background: var(--raised); color: var(--ink); cursor: pointer; }
+.ctl.off output { color: var(--danger); }
 select, .f input { font: inherit; font-size: 13.5px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; min-height: 34px; }
 .f { display: grid; grid-template-columns: minmax(0, 1fr) 104px; gap: 8px; align-items: center; font-size: 13.5px; }
 .f label { color: var(--muted); }
@@ -118,6 +128,9 @@ main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
 .sch-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 #mimic { display: block; width: 100%; min-width: 760px; }
+.sysrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.sysrow > * { min-width: 0; }
+@media (min-width: 1560px) { .wrap { max-width: 1680px; } .sysrow { grid-template-columns: minmax(0, 1fr) 280px; align-items: start; } }
 canvas.chart { display: block; width: 100%; }
 .duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 @media (max-width: 1100px) { .duo { grid-template-columns: minmax(0, 1fr); } }
@@ -136,6 +149,13 @@ table.t tbody tr { cursor: pointer; }
 table.t tbody tr:hover td { background: var(--raised); }
 table.t tr.cur td { background: var(--ok-bg); }
 table.t tr.no td { color: var(--muted); }
+table.tubes tbody tr { cursor: default; }
+table.tubes td.l { min-width: 220px; }
+.nb { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: var(--bg); font: 700 12px var(--f-display); }
+.mix { display: inline-flex; width: 110px; height: 12px; border: 1px solid var(--ink); vertical-align: middle; }
+.mix i { display: block; height: 100%; }
+.tag { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; }
+.tag.rich { color: var(--ok); background: var(--ok-bg); } .tag.poor { color: var(--warn); background: var(--warn-bg); }
 .notes { font-size: 13.5px; color: var(--muted); }
 .notes > div { max-width: 86ch; }
 .notes h3 { font-family: var(--f-display); font-weight: 600; font-size: 18px; color: var(--ink); margin: 6px 0 6px; }
@@ -151,7 +171,7 @@ table.t tr.no td { color: var(--muted); }
   <header class="top">
     <div>
       <p class="eyebrow">Heat-driven refrigeration · absorption, diffusion and adsorption cycles</p>
-      <h1>Einstein Refrigerator Lab <span class="ver">v1.0</span></h1>
+      <h1>Einstein Refrigerator Lab <span class="ver">v1.1</span></h1>
       <p class="sub">Pick a working pair, a heat source and a heat sink. The model scales each machine to a real commercial or documented unit and shows what it can do at your conditions.</p>
     </div>
   </header>
@@ -198,6 +218,15 @@ table.t tr.no td { color: var(--muted); }
         <div class="f"><label for="hours">Hours per day</label><input id="hours" type="number" min="0" max="24" step="0.5" value="12"></div>
       </section>
 
+      <section class="group f2">
+        <h2>Flows and faults <span>Break it</span></h2>
+        <p class="hint">Every scenario runs at its design point. Turn flows down or up, add air or fouling, or switch an exchanger to parallel flow, and watch what fails first.</p>
+        <div id="flowCtl"></div>
+        <label class="chk" id="xgWrap"><input type="checkbox" id="xguard" checked> Anti-crystallization control (LiBr)</label>
+        <div class="arr" id="arrCtl" role="group" aria-label="Exchanger flow arrangement"></div>
+        <button type="button" class="reset" id="resetF">Reset to design</button>
+      </section>
+
       <section class="group p">
         <h2>Comparison <span>Electric chiller</span></h2>
         <div class="f"><label for="elec">Electricity ($/kWh)</label><input id="elec" type="number" min="0" step="0.01" value="0.16"></div>
@@ -220,7 +249,12 @@ table.t tr.no td { color: var(--muted); }
 
       <section class="card">
         <div class="card-head"><h3 id="mimicTitle">Cycle</h3><span class="hint">Colours show temperature; dots show what moves</span></div>
+        <div class="sysrow">
         <div class="sch-wrap"><canvas id="mimic" aria-label="Animated diagram of the refrigeration cycle: heat source, generator, condenser, evaporator, absorber, solution circuit and heat sink"></canvas></div>
+        <div class="sank"><canvas id="sankey" class="chart" data-h="320" aria-label="Sankey diagram of energy flows: heat in, heat lifted, heat rejected, with band widths proportional to power"></canvas></div>
+        </div>
+        <div class="legend" id="lgSp" style="margin-top:6px"></div>
+        <div class="tbl-wrap"><table class="t tubes" id="tubes"></table></div>
         <div class="bal" id="bal" style="margin-top:8px"></div>
       </section>
 
@@ -238,6 +272,12 @@ table.t tr.no td { color: var(--muted); }
       </div>
 
       <section class="card">
+        <div class="card-head"><h3>How big is it?</h3><label class="hint">Compare with <select id="cmpObj" style="width:auto;min-height:30px;padding:3px 6px"><option value="auto">Automatic</option><option value="person">Person</option><option value="fridge">Kitchen fridge</option><option value="truck">Fire truck</option><option value="house">Cape-style house</option><option value="church">Village church</option></select></label></div>
+        <canvas id="size" class="chart" data-h="250" aria-label="Isometric size comparison of the installed machines with a familiar object"></canvas>
+        <p class="hint">Approximate outside dimensions of one unit of the reference machine, drawn to scale. Large plants also need cooling towers, pumps and pipework not shown here.</p>
+      </section>
+
+      <section class="card">
         <div class="card-head"><h3>Every working pair at these conditions</h3><span class="hint">Tap a row to switch machine. Each pair is run with its best available drive temperature from the chosen source.</span></div>
         <div class="tbl-wrap"><table class="t" id="cmp"></table></div>
       </section>
@@ -248,9 +288,21 @@ table.t tr.no td { color: var(--muted); }
           <p><b>The cycle.</b> In every machine here, a refrigerant boils in the evaporator and takes heat from the cold space. A second substance soaks up that vapour at low pressure: a salt solution (absorption) or a porous solid (adsorption). Heat in the generator drives the refrigerant back out at high pressure, and it condenses. The absorber and condenser reject heat to the sink. There is no compressor; heat does the work. Einstein and Szilard's 1930 design, and the Platen–Munters design in RV fridges, go further. A third gas keeps the total pressure the same everywhere, and a bubble pump lifts the solution, so nothing moves except fluid.</p>
           <p><b>Temperature lift.</b> A heat-driven machine needs its driving temperature lift (generator above sink) to exceed its pumping lift (sink above cold space) by a factor set by the working pair. The model uses the characteristic-temperature form fitted to manufacturers' data (Δ = T<sub>gen</sub> − T<sub>sink</sub> − B·(T<sub>sink</sub> − T<sub>cold</sub>)). Capacity rises with Δ above a small threshold. COP rises toward its asymptote and stays below the Carnot limit for a heat-driven chiller. Double-effect LiBr machines need about twice the lift: their high-pressure stage condenses refrigerant to fire the low-pressure stage.</p>
           <p><b>Scaling.</b> Each pair is anchored to a documented machine at its rated point. Temperature-driven chillers (hot water, steam) gain or lose capacity with Δ. Fired machines (gas, kerosene, electric element, RTG) have a fixed heat input per unit, so their capacity follows their COP. Machines are added in whole units to meet the load, and a source with limited heat (solar field, waste stream, RTG) caps the output.</p>
+          <p><b>Counterflow or parallel flow.</b> Every exchange in the machine is between two streams: heating fluid and solution in the generator, cooling fluid and solution in the absorber, refrigerant vapour and the falling solution film, condensing and boiling refrigerant against water or air, and rich against poor solution in the solution heat exchanger. Each uses the ε-NTU relation for its arrangement. Counterflow is the rated design. Switching one exchanger to parallel flow lowers its effectiveness and widens its approach temperature, which eats into the lift margin Δ. Where one side boils or condenses at constant temperature (condenser, evaporator), the arrangement hardly matters; where both sides change temperature (generator, absorber, solution heat exchanger), it matters a lot. The diagram shows the direction of both streams inside every vessel.</p>
+          <p><b>Flows and faults.</b> Each scenario fixes its number of machines at the design point, so a fault shows up as lost cooling. Its effects are behavioural, not a full simulation:</p>
+          <ul>
+            <li>Low heating, cooling or chilled-water flow widens the stream's temperature change and lowers its film coefficient (h ∝ flow<sup>0.8</sup>).</li>
+            <li>Low chilled-water flow can freeze the refrigerant water and trip the machine.</li>
+            <li>Too little solution flow starves the absorber and, in LiBr machines lets the strong solution leave the generator closer to the heating-fluid temperature, so it comes out more concentrated. Combined with a cold sink or a hot drive, it crosses the solubility line and crystallizes in the solution heat exchanger, unless the anti-crystallization control holds the generator back.</li>
+            <li>Too much solution flow carries sensible heat around the loop and lowers COP.</li>
+            <li>Diffusion machines stall when the bubble pump gets too little heat or the fridge is out of level. Their pressure-gas charge sets the hottest sink they can work against.</li>
+            <li>Air leaking into vacuum machines blankets the absorber.</li>
+            <li>An under-cooled rectifier lets water into an ammonia evaporator.</li>
+          </ul>
+          <p><b>Tubes and mixtures.</b> The numbered tubes carry refrigerant vapour, condensate, rich solution and poor solution (plus the gas mixtures of the diffusion machines). Solution compositions for LiBr come from the Dühring equation. The ammonia–water figures and the gas-mixture fractions (from the partial pressures) are indicative.</p>
           <p><b>LiBr–water details.</b> Solution concentrations come from the ASHRAE Dühring equation for LiBr–water. The crystallization line is an approximate solubility curve (62.5% at 20 °C, about 72% at 100 °C). If the strong solution would cross it at the cold end of the solution heat exchanger, the model lowers the generator temperature, as the chiller's anti-crystallization control does. Water is the refrigerant, so LiBr chillers cannot go below about 5 °C.</p>
           <p><b>Diffusion machines.</b> In the Platen–Munters and Einstein–Szilard designs the total pressure is fixed by the charge. When the sink gets too hot, the condenser can no longer condense the refrigerant at that pressure and cooling collapses, which is why RV fridges struggle on very hot days. The model derates these machines over 5 °C below a maximum ambient.</p>
-          <p><b>Not modelled.</b> Start-up, transients, solution and adsorbent-bed dynamics, part-load cycling losses, frosting, and the detailed thermodynamic property models of ammonia–water and butane–ammonia–water (these pairs use fitted characteristics, not equations of state).</p>
+          <p><b>Not modelled.</b> Start-up, transients and time-dependent bed or solution dynamics (faults are evaluated as steady states), part-load cycling losses, frosting, and the detailed thermodynamic property models of ammonia–water and butane–ammonia–water (these pairs use fitted characteristics, not equations of state).</p>
           <h3>Where the numbers come from</h3>
           <ul id="srcList"></ul>
           <h3>Other combinations worth knowing</h3>
@@ -321,6 +373,47 @@ table.t tr.no td { color: var(--muted); }
       unit: 'Solar ice maker (per m² of collector)', Qr: 0.13, perArea: true, COPr: 0.35, COPinf: 0.45, rated: { Tg: 100, Tac: 25, Te: -5 }, B: 1.5, stages: 1, Dmin: 3, TeMin: -15, TgMax: 130, auxE: 0, col: 'c7',
       note: 'Intermittent: the sun drives methanol out of the carbon by day, and at night the cooled carbon re-adsorbs it and makes ice. Field units make 3–10 kg of ice per m² per day, solar COP about 0.1.' },
   ];
+  // ---------- per-pair extras: glide, solution heat-exchanger weight, footprint ----------
+  const EXTRA = {
+    libr1: { glide: 0.6, shxK: 0.35, shx: 'Solution heat exchanger', dims: [0.6, 0.75, 1.8] },
+    libr2: { glide: 0.6, shxK: 0.4, shx: 'Solution heat exchangers (high and low)', dims: [5.0, 2.2, 2.8] },
+    nh3: { glide: 0.8, shxK: 0.4, shx: 'Solution heat exchanger', dims: [0.85, 1.23, 1.28] },
+    dar: { glide: 0.8, shxK: 0.3, shx: 'Solution and gas heat exchangers', dims: [0.6, 0.6, 1.45] },
+    ein: { glide: 0.7, shxK: 0.3, shx: 'Solution heat exchanger', dims: [0.45, 0.4, 0.9] },
+    sg: { glide: 0.5, shxK: 0.25, shx: 'Bed-to-bed heat recovery', dims: [0.8, 1.2, 1.65] },
+    acm: { glide: 0.5, shxK: 0, shx: 'None (single bed)', dims: [1.0, 1.0, 1.0] },
+  };
+  PAIRS.forEach(p => Object.assign(p, EXTRA[p.id]));
+
+  // ---------- exchanger arrangement: ε-NTU for counterflow or parallel flow ----------
+  // Rated performance assumes counterflow everywhere. Parallel flow lowers effectiveness, which widens the
+  // approach temperature and eats into the lift margin Δ. Where one side changes phase at constant temperature
+  // (condenser, evaporator: capacity ratio near 0) the arrangement barely matters.
+  const epsHX = (N, C, arr) => {
+    if (arr === 'parallel') return (1 - Math.exp(-N * (1 + C))) / (1 + C);
+    if (Math.abs(1 - C) < 1e-6) return N / (1 + N);
+    const e = Math.exp(-N * (1 - C)); return (1 - e) / (1 - C * e);
+  };
+  const EXCH = [
+    { id: 'gen', name: 'Generator', N: 2, A: 4, C: p => p.glide, w: () => 1, what: 'heating fluid vs solution' },
+    { id: 'abs', name: 'Absorber (heat)', N: 2, A: 4, C: p => p.glide, w: () => 1, what: 'cooling fluid vs solution' },
+    { id: 'mass', name: 'Absorber (mass)', N: 1.5, A: 2, C: () => 0.7, w: () => 1, what: 'vapour vs solution film' },
+    { id: 'cond', name: 'Condenser', N: 2, A: 3, C: () => 0.05, w: p => p.B, what: 'cooling fluid vs condensing refrigerant' },
+    { id: 'evap', name: 'Evaporator', N: 2, A: 3, C: () => 0.05, w: p => p.B, what: 'chilled fluid vs boiling refrigerant' },
+  ];
+  const noStream = src => !!(src.rtg || src.id === 'elec');
+  function exchangers(p, arr, src) {
+    let pen = 0; const rows = [];
+    for (const x of EXCH) {
+      const C = x.C(p), ec = epsHX(x.N, C, 'counter'), es = epsHX(x.N, C, arr[x.id]);
+      const inert = x.id === 'gen' && noStream(src);
+      const A = inert ? x.A : x.A * (1 - es) / (1 - ec), dp = (A - x.A) * x.w(p);
+      pen += dp; rows.push({ x, C, eps: inert ? ec : es, A, dp, inert });
+    }
+    const ec = epsHX(2.5, 0.85, 'counter'), es = epsHX(2.5, 0.85, arr.shx);
+    const shxF = p.shxK ? (1 - p.shxK * (1 - es)) / (1 - p.shxK * (1 - ec)) : 1;
+    return { penalty: pen, rows, shx: { eps: p.shxK ? es : 0, F: shxF }, shxF };
+  }
   PAIRS.forEach(p => { p.Dr = lift(p, p.rated.Tg, p.rated.Tac, p.rated.Te); p.Dk = (p.Dr - p.Dmin) * (p.COPinf / p.COPr - 1); });
   function lift(p, Tg, Tac, Te) {
     if (p.stages === 2) { const Tc1 = Tac + p.B * (Tac - Te) + 5; return Tg - (Tc1 + p.B * (Tc1 - Te)); }
@@ -364,41 +457,99 @@ table.t tr.no td { color: var(--muted); }
   ];
 
   // ---------- state ----------
-  const S = { pair: 'libr1', src: 'jacket', sink: 'tower', Tsrc: 90, Tdb: 32, Twb: 24, Tw: 20, Te: 7, load: 100, hours: 12, units: 0, elec: 0.16, grid: 0.38,
-    price: null, avail: 100, area: 150, G: 800, sunH: 6, rtgN: 1, rtgAge: 0 };
+  const S = { pair: 'libr1', src: 'jacket', sink: 'tower', Tsrc: 90, Tdb: 32, Twb: 24, Tw: 20, Te: 7, load: 100, hours: 12, units: 0, elec: 0.16, cmpObj: 'auto',
+    arr: { gen: 'counter', abs: 'counter', mass: 'counter', cond: 'counter', evap: 'counter', shx: 'counter' }, grid: 0.38,
+    price: null, avail: 100, area: 150, G: 800, sunH: 6, rtgN: 1, rtgAge: 0,
+    fl: { hot: 1, cool: 1, chill: 1, sol: 1, gas: 1, rect: 1 }, nc: 0, foul: 0, tilt: 0, xguard: true };
   const pairById = id => PAIRS.find(p => p.id === id), srcById = id => SOURCES.find(s => s.id === id), sinkById = id => SINKS.find(s => s.id === id);
 
   // ---------- one machine at one set of conditions ----------
   function solve(p, st, TgOverride) {
     const src = srcById(st.src), sink = sinkById(st.sink), out = { p, flags: [] };
+    const F = st.fl, foul = st.foul, vac = p.ref === 'water' || p.ref === 'methanol', diff = !!p.aux, ads = p.abs.includes('solid');
+    const fh = clamp(F.hot, 0.05, 3), fc = clamp(F.cool, 0.05, 3), fe = clamp(F.chill, 0.05, 3), fs = clamp(F.sol, 0.05, 3);
+    // sink side: lower cooling flow means a bigger water (or air) temperature rise and a poorer film coefficient (h ∝ flow^0.8)
     let Tac = sink.T(st);
     if (p.cool === 'water' && sink.kind === 'air' && sink.dryPenalty) { Tac += sink.dryPenalty; }
-    const Te = st.Te;
-    // driving temperature reaching the generator
-    const Tdel = TgOverride ?? st.Tsrc;
-    let Tg = Math.min(Tdel - (src.flame ? 0 : 3), p.TgMax);
-    if (p.kind === 'fired' && src.flame) Tg = Math.min(p.rated.Tg, Tdel);
-    out.Tac = Tac; out.Te = Te; out.Tdel = Tdel;
+    const dTc = (sink.kind === 'air' ? 8 : 5) / 2 * (1 / fc - 1) + 2.5 * (fc ** -0.8 - 1) + 4 * foul;
+    Tac += dTc;
+    // air leak: non-condensable gas blankets the absorber and condenser of vacuum machines and raises their effective temperature
+    const ncDT = vac ? 14 * st.nc : 0; Tac += ncDT;
+    if (vac && st.nc > 0.25) out.flags.push([st.nc > 0.6 ? 'bad' : 'alm', `Air in the machine: non-condensable gas is blanketing the absorber (+${fmt(ncDT, 0)} K). Purge it.`]);
+    if (fc < 0.6) out.flags.push(['alm', `Low ${sink.kind === 'air' ? 'fan airflow' : 'cooling water flow'}: the sink side runs ${fmt(dTc, 1)} K hotter`]);
+    // load side: low chilled-water flow widens the evaporator approach and drives the refrigerant toward freezing
+    const Te = st.Te, dTe = 3 * (fe ** -0.8 - 1) + 2 * foul, Teff = Te - dTe;
+    out.Tei = Teff - 3; out.chillCap = Math.min(1, 2 * fe);
+    if (fe < 0.5) out.flags.push(['alm', `Low chilled-water flow: ${fmt(Te + 5 / fe, 1)} °C return water, evaporator approach widened by ${fmt(dTe, 1)} K`]);
+    // driving temperature reaching the generator: low heating-fluid flow means a bigger glide and a poorer film coefficient
+    const Tdel = TgOverride ?? st.Tsrc, stream = !src.flame && !noStream(src);
+    const dTh = stream ? 4 * (1 / fh - 1) + 2.5 * (fh ** -0.8 - 1) + 4 * foul : 4 * foul;
+    let Tg = Math.min(Tdel - (src.flame ? 0 : 3) - dTh, p.TgMax);
+    if (p.kind === 'fired' && src.flame) Tg = Math.min(p.rated.Tg, Tdel) - dTh;
+    if (stream && fh < 0.6) out.flags.push(['alm', `Low heating-fluid flow: the generator sees ${fmt(dTh, 1)} K less than the supply`]);
+    out.Tac = Tac; out.Te = Te; out.Tdel = Tdel; out.dTh = dTh; out.dTc = dTc; out.dTe = dTe;
     if (Te < p.TeMin) { out.flags.push(['bad', `${p.short} cannot reach ${fmt(Te, 1)} °C (limit ${p.TeMin} °C${p.ref === 'water' ? ': water is the refrigerant' : ''})`]); }
-    // LiBr crystallization guard (single effect): the controls hold the generator below the crystallization limit
-    if (p.id === 'libr1') {
-      const lim = TgX => { const Xs = solX(TgX - 6, Tac + 6); return Xcr(Tac + 10) - Xs; };
+    let trip = false;
+    if (p.ref === 'water' && out.Tei < 1) { trip = true; out.flags.push(['bad', `Freeze protection trip: refrigerant water at ${fmt(out.Tei, 1)} °C in the evaporator`]); }
+    // LiBr crystallization: the strong solution is coldest at the solution heat exchanger outlet; low solution flow
+    // (or a parallel-flow exchanger) cools it further toward the solubility line
+    let xtal = false;
+    if (p.stages && p.abs.includes('bromide')) {
+      // a less effective (parallel-flow) exchanger leaves the strong solution warmer; it can never leave colder than the weak solution entering (≈ absorber)
+      const shxAr = st.arr.shx === 'parallel' ? 4 : 0, Tcold = Tac + 10 + shxAr;
+      // double effect: the strong solution leaves the low-pressure generator, fired by high-stage vapour at about half the drive temperature
+      // slow solution leaves the generator closer to the heating-fluid inlet temperature, so it comes out stronger
+      const app = 6 * Math.min(1, fs);
+      const XsOf = TgX => p.stages === 2 ? solX(0.45 * TgX + 12 - app + 6, Tac + 6) : solX(TgX - app, Tac + 6);
+      const lim = TgX => Xcr(Tcold) - XsOf(TgX);
       if (lim(Tg) < 0) {
-        let lo = 40, hi = Tg; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; lim(m) < 0 ? hi = m : lo = m; }
-        out.flags.push(['alm', `Crystallization limit: the controls hold the generator at ${fmt(lo, 0)} °C (strong solution would pass ${fmt(Xcr(Tac + 10), 1)}% LiBr)`]);
-        Tg = lo;
+        if (st.xguard) {
+          let lo = 40, hi = Tg; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; lim(m) < 0 ? hi = m : lo = m; }
+          out.flags.push(['alm', `Crystallization limit: the controls hold the generator at ${fmt(lo, 0)} °C (strong solution would pass ${fmt(Xcr(Tcold), 1)}% LiBr)`]);
+          Tg = lo;
+        } else { xtal = true; out.flags.push(['bad', `Crystallized: strong solution passed ${fmt(Xcr(Tcold), 1)}% LiBr at ${fmt(Tcold, 0)} °C and plugged the solution heat exchanger. Machine stopped; it needs a dilution cycle.`]); }
       }
-      out.Xs = solX(Tg - 6, Tac + 6); out.Xw = solX(Tac + 5, Te - 3); out.Xc = Xcr(Tac + 10);
+      out.Xs = XsOf(Tg); out.Xc = Xcr(Tcold);
+      out.Xw = solX(Tac + 5, Teff - 3); out.Tcold = Tcold;
     }
     out.Tg = Tg;
-    const D = lift(p, Tg, Tac, Te); out.D = D;
+    const D0 = lift(p, Tg, Tac, Teff), ex = exchangers(p, st.arr, src), D = D0 - ex.penalty;
+    out.D0 = D0; out.D = D; out.ex = ex;
+    // solution circuit (pump flow, bubble-pump heat, or bed cycle time) and the special controls of each machine
+    let capF = out.chillCap, copF = 1;
+    if (ads) {
+      const t = fs, n0 = 1 - Math.exp(-3);
+      capF *= ((1 - Math.exp(-3 * t)) / (t + 0.15)) / (n0 / 1.15); copF *= (1 - Math.exp(-3 * t)) / n0;
+      if (t < 0.4) out.flags.push(['alm', 'Bed cycle too short: the beds swap before they load up, and the heat spent warming them is wasted']);
+      if (t > 1.8) out.flags.push(['alm', 'Bed cycle too long: the beds sit saturated and output falls']);
+    } else if (diff) {
+      if (fs < 0.35) { capF = 0; out.flags.push(['bad', 'Bubble pump stalled: too little heat to lift solution, so the generator boils dry and circulation stops']); }
+      else { capF *= Math.min(1, (fs - 0.35) / 0.45); if (fs > 1.3) { copF /= 1 + 0.6 * (fs - 1.3); out.flags.push(['alm', 'Bubble pump overdriven: extra heat lifts hot solution that only carries heat back to the absorber']); } }
+      const g = clamp(F.gas, 0.1, 3); capF *= Math.exp(-((Math.log(g) / 0.75) ** 2));
+      if (g < 0.7) out.flags.push(['alm', `Low ${p.aux} charge: total pressure too low to condense the ${p.ref} at this sink`]);
+      if (g > 1.4) out.flags.push(['alm', `High ${p.aux} charge: ${p.ref} vapour has to diffuse through more ${p.aux} in the evaporator and absorber`]);
+      out.gasShift = 8 * Math.log(g);
+      if (st.tilt > 3) { capF *= clamp(1 - (st.tilt - 3) / 3, 0, 1); out.flags.push([st.tilt >= 6 ? 'bad' : 'alm', `Out of level ${fmt(st.tilt, 1)}°: the bubble pump and the gravity-drained evaporator tubes stop working (RV makers allow about 3°)`]); }
+    } else {
+      capF *= fs < 1 ? fs ** 0.7 : 1;
+      copF /= fs > 1 ? 1 + 0.15 * (fs - 1) : 1;
+      if (fs < 0.6) out.flags.push(['alm', 'Low solution flow: not enough absorbent reaches the absorber to carry the refrigerant']);
+      if (fs > 1.4) out.flags.push(['alm', 'High solution flow: extra solution carries sensible heat around the loop and COP falls']);
+    }
+    if (p.id === 'nh3') {
+      const r = clamp(F.rect, 0, 3);
+      if (r < 1) { capF *= 1 - 0.7 * (1 - r) ** 1.5; copF *= 1 - 0.5 * (1 - r) ** 1.5; }
+      else copF /= 1 + 0.12 * (r - 1);
+      if (r < 0.6) out.flags.push(['alm', 'Rectifier under-cooled: water vapour reaches the evaporator, collects there and raises its boiling temperature']);
+    }
+    out.capF = capF; out.copF = copF;
     let derate = 1;
-    if (p.TacMax) { derate = clamp((p.TacMax - Tac) / 5, 0, 1); if (derate < 1) out.flags.push([derate ? 'alm' : 'bad', `Sink too hot for a fixed-pressure machine: the condenser ${derate ? 'struggles' : 'cannot condense'} with the sink above about ${p.TacMax - 5} °C at the machine`]); }
-    let cop = Te < p.TeMin ? 0 : copOf(p, D, Tg, Tac, Te);
+    if (p.TacMax) { derate = clamp((p.TacMax + (out.gasShift || 0) - Tac) / 5, 0, 1); if (derate < 1) out.flags.push([derate ? 'alm' : 'bad', `Sink too hot for a fixed-pressure machine: the condenser ${derate ? 'struggles' : 'cannot condense'} with the sink above about ${p.TacMax - 5} °C at the machine`]); }
+    let cop = Te < p.TeMin || trip || xtal ? 0 : copOf(p, D, Tg, Tac, Teff) * ex.shxF * copF;
     const frac = Math.max(0, (D - p.Dmin) / (p.Dr - p.Dmin));
     let cap;
-    if (p.kind === 'fired') cap = (p.Qr / p.COPr) * cop * derate * (frac > 0 ? 1 : 0);
-    else cap = p.Qr * Math.min(1.25, frac) * derate;
+    if (p.kind === 'fired') cap = (p.Qr / p.COPr) * cop * derate * capF * (frac > 0 ? 1 : 0);
+    else cap = p.Qr * Math.min(1.25, frac) * derate * capF;
     if (cop <= 0) cap = 0;
     if (D <= p.Dmin && Te >= p.TeMin) out.flags.push(['bad', `Not enough driving temperature: ${fmt(Tg, 0)} °C at the generator is below the threshold of about ${fmt(Tg - D + p.Dmin, 0)} °C`]);
     if (p.kind === 'temp' && Tdel > p.TgMax + 3) out.flags.push(['alm', `Source tempered to ${p.TgMax} °C (machine limit)`]);
@@ -497,9 +648,17 @@ table.t tr.no td { color: var(--muted); }
     Object.assign(S, { units: 0, price: null }, { area: S.area, G: S.G, sunH: S.sunH, rtgN: 1, rtgAge: 0 });
     S.pair = pr.set.pair; setSrc(pr.set.src, false); setSink(pr.set.sink);
     Object.assign(S, pr.set);
+    resetFaults(false);
+    // lock the unit count at the clean design point, so a fault shows up as lost cooling instead of extra machines
+    S.units = 0; S.units = solve(pairById(S.pair), S).n || 0;
     srcExtra(); syncInputs(); recalc();
   }
-  function clearPreset() { presetIdx = -1; }
+  function clearPreset() { presetIdx = -1; S.units = 0; }
+  function resetFaults(redraw = true) {
+    S.fl = { hot: 1, cool: 1, chill: 1, sol: 1, gas: 1, rect: 1 }; S.nc = 0; S.foul = 0; S.tilt = 0; S.xguard = true;
+    S.arr = { gen: 'counter', abs: 'counter', mass: 'counter', cond: 'counter', evap: 'counter', shx: 'counter' };
+    if (redraw) recalc();
+  }
   for (const [i, pr] of PRESETS.entries()) { const b = document.createElement('button'); b.type = 'button'; b.textContent = pr.label; b.addEventListener('click', () => applyPreset(i)); $('presets').append(b); }
   function syncInputs() {
     $('pair').value = S.pair; $('src').value = S.src; $('sink').value = S.sink;
@@ -509,6 +668,49 @@ table.t tr.no td { color: var(--muted); }
     const k = sinkById(S.sink); if (k.water) $('lTw').textContent = k.water;
     for (const [i, b] of [...$('presets').children].entries()) b.setAttribute('aria-pressed', i === presetIdx);
   }
+
+
+  // ---------- flows and faults ----------
+  function flowDefs() {
+    const p = pairById(S.pair), src = srcById(S.src), sink = sinkById(S.sink), ads = p.abs.includes('solid'), diff = !!p.aux, vac = p.ref === 'water' || p.ref === 'methanol';
+    const d = [];
+    if (!src.flame && !noStream(src)) d.push(['hot', 'Heating-fluid flow', 'fl']);
+    d.push(['cool', sink.kind === 'air' ? (p.cool === 'water' ? 'Dry-cooler fan airflow' : sink.fan ? 'Condenser fan airflow' : 'Air movement over the fins') : 'Cooling-water flow', 'fl']);
+    d.push(['chill', p.Qr < 1 ? 'Air circulation in the cold box' : 'Chilled-water flow', 'fl']);
+    d.push(['sol', ads ? 'Bed cycle time' : diff ? 'Bubble-pump heat share' : 'Solution pump flow', 'fl']);
+    if (diff) d.push(['gas', `${p.aux[0].toUpperCase() + p.aux.slice(1)} charge`, 'fl']);
+    if (p.id === 'nh3') d.push(['rect', 'Rectifier cooling', 'fl']);
+    if (vac) d.push(['nc', 'Air leak (non-condensable gas)', 'pct']);
+    d.push(['foul', 'Fouling of heat-transfer surfaces', 'pct']);
+    if (diff) d.push(['tilt', 'Out of level', 'deg']);
+    return d;
+  }
+  function buildFlowCtl() {
+    $('flowCtl').innerHTML = flowDefs().map(([k, lab, t]) => {
+      const [mn, mx, stp] = t === 'fl' ? [5, 250, 5] : t === 'pct' ? [0, 100, 5] : [0, 10, 0.5];
+      return `<label class="ctl"><span class="lab">${lab}</span><output id="o_f_${k}"></output><input type="range" id="f_${k}" min="${mn}" max="${mx}" step="${stp}"></label>`;
+    }).join('');
+    for (const [k, , t] of flowDefs()) $('f_' + k).addEventListener('input', e => {
+      const v = +e.target.value; if (t === 'fl') S.fl[k] = v / 100; else if (t === 'pct') S[k] = v / 100; else S[k] = v; recalc();
+    });
+    const p = pairById(S.pair), rows = [['gen', 'Generator'], ['abs', 'Absorber heat removal'], ['mass', 'Absorber vapour vs solution'], ['cond', 'Condenser'], ['evap', 'Evaporator'], ['shx', p.shx]];
+    $('arrCtl').innerHTML = rows.filter(([k]) => k !== 'shx' || p.shxK).map(([k, lab]) => `<span>${lab}</span><span class="seg" data-k="${k}"><button type="button" data-v="counter">Counter</button><button type="button" data-v="parallel">Parallel</button></span>`).join('');
+    $('xgWrap').hidden = !p.abs.includes('bromide');
+  }
+  function syncFlowCtl() {
+    for (const [k, , t] of flowDefs()) {
+      const v = t === 'fl' ? S.fl[k] * 100 : t === 'pct' ? S[k] * 100 : S[k], el = $('f_' + k);
+      if (document.activeElement !== el) el.value = v;
+      $('o_f_' + k).textContent = t === 'deg' ? `${fmt(v, 1)}°` : `${fmt(v, 0)}%`;
+      el.closest('.ctl').classList.toggle('off', t === 'fl' ? Math.abs(v - 100) > 1 : v > 0);
+    }
+    for (const g of $('arrCtl').querySelectorAll('.seg')) for (const b of g.querySelectorAll('button')) b.setAttribute('aria-pressed', S.arr[g.dataset.k] === b.dataset.v);
+    $('xguard').checked = S.xguard;
+  }
+  $('arrCtl').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.arr[b.parentNode.dataset.k] = b.dataset.v; recalc(); });
+  $('xguard').addEventListener('change', e => { S.xguard = e.target.checked; recalc(); });
+  $('resetF').addEventListener('click', () => resetFaults(true));
+  let flowKey = '';
 
   // ---------- drawing ----------
   let tok = {};
@@ -541,71 +743,191 @@ table.t tr.no td { color: var(--muted); }
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
     }
   }
-  const MW = 1060, MH = 430;
-  function drawMimic() {
-    const { ctx } = fit($('mimic'), MW, MH), r = R, p = r.p, src = srcById(S.src), sink = sinkById(S.sink);
-    const ads = p.abs.includes('solid'), diff = !!p.aux, run = r.q > 0 ? 0.4 + 0.6 * Math.min(1, r.duty) : 0;
-    const Tc = r.Tac + 5, Ta = r.Tac + 5, Tei = r.Te - 3, Tgi = r.Tg;
-    const box = (x, y, w, h, T, title, sub1, sub2) => {
-      ctx.fillStyle = heat(T); ctx.globalAlpha = 0.85; ctx.fillRect(x, y, w, h); ctx.globalAlpha = 1;
-      ctx.strokeStyle = tok.ink; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
-      lab(ctx, title, x + w / 2, y + 18, 'center', 15, '#fff', 700);
-      sm(ctx, sub1, x + w / 2, y + 40, 'center', '#fff'); if (sub2) sm(ctx, sub2, x + w / 2, y + 56, 'center', '#fff');
+  // ---------- cycle topology: vessels, tubes and what is in each tube ----------
+  const SPC = { water: ['water', 'c1'], LiBr: ['LiBr', 'c5'], NH3: ['ammonia', 'c4'], H2: ['hydrogen', 'c6'], C4: ['butane', 'c2'], MeOH: ['methanol', 'c7'] };
+  function machineType(p) { return p.abs.includes('solid') ? 'ads' : p.id === 'ein' ? 'ein' : p.aux ? 'dar' : 'abs'; }
+  function cycleSpec(r) {
+    const p = r.p, ty = machineType(p), ref = REF[p.ref], fs = clamp(S.fl.sol, 0.05, 3);
+    const Tc = r.Tac + 5, Ta = r.Tac + 5, Tei = r.Tei, Tg = r.Tg, pc = ref.P(Tc), pe = ref.P(Tei);
+    const eS = r.ex.shx.eps || 0, TrichOut = Ta + eS * (Tg - Ta), TpoorOut = Tg - eS * (Tg - Ta) * 0.85;
+    const kPa = v => v >= 100 ? `${fmt(v, 0)} kPa` : v >= 1 ? `${fmt(v, 1)} kPa` : `${fmt(v * 1000, 0)} Pa`;
+    const V = {
+      C: { box: [300, 40, 200, 120], T: Tc, title: 'CONDENSER' },
+      G: { box: [600, 40, 200, 120], T: Tg, title: 'GENERATOR' },
+      E: { box: [300, 300, 200, 120], T: Tei, title: 'EVAPORATOR' },
+      A: { box: [600, 300, 200, 120], T: Ta, title: 'ABSORBER' },
     };
-    // positions
-    const C = [300, 40, 200, 110], G = [600, 40, 200, 110], E = [300, 280, 200, 110], A = [600, 280, 200, 110];
-    const refP = REF[p.ref], pc = refP.P(Tc), pe = refP.P(Tei);
-    // vessels
-    box(...G, Tgi, ads ? 'BED A · DESORBING' : 'GENERATOR', `${fmt(Tgi, 0)} °C · ${fP(r.qg)}`, ads ? 'heat drives refrigerant out' : `${p.ref} boils off`);
-    box(...C, Tc, p.id === 'ein' ? 'CONDENSER–ABSORBER' : 'CONDENSER', `${fmt(Tc, 0)} °C · rejects ${fP(p.id === 'ein' ? r.rej * 0.6 : r.q * 1.05)}`, `${p.ref} condenses`);
-    box(...E, Tei, 'EVAPORATOR', `${fmt(Tei, 1)} °C · ${fP(r.q)}`, diff ? `${p.ref} evaporates into ${p.aux}` : `${p.ref} boils at low pressure`);
-    box(...A, Ta, ads ? 'BED B · ADSORBING' : p.id === 'ein' ? 'ABSORBER (water–ammonia)' : 'ABSORBER', `${fmt(Ta, 0)} °C · rejects ${fP(Math.max(0, r.rej - r.q * 1.05))}`, ads ? 'solid takes up vapour' : `${p.abs.split(' (')[0]} takes up vapour`);
-    // refrigerant: G → C vapour, C → E liquid, E → A vapour
-    line(ctx, [[600, 95], [500, 95]], tok.vapour, 8); arrowHead(ctx, 506, 95, -1, 0, tok.vapour);
-    flowDots(ctx, [[600, 95], [500, 95]], '#fff', run, 4, 2.5);
-    line(ctx, [[340, 150], [340, 280]], tok.cold, 5); arrowHead(ctx, 340, 274, 0, 1, tok.cold);
-    flowDots(ctx, [[340, 150], [340, 280]], '#fff', run * 0.5, 4, 2);
-    if (!diff && !ads) { ctx.fillStyle = tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(330, 205); ctx.lineTo(350, 225); ctx.lineTo(350, 205); ctx.lineTo(330, 225); ctx.closePath(); ctx.fill(); ctx.stroke(); sm(ctx, 'expansion', 356, 215, 'left'); }
-    else if (diff) { sm(ctx, 'liquid trap', 348, 215, 'left'); }
-    line(ctx, [[500, 335], [600, 335]], tok.vapour, 8); arrowHead(ctx, 594, 335, 1, 0, tok.vapour);
-    flowDots(ctx, [[500, 335], [600, 335]], '#fff', run, 4, 2.5);
-    // solution circuit
-    if (!ads) {
-      line(ctx, [[760, 280], [760, 150]], heat((Ta + Tgi) / 2), 6); arrowHead(ctx, 760, 156, 0, -1, tok.ink);
-      flowDots(ctx, [[760, 280], [760, 150]], tok.ink, run * 0.6, 4, 2);
-      line(ctx, [[640, 150], [640, 280]], heat((Ta + Tgi) / 2 + 10), 6); arrowHead(ctx, 640, 274, 0, 1, tok.ink);
-      flowDots(ctx, [[640, 150], [640, 280]], tok.ink, run * 0.5, 4, 2);
-      ctx.fillStyle = tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; ctx.fillRect(620, 195, 160, 30); ctx.strokeRect(620, 195, 160, 30);
-      sm(ctx, 'solution heat exchanger', 700, 210, 'center', tok.ink);
-      if (diff) { sm(ctx, 'bubble pump ↑', 770, 250, 'left', tok.ink); }
-      else { ctx.beginPath(); ctx.arc(760, 255, 10, 0, Math.PI * 2); ctx.fillStyle = tok.raised; ctx.fill(); ctx.stroke(); sm(ctx, 'pump', 776, 255, 'left'); }
-      sm(ctx, r.Xs ? `strong ${fmt(r.Xs, 1)}%` : 'weak in refrigerant', 646, 168, 'left', tok.ink);
-      sm(ctx, r.Xw ? `weak ${fmt(r.Xw, 1)}%` : 'rich in refrigerant', 754, 268, 'right', tok.ink);
+    let T = [], shx = !!p.shxK, note = null;
+    const refK = p.ref === 'water' ? 'water' : p.ref === 'ammonia' ? 'NH3' : p.ref === 'butane' ? 'C4' : 'MeOH';
+    if (ty === 'abs') {
+      const libr = p.abs.includes('bromide');
+      let rich, poor;
+      if (libr) { rich = [[1 - r.Xw / 100, 'water'], [r.Xw / 100, 'LiBr']]; poor = [[1 - r.Xs / 100, 'water'], [r.Xs / 100, 'LiBr']]; }
+      else {
+        const Xr = clamp(0.42 - 0.004 * (r.Tac - 35) + 0.003 * (S.Te - 7), 0.25, 0.55), Xp = Math.max(0.05, Xr - Math.min(0.25, 0.1 / Math.max(fs, 0.3)));
+        rich = [[Xr, 'NH3'], [1 - Xr, 'water']]; poor = [[Xp, 'NH3'], [1 - Xp, 'water']];
+      }
+      const wv = libr ? 0 : 0.003 + (S.fl.rect < 1 ? 0.06 * (1 - S.fl.rect) ** 1.5 : 0);
+      const vap = libr ? [[1, 'water']] : [[1 - wv, 'NH3'], [wv, 'water']];
+      T = [
+        { n: 1, from: 'G', to: 'C', path: [[600, 100], [500, 100]], b: [550, 100], kind: 'vap', phase: 'vapour', mix: vap, rich: '', T: libr ? Tg : Tac + 35, P: pc, what: libr ? 'Water vapour boiled out of the solution' : 'Ammonia vapour after the rectifier strips most of the water' },
+        { n: 2, from: 'C', to: 'E', path: [[340, 160], [340, 300]], b: [340, 200], kind: 'liq', phase: 'liquid', mix: vap, rich: '', T: Tc, P: pc, valve: [340, 250], what: 'Condensed refrigerant, throttled from high to low pressure' },
+        { n: 3, from: 'E', to: 'A', path: [[500, 340], [600, 340]], b: [550, 340], kind: 'vap', phase: 'vapour', mix: vap, rich: '', T: Tei, P: pe, what: 'Low-pressure refrigerant vapour drawn into the absorber' },
+        { n: 4, from: 'A', to: 'G', path: [[770, 300], [770, 160]], b: [770, 282], kind: 'sol', phase: 'solution', mix: rich, rich: 'rich', T: Ta, P: pe, pump: [770, 258], what: libr ? 'Weak solution, rich in water, pumped up through the heat exchanger' : 'Strong aqua-ammonia, rich in refrigerant, pumped to the generator' },
+        { n: 5, from: 'G', to: 'A', path: [[630, 160], [630, 300]], b: [630, 282], kind: 'sol', phase: 'solution', mix: poor, rich: 'poor', T: Tg, P: pc, valve: [630, 258], what: libr ? 'Strong solution, poor in water, returning through the heat exchanger' : 'Weak aqua-ammonia, poor in refrigerant, returning to the absorber' },
+      ];
+      if (!libr) V.G.title = 'GENERATOR + RECTIFIER';
+      if (p.stages === 2) V.G.title = 'HIGH + LOW GENERATORS';
+    } else if (ty === 'dar') {
+      const Ptot = ref.P(Tc) / 0.97, yr = clamp(0.9 * pe / Ptot, 0.05, 0.9), yl = yr * 0.3;
+      const Xr = 0.32, Xp = Math.max(0.04, Xr - Math.min(0.26, 0.18 / Math.max(fs, 0.4)));
+      V.G.title = 'GENERATOR + BUBBLE PUMP';
+      T = [
+        { n: 1, from: 'G', to: 'C', path: [[600, 100], [500, 100]], b: [550, 100], kind: 'vap', phase: 'vapour', mix: [[0.98, 'NH3'], [0.02, 'water']], rich: '', T: Tg - 60, P: Ptot, what: 'Ammonia vapour from the generator, dried in a short rectifier' },
+        { n: 2, from: 'C', to: 'E', path: [[340, 160], [340, 300]], b: [340, 200], kind: 'liq', phase: 'liquid', mix: [[1, 'NH3']], rich: '', T: Tc, P: Ptot, trap: [340, 250], what: 'Liquid ammonia runs down by gravity through a liquid trap (no valve)' },
+        { n: 3, from: 'E', to: 'A', path: [[500, 330], [600, 330]], b: [550, 330], kind: 'gas', phase: 'gas mix (mole)', mix: [[yr, 'NH3'], [1 - yr, 'H2']], rich: 'rich', T: Tei, P: Ptot, what: 'Hydrogen loaded with evaporated ammonia: heavy, so it sinks to the absorber' },
+        { n: 4, from: 'A', to: 'E', path: [[600, 395], [500, 395]], b: [550, 395], kind: 'gas', phase: 'gas mix (mole)', mix: [[yl, 'NH3'], [1 - yl, 'H2']], rich: 'poor', T: Ta, P: Ptot, what: 'Lean hydrogen, stripped by the absorber: light, so it rises back to the evaporator' },
+        { n: 5, from: 'A', to: 'G', path: [[770, 300], [770, 160]], b: [770, 282], kind: 'sol', phase: 'solution', mix: [[Xr, 'NH3'], [1 - Xr, 'water']], rich: 'rich', T: Ta, P: Ptot, bubble: [770, 230], what: 'Rich aqua-ammonia, lifted by vapour bubbles in the bubble pump' },
+        { n: 6, from: 'G', to: 'A', path: [[630, 160], [630, 300]], b: [630, 282], kind: 'sol', phase: 'solution', mix: [[Xp, 'NH3'], [1 - Xp, 'water']], rich: 'poor', T: Tg, P: Ptot, what: 'Weak solution flows by gravity to the top of the absorber' },
+      ];
+    } else if (ty === 'ein') {
+      const Ptot = REF.butane.P(Tc), yb = clamp(REF.butane.P(Tei) / Ptot, 0.05, 0.95);
+      const Xr = 0.3, Xp = Math.max(0.03, Xr - Math.min(0.24, 0.17 / Math.max(fs, 0.4)));
+      delete V.C;
+      V.A.title = 'CONDENSER–ABSORBER';
+      V.G.title = 'GENERATOR + BUBBLE PUMP';
+      note = [300, 40, 175, 92];
+      T = [
+        { n: 1, from: 'G', to: 'E', path: [[600, 148], [420, 148], [420, 300]], b: [510, 148], kind: 'gas', phase: 'gas', mix: [[0.99, 'NH3'], [0.01, 'water']], rich: '', T: Tg - 40, P: Ptot, what: 'Ammonia gas driven out of the water: it fills the evaporator and lowers the butane partial pressure' },
+        { n: 2, from: 'E', to: 'A', path: [[500, 330], [600, 330]], b: [550, 330], kind: 'gas', phase: 'gas mix (mole)', mix: [[yb, 'C4'], [1 - yb, 'NH3']], rich: 'rich', T: Tei, P: Ptot, what: 'Butane that has evaporated into the ammonia: the cooling happens here' },
+        { n: 3, from: 'A', to: 'E', path: [[600, 395], [500, 395]], b: [550, 395], kind: 'liq', phase: 'liquid', mix: [[1, 'C4']], rich: '', T: Tc, P: Ptot, what: 'Water absorbs the ammonia, so butane condenses, floats on the water and runs back' },
+        { n: 4, from: 'A', to: 'G', path: [[770, 300], [770, 160]], b: [770, 282], kind: 'sol', phase: 'solution', mix: [[Xr, 'NH3'], [1 - Xr, 'water']], rich: 'rich', T: Ta, P: Ptot, bubble: [770, 230], what: 'Ammonia-rich water, lifted by the bubble pump' },
+        { n: 5, from: 'G', to: 'A', path: [[630, 160], [630, 300]], b: [630, 282], kind: 'sol', phase: 'solution', mix: [[Xp, 'NH3'], [1 - Xp, 'water']], rich: 'poor', T: Tg, P: Ptot, what: 'Water with little ammonia, back to absorb more' },
+      ];
     } else {
-      ctx.strokeStyle = tok.ink; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(700, 150); ctx.lineTo(700, 280); ctx.stroke(); ctx.setLineDash([]);
-      const sw = (Math.sin(phase * 0.4) > 0); sm(ctx, sw ? '⇅ beds swap every few minutes' : '⇵ beds swap every few minutes', 710, 215, 'left', tok.ink);
+      const sw = Math.floor(phase / 8) % 2, b1 = sw ? 'Bed 2' : 'Bed 1', b2 = sw ? 'Bed 1' : 'Bed 2';
+      V.G.title = p.id === 'acm' ? 'BED BY DAY: DESORBING' : `${b1.toUpperCase()}: DESORBING`;
+      V.A.title = p.id === 'acm' ? 'BED BY NIGHT: ADSORBING' : `${b2.toUpperCase()}: ADSORBING`;
+      shx = false;
+      T = [
+        { n: 1, from: 'G', to: 'C', path: [[600, 100], [500, 100]], b: [550, 100], kind: 'vap', phase: 'vapour', mix: [[1, refK]], rich: '', T: Tg - 10, P: pc, what: `${p.ref} vapour driven out of the hot bed` },
+        { n: 2, from: 'C', to: 'E', path: [[340, 160], [340, 300]], b: [340, 200], kind: 'liq', phase: 'liquid', mix: [[1, refK]], rich: '', T: Tc, P: pc, valve: [340, 250], what: `Condensed ${p.ref}, through a U-trap or valve to low pressure` },
+        { n: 3, from: 'E', to: 'A', path: [[500, 340], [600, 340]], b: [550, 340], kind: 'vap', phase: 'vapour', mix: [[1, refK]], rich: '', T: Tei, P: pe, what: `Low-pressure ${p.ref} vapour taken up by the cool bed` },
+      ];
     }
-    if (diff) { // auxiliary gas loop between evaporator and absorber
-      line(ctx, [[500, 365], [600, 365]], tok.steel, 3, [4, 4]); arrowHead(ctx, 506, 365, -1, 0, tok.steel);
-      sm(ctx, `${p.aux} returns`, 550, 380, 'center', tok.steel);
-    }
-    // pressure levels
-    if (diff) sm(ctx, `Total pressure uniform; ${p.ref} partial pressure ${fmt(pc, 0)} kPa (top) / ${fmt(pe, 0)} kPa (bottom)`, 550, 18, 'center', tok.ink);
-    else { sm(ctx, `HIGH ${pc >= 100 ? fmt(pc, 0) : fmt(pc, 1)} kPa`, 550, 120, 'center', tok.ink); sm(ctx, `LOW ${pe >= 100 ? fmt(pe, 0) : fmt(pe, 2)} kPa`, 550, 310, 'center', tok.ink); }
-    // source, sink, load
-    const ext = (x, y, w, h, T, title, sub, col) => { ctx.fillStyle = tok.raised; ctx.fillRect(x, y, w, h); ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.strokeRect(x, y, w, h); lab(ctx, title, x + w / 2, y + 18, 'center', 13, tok.ink); sm(ctx, sub, x + w / 2, y + 38, 'center', tok.ink); if (T !== null) sm(ctx, `${fmt(T, 0)} °C`, x + w / 2, y + 56, 'center', col); };
-    ext(860, 40, 180, 110, r.Tdel, src.name.length > 26 ? src.name.split(' (')[0].slice(0, 26) : src.name, src.solar ? `${fmt(r.avail, 1)} kW from ${fmt(S.area, 0)} m²` : src.rtg ? `${fmt(r.avail * 1000, 0)} W thermal` : Number.isFinite(r.avail) ? `${fmt(r.avail, 0)} kW available` : `${fP(r.qg / src.eta)} of fuel`, tok.hot);
-    line(ctx, [[860, 95], [800, 95]], tok.hot, 10); arrowHead(ctx, 806, 95, -1, 0, tok.hot);
-    ext(860, 280, 180, 110, r.Tac, sink.name.split(' (')[0].slice(0, 26), `takes ${fP(r.rej)}`, tok.cold);
-    line(ctx, [[800, 335], [860, 335]], tok.cold, 10); arrowHead(ctx, 854, 335, 1, 0, tok.cold);
-    line(ctx, [[300, 95], [230, 95], [230, 30], [950, 30], [950, 40]], tok.cold, 4, [6, 4]); sm(ctx, 'condenser heat to sink', 590, 22, 'center', tok.cold);
-    ext(20, 280, 180, 110, S.Te, 'COLD SPACE / CHILLED WATER', `${fP(r.q)} removed`, tok.cold);
-    line(ctx, [[200, 335], [300, 335]], tok.cold, 10); arrowHead(ctx, 294, 335, 1, 0, tok.cold);
-    ext(20, 40, 180, 110, null, p.short, p.unit.length > 26 ? p.unit.slice(0, 26) + '…' : p.unit, tok.copper);
-    sm(ctx, `${r.n} × ${fP(r.cap)} rated here`, 110, 116, 'center', tok.copper);
-    sm(ctx, `running at ${fmt(r.duty * 100, 0)}%`, 110, 132, 'center', tok.copper);
+    for (const t of T) { t.Pk = kPa(t.P); t.fromN = (V[t.from] || {}).title || t.from; t.toN = (V[t.to] || {}).title || t.to; }
+    return { ty, V, T, shx, note, TrichOut, TpoorOut };
   }
-
+  const MW = 1060, MH = 460;
+  // a lane inside a vessel: a track with moving dots and arrowheads; dir +1 runs left to right
+  function lane(ctx, x0, x1, y, dir, col, label, speed) {
+    ctx.strokeStyle = col; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.globalAlpha = 0.35;
+    ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); ctx.globalAlpha = 1; ctx.lineCap = 'butt';
+    const L = x1 - x0, n = 4;
+    for (let k = 0; k < n; k++) {
+      const u = (((phase * speed * 0.35 + k / n) % 1) + 1) % 1, x = dir > 0 ? x0 + u * L : x1 - u * L;
+      arrowHead(ctx, x + dir * 5, y, dir, 0, col, 7);
+    }
+    ctx.font = '600 10px "JetBrains Mono", monospace'; ctx.fillStyle = '#fff'; ctx.textAlign = dir > 0 ? 'left' : 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillText(label, dir > 0 ? x0 : x1, y - 4);
+  }
+  function mixBar(ctx, x, y, w, h, mix) {
+    let cx = x;
+    for (const [f, k] of mix) { const ww = w * clamp(f, 0, 1); ctx.fillStyle = tok[SPC[k][1]]; ctx.fillRect(cx, y, ww, h); cx += ww; }
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
+  }
+  function drawMimic() {
+    const { ctx } = fit($('mimic'), MW, MH), r = R, p = r.p, src = srcById(S.src), sink = sinkById(S.sink), sp = cycleSpec(r);
+    const run = r.q > 0 ? 0.4 + 0.6 * Math.min(1, r.duty) : 0, fs = clamp(S.fl.sol, 0.05, 3), arr = S.arr;
+    const ins = sp.ty !== 'ads';
+    // external circuits first, so vessels sit on top of them
+    const hotCol = tok.hot, coolCol = tok.steel, chillCol = tok.cold;
+    const stream = !src.flame && !noStream(src);
+    // heating: supply in at the top, return out at the bottom of the generator's right side
+    line(ctx, [[860, 85], [800, 85]], hotCol, stream ? 6 : 12); arrowHead(ctx, 806, 85, -1, 0, hotCol, stream ? 8 : 11);
+    if (stream) { line(ctx, [[800, 135], [860, 135]], hotCol, 4, [5, 3]); arrowHead(ctx, 854, 135, 1, 0, hotCol); flowDots(ctx, [[860, 85], [800, 85]], '#fff', run * S.fl.hot, 3, 2); }
+    // cooling: sink → absorber → condenser (series) → back to sink
+    const condX = sp.V.C ? 300 : null;
+    line(ctx, [[860, 345], [800, 345]], coolCol, 6); arrowHead(ctx, 806, 345, -1, 0, coolCol);
+    const back = condX ? [[800, 400], [830, 400], [830, 445], [270, 445], [270, 130], [300, 130]] : [[800, 400], [860, 400]];
+    line(ctx, back, coolCol, 4, [6, 4]); flowDots(ctx, back, coolCol, run * S.fl.cool, 7, 2.5);
+    if (condX) { line(ctx, [[300, 70], [270, 70], [270, 20], [950, 20], [950, 40]], coolCol, 4, [6, 4]); arrowHead(ctx, 950, 36, 0, 1, coolCol); arrowHead(ctx, 296, 130, 1, 0, coolCol); sm(ctx, `${sink.kind === 'air' ? 'air' : 'cooling water'}: absorber first, then condenser`, 600, 12, 'center', coolCol); }
+    else arrowHead(ctx, 854, 400, 1, 0, coolCol);
+    // chilled: cold space ⇄ evaporator
+    line(ctx, [[200, 345], [300, 345]], chillCol, 6); arrowHead(ctx, 294, 345, 1, 0, chillCol);
+    line(ctx, [[300, 395], [200, 395]], chillCol, 4, [5, 3]); arrowHead(ctx, 206, 395, -1, 0, chillCol);
+    flowDots(ctx, [[200, 345], [300, 345]], '#fff', run * S.fl.chill, 3, 2);
+    // tubes between the stages
+    const tubeCol = t => t.kind === 'sol' ? heat((t.T + (t.rich === 'rich' ? sp.TrichOut : sp.TpoorOut)) / 2) : t.kind === 'liq' ? tok.cold : t.kind === 'gas' ? tok.c6 : tok.vapour;
+    for (const t of sp.T) {
+      const w = t.kind === 'vap' || t.kind === 'gas' ? 8 : 5, c = tubeCol(t), last = t.path[t.path.length - 1], prev = t.path[t.path.length - 2];
+      line(ctx, t.path, c, w); arrowHead(ctx, last[0] - Math.sign(last[0] - prev[0]) * 6, last[1] - Math.sign(last[1] - prev[1]) * 6, last[0] - prev[0], last[1] - prev[1], c, 8);
+      const sp2 = t.kind === 'sol' ? run * fs : run;
+      flowDots(ctx, t.path, t.kind === 'sol' ? tok.ink : '#fff', sp2, 4, t.kind === 'liq' ? 2 : 2.5);
+      ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; ctx.fillStyle = tok.raised;
+      if (t.valve) { const [x, y] = t.valve; ctx.beginPath(); ctx.moveTo(x - 9, y - 7); ctx.lineTo(x + 9, y + 7); ctx.lineTo(x + 9, y - 7); ctx.lineTo(x - 9, y + 7); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      if (t.pump) { const [x, y] = t.pump; ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); sm(ctx, 'pump', x + 14, y, 'left'); }
+      if (t.trap) { const [x, y] = t.trap; ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI); ctx.stroke(); sm(ctx, 'liquid trap', x + 14, y, 'left'); }
+      if (t.bubble) { const [x, y] = t.bubble; ctx.fillStyle = '#fff'; for (let k = 0; k < 4; k++) { const yy = y + 20 - ((phase * 30 * fs + k * 12) % 48); ctx.beginPath(); ctx.arc(x, yy, 3, 0, Math.PI * 2); ctx.fill(); } sm(ctx, 'bubble pump', x + 12, y - 14, 'left'); }
+    }
+    // solution heat exchanger: two lanes, counter or parallel
+    if (sp.shx && ins) {
+      const x = 655, y = 195, w = 90, h = 50;
+      ctx.fillStyle = tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
+      const par = arr.shx === 'parallel';
+      laneSmall(ctx, x + 6, x + w - 6, y + 15, 1, heat(sp.TrichOut), run * fs);
+      laneSmall(ctx, x + 6, x + w - 6, y + 35, par ? 1 : -1, heat(sp.TpoorOut), run * fs);
+      sm(ctx, `SHX · ${par ? 'parallel' : 'counter'}`, x + w / 2, y + h + 9, 'center', tok.ink);
+      sm(ctx, `ε ${fmt(r.ex.shx.eps, 2)}`, x + w / 2, y - 7, 'center', tok.muted);
+    }
+    // vessels
+    const ext = { G: [stream ? (src.id === 'jacket' || src.id === 'process' || src.id === 'dc' || src.id === 'district' ? 'hot water' : src.solar ? 'collector fluid' : src.id === 'geo' ? 'brine' : src.id === 'exhaust' ? 'exhaust gas' : 'steam') : (src.rtg ? 'decay heat' : src.id === 'elec' ? 'element' : 'flame'), -1, hotCol],
+      A: [sink.kind === 'air' ? 'air' : 'cooling water', -1, coolCol], C: [sink.kind === 'air' ? 'air' : 'cooling water', 1, coolCol], E: [S.load < 1 ? 'cold-box air' : 'chilled water', 1, chillCol] };
+    const intl = { G: [sp.ty === 'ads' ? 'bed' : 'solution', 'gen'], A: [sp.ty === 'ads' ? 'bed' : 'solution', 'abs'], C: [sp.ty === 'ein' ? '' : 'condensate', 'cond'], E: [p.ref, 'evap'] };
+    for (const [k, v] of Object.entries(sp.V)) {
+      const [x, y, w, h] = v.box;
+      ctx.fillStyle = heat(v.T); ctx.globalAlpha = 0.88; ctx.fillRect(x, y, w, h); ctx.globalAlpha = 1;
+      ctx.strokeStyle = tok.ink; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+      lab(ctx, v.title, x + w / 2, y + 15, 'center', v.title.length > 22 ? 13 : 15, '#fff', 700);
+      const duty = k === 'G' ? r.qg : k === 'E' ? r.q : k === 'C' ? r.q * 1.05 : sp.V.C ? Math.max(0, r.rej - r.q * 1.05) : r.rej;
+      sm(ctx, `${fmt(v.T, 0)} °C · ${fP(duty)}`, x + w / 2, y + 33, 'center', '#fff');
+      const [el, edir, ecol] = ext[k], [il, ak] = intl[k], bed = sp.ty === 'ads' && (k === 'G' || k === 'A'), idir = bed ? 0 : arr[ak] === 'parallel' ? edir : -edir;
+      const fK = k === 'G' ? S.fl.hot : k === 'E' ? S.fl.chill : S.fl.cool;
+      lane(ctx, x + 12, x + w - 12, y + 66, edir, '#fff', el, run * fK);
+      if (idir) lane(ctx, x + 12, x + w - 12, y + 96, idir, tok.ink, il, run * (k === 'G' || k === 'A' ? fs : 1));
+      else { ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x + 12, y + 86, w - 24, 16); const ld = k === 'G' ? 0.3 : 0.8; ctx.fillStyle = '#fff'; ctx.fillRect(x + 12, y + 86, (w - 24) * ld, 16); sm(ctx, `${k === 'G' ? 'loading falls' : 'loading rises'}`, x + w / 2, y + 94, 'center', tok.ink); }
+      if (idir) sm(ctx, arr[ak] === 'parallel' ? 'parallel flow' : 'counterflow', x + w - 8, y + 112, 'right', '#fff');
+      if (k === 'A' && sp.ty !== 'ads') sm(ctx, `vapour vs film: ${arr.mass === 'parallel' ? 'parallel' : 'counter'}`, x + w / 2, y + 48, 'center', '#fff');
+    }
+    if (sp.note) {
+      const [x, y, w, h] = sp.note; ctx.fillStyle = tok.raised; ctx.fillRect(x, y, w, h); ctx.strokeStyle = tok.line; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
+      lab(ctx, 'NO PUMP · NO VALVE', x + w / 2, y + 16, 'center', 13, tok.ink);
+      ['Ammonia gas fills the system;', 'butane boils into it. Water', 'takes the ammonia back, and', 'the butane condenses.'].forEach((s2, i) => sm(ctx, s2, x + w / 2, y + 36 + i * 15, 'center', tok.muted));
+    }
+    // tube badges with mix bars
+    for (const t of sp.T) {
+      const [bx, by] = t.b;
+      ctx.fillStyle = tok.ink; ctx.beginPath(); ctx.arc(bx, by, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.font = '700 12px "Barlow Condensed", sans-serif'; ctx.fillStyle = tok.bg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(t.n), bx, by + 0.5);
+      const vert = t.path[0][0] === t.path[1][0];
+      mixBar(ctx, vert ? bx + 14 : bx - 22, vert ? by - 4 : by + 14, 44, 8, t.mix);
+    }
+    // pressure levels, source, sink, cold space, machine
+    if (sp.ty === 'dar' || sp.ty === 'ein') sm(ctx, `one total pressure · ${sp.T[0].Pk}`, sp.ty === 'ein' ? 520 : 550, sp.ty === 'ein' ? 180 : 172, 'center', tok.ink);
+    else { sm(ctx, `HIGH ${sp.T[0].Pk}`, 550, 82, 'center', tok.ink); sm(ctx, `LOW ${sp.T[2].Pk}`, 550, 375, 'center', tok.ink); }
+    const exb = (x, y, w, h, T0, title, sub, col) => { ctx.fillStyle = tok.raised; ctx.fillRect(x, y, w, h); ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.strokeRect(x, y, w, h); lab(ctx, title, x + w / 2, y + 18, 'center', 13, tok.ink); sm(ctx, sub, x + w / 2, y + 40, 'center', tok.ink); if (T0 !== null) sm(ctx, `${fmt(T0, 0)} °C`, x + w / 2, y + 60, 'center', col); };
+    exb(860, 40, 180, 120, r.Tdel, src.name.split(' (')[0].slice(0, 26), src.solar ? `${fmt(r.avail, 1)} kW from ${fmt(S.area, 0)} m²` : src.rtg ? `${fmt(r.avail * 1000, 0)} W thermal` : Number.isFinite(r.avail) ? `${fmt(r.avail, 0)} kW available` : `${fP(r.qg / src.eta)} of fuel`, hotCol);
+    exb(860, 300, 180, 120, sink.T(S), sink.name.split(' (')[0].slice(0, 26), `takes ${fP(r.rej)}`, coolCol);
+    exb(20, 300, 180, 120, S.Te, S.load < 1 ? 'COLD BOX' : 'CHILLED WATER', `${fP(r.q)} removed`, chillCol);
+    exb(20, 40, 180, 120, null, p.short, p.unit.length > 26 ? p.unit.slice(0, 26) + '…' : p.unit, tok.copper);
+    sm(ctx, `${r.n} × ${fP(r.cap)} here`, 110, 104, 'center', tok.copper);
+    sm(ctx, `running at ${fmt(r.duty * 100, 0)}%`, 110, 122, 'center', tok.copper);
+    if (r.q <= 0) { ctx.fillStyle = tok.danger; ctx.globalAlpha = 0.9; ctx.fillRect(420, 214, 180, 30); ctx.globalAlpha = 1; lab(ctx, 'NOT COOLING', 510, 229, 'center', 16, '#fff', 700); }
+  }
+  function laneSmall(ctx, x0, x1, y, dir, col, speed) {
+    ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+    const L = x1 - x0; for (let k = 0; k < 3; k++) { const u = (((phase * speed * 0.35 + k / 3) % 1) + 1) % 1, x = dir > 0 ? x0 + u * L : x1 - u * L; arrowHead(ctx, x + dir * 4, y, dir, 0, tok.ink, 6); }
+  }
   function axes(ctx, w, h, m, xlo, xhi, ylo, yhi, xt, yt, xf, yf) {
     const X = x => m.l + (x - xlo) / (xhi - xlo) * (w - m.l - m.r), Y = y => h - m.b - (y - ylo) / (yhi - ylo) * (h - m.t - m.b);
     ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.muted; ctx.strokeStyle = tok.line; ctx.lineWidth = 1;
@@ -630,7 +952,7 @@ table.t tr.no td { color: var(--muted); }
     ctx.strokeStyle = tok.cold; ctx.lineWidth = 2.2; ctx.beginPath();
     for (let T = Tlo, i = 0; T <= Math.min(Thi, 200); T += 2, i++) { const [x, y] = pt(T, ref.P(T)); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
     ctx.stroke();
-    const Tc = r.Tac + 5, Ta = r.Tac + 5, Tei = r.Te - 3, pc = ref.P(Tc), pe = ref.P(Tei);
+    const Tc = r.Tac + 5, Ta = r.Tac + 5, Tei = r.Tei, pc = ref.P(Tc), pe = ref.P(Tei);
     // LiBr isosteres and crystallization line
     if (p.ref === 'water' && p.abs.includes('bromide')) {
       for (const X0 of [50, 55, 60, 65]) { ctx.strokeStyle = tok.line; ctx.lineWidth = 1; ctx.beginPath(); let f = true; for (let t = 10; t <= Thi; t += 3) { const tr = solRef(X0, t); if (tr < Tlo || tr > 200) continue; const [x, y] = pt(t, ref.P(tr)); f ? ctx.moveTo(x, y) : ctx.lineTo(x, y); f = false; } ctx.stroke(); }
@@ -645,8 +967,8 @@ table.t tr.no td { color: var(--muted); }
     ctx.fillStyle = tok.copper; ctx.globalAlpha = 0.1; ctx.beginPath(); poly.forEach((q, i) => i ? ctx.lineTo(...q) : ctx.moveTo(...q)); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
     ctx.strokeStyle = tok.copper; ctx.lineWidth = 2.4; ctx.beginPath(); poly.forEach((q, i) => i ? ctx.lineTo(...q) : ctx.moveTo(...q)); ctx.closePath(); ctx.stroke();
     const dot = (q, t, al = 'left') => { ctx.fillStyle = tok.ink; ctx.beginPath(); ctx.arc(q[0], q[1], 4, 0, Math.PI * 2); ctx.fill(); sm(ctx, t, q[0] + (al === 'left' ? 7 : -7), q[1] - 9, al, tok.ink); };
-    dot(pts.E, 'evaporator', 'left'); dot(pts.C, 'condenser', 'left'); dot(pts.A, 'absorber', 'left');
-    dot(pts.G, p.stages === 2 ? 'low gen.' : 'generator', 'right');
+    dot(pts.E, 'evaporator', 'right'); dot(pts.C, 'condenser', 'right'); dot(pts.A, 'absorber', 'left');
+    dot(pts.G, p.stages === 2 ? 'low gen.' : 'generator', 'left'); 
     if (pts.C1) { dot(pts.C1, 'high cond.', 'left'); dot(pts.G2, 'high gen.', 'right'); }
     $('lgPT').innerHTML = `<span><i style="background:var(--cold)"></i>${ref.name} saturation</span><span><i style="background:var(--copper)"></i>cycle</span>${p.abs.includes('bromide') ? '<span><i style="background:var(--line)"></i>50–65% LiBr</span><span><i style="background:var(--danger)"></i>crystallization</span>' : ''}`;
     $('nPT').textContent = `Log pressure against −1/T, so saturation lines are nearly straight. ${p.aux ? `In this machine the total pressure is the same everywhere; the cycle runs on the ${p.ref} partial pressure while ${p.aux} fills the rest.` : `Pressure ratio ${fmt(pc / pe, 1)} : 1.`}${r.Xs ? ` Strong solution ${fmt(r.Xs, 1)}%, weak ${fmt(r.Xw, 1)}%, crystallization at about ${fmt(r.Xc, 1)}% at the heat exchanger's cold end.` : ''}`;
@@ -671,6 +993,119 @@ table.t tr.no td { color: var(--muted); }
     }
     if (r.cop > 0) { ctx.fillStyle = tok.ink; ctx.beginPath(); ctx.arc(X(clamp(r.Tg, 40, 230)), Y(Math.min(1.6, r.cop)), 5, 0, Math.PI * 2); ctx.fill(); }
     $('lgCOP').innerHTML = PAIRS.map(p => `<span><i style="background:var(--${p.col})"></i>${p.short}</span>`).join('');
+  }
+
+
+  function renderTubes() {
+    const sp = cycleSpec(R), used = new Set();
+    for (const t of sp.T) for (const [, k] of t.mix) used.add(k);
+    $('lgSp').innerHTML = [...used].map(k => `<span><i style="background:var(--${SPC[k][1]});height:8px"></i>${SPC[k][0]}</span>`).join('') + '<span>Bars show the mix in each numbered tube (by mass for liquids, by mole for gas mixtures).</span>';
+    $('tubes').innerHTML = '<thead><tr><th>#</th><th class="l">From → to</th><th class="l">What is in it</th><th>Mix</th><th>State</th><th>Temp</th><th>Pressure</th></tr></thead><tbody>' + sp.T.map(t => {
+      const bar = t.mix.map(([f, k]) => `<i style="width:${clamp(f, 0, 1) * 100}%;background:var(--${SPC[k][1]})"></i>`).join('');
+      const txt = t.mix.filter(([f]) => f >= 0.005).map(([f, k]) => `${fmt(f * 100, f < 0.1 ? 1 : 0)}% ${SPC[k][0]}`).join(' · ');
+      return `<tr><td><span class="nb">${t.n}</span></td><td class="l">${t.fromN.toLowerCase()} → ${t.toN.toLowerCase()}</td><td class="l">${t.rich ? `<span class="tag ${t.rich}">${t.rich} in ${t.mix[0][1] === 'LiBr' || t.mix[1]?.[1] === 'LiBr' ? 'water' : SPC[t.mix[0][1]][0]}</span> ` : ''}${t.what}<br><small>${txt}</small></td><td><span class="mix">${bar}</span></td><td>${t.phase}</td><td>${fmt(t.T, 0)} °C</td><td>${t.Pk}</td></tr>`;
+    }).join('') + '</tbody>';
+  }
+
+  // ---------- energy Sankey: band widths scale with power ----------
+  function drawSankey() {
+    const cv = $('sankey'); cv.dataset.h = innerWidth >= 1560 ? 470 : 300;
+    const { ctx, w, h } = fit(cv), r = R, src = srcById(S.src), sink = sinkById(S.sink), sp = cycleSpec(r);
+    const fuel = r.qg / src.eta, flue = fuel - r.qg, q = r.q, el = r.auxE;
+    const qc = sp.V.C ? r.q * 1.05 : 0, qa = Math.max(0, r.rej - qc);
+    const tot = fuel + q + el;
+    ctx.font = '500 11px "JetBrains Mono", monospace';
+    if (tot <= 0) { sm(ctx, 'No energy flows: the machine is not running', w / 2, h / 2, 'center', tok.muted); return; }
+    const top = 26, bot = h - 14, gap = 16, nIn = 3, avail = bot - top - gap * 2, k = avail / tot, minW = 1.5;
+    const bw = v => v > 0 ? Math.max(minW, v * k) : 0;
+    const xL = 6, xM = w * 0.5 - 6, xR = w - 18, nodeW = 12;
+    const useful = sink.useful;
+    const heatName = src.eta < 1 ? (src.flame ? 'Fuel' : 'Fuel / steam') : src.rtg ? 'Decay heat' : src.solar ? 'Collected sun' : src.id === 'elec' ? 'Electric heat' : 'Waste heat';
+    const ins = [[heatName, fuel, tok.hot], ['Heat from cold space', q, tok.cold], ['Pumps and fans', el, tok.c8]];
+    const outs = [['Flue and source losses', flue, tok.muted], [(sp.ty === 'ads' ? 'Bed' : 'Absorber') + (useful ? ': useful heat' : ' reject'), qa, tok.steel], [useful ? 'Condenser: useful heat' : 'Condenser reject', qc, tok.c6], ['Pump and fan heat', el, tok.c8]];
+    const band = (x0, y0, x1, y1, wd, col) => {
+      if (wd <= 0) return;
+      ctx.fillStyle = col; ctx.globalAlpha = 0.55; ctx.beginPath(); const xm = (x0 + x1) / 2;
+      ctx.moveTo(x0, y0); ctx.bezierCurveTo(xm, y0, xm, y1, x1, y1); ctx.lineTo(x1, y1 + wd); ctx.bezierCurveTo(xm, y1 + wd, xm, y0 + wd, x0, y0 + wd); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    };
+    // left nodes
+    let y = top, Lpos = [];
+    for (const [, v, c] of ins) { const wd = bw(v); Lpos.push([y, wd]); if (wd) { ctx.fillStyle = c; ctx.fillRect(xL, y, nodeW, wd); } y += wd + (wd ? gap : 0); }
+    // machine node: inputs that enter it (generator heat, lifted heat, electricity)
+    const intoM = [[r.qg, tok.hot], [q, tok.cold], [el, tok.c8]], mH = intoM.reduce((a, [v]) => a + bw(v), 0);
+    const mTop = Math.max(top + bw(flue) + (flue > 0 ? gap : 0), top + (avail + gap * 2 - mH - bw(flue)) / 2);
+    ctx.fillStyle = tok.copper; ctx.fillRect(xM, mTop, nodeW, mH);
+    // right nodes
+    y = top; const Rpos = [];
+    for (const [, v, c] of outs) { const wd = bw(v); Rpos.push([y, wd]); if (wd) { ctx.fillStyle = c; ctx.fillRect(xR, y, nodeW, wd); } y += wd + (wd ? gap : 0); }
+    // bands: fuel → machine (generator heat) and fuel → flue
+    let my = mTop;
+    if (flue > 0) band(xL + nodeW, Lpos[0][0], xR, Rpos[0][0], bw(flue), tok.muted);
+    band(xL + nodeW, Lpos[0][0] + bw(flue), xM, my, bw(r.qg), tok.hot); my += bw(r.qg);
+    band(xL + nodeW, Lpos[1][0], xM, my, bw(q), tok.cold); my += bw(q);
+    band(xL + nodeW, Lpos[2][0], xM, my, bw(el), tok.c8); my += bw(el);
+    // machine → outputs (absorber, condenser, pump heat)
+    let oy = mTop;
+    band(xM + nodeW, oy, xR, Rpos[1][0], bw(qa), tok.steel); oy += bw(qa);
+    band(xM + nodeW, oy, xR, Rpos[2][0], bw(qc), tok.c6); oy += bw(qc);
+    band(xM + nodeW, oy, xR, Rpos[3][0], bw(el), tok.c8);
+    // labels
+    const labL = (i, [n, v]) => { if (!Lpos[i][1]) return; sm(ctx, n, xL + nodeW + 4, Lpos[i][0] - 6, 'left', tok.ink); sm(ctx, fP(v), xL + nodeW + 4, Lpos[i][0] + Math.min(Lpos[i][1], 20) / 2 + 2, 'left', tok.ink); };
+    const labR = (i, [n, v]) => { if (!Rpos[i][1]) return; sm(ctx, n, xR - 4, Rpos[i][0] - 6, 'right', tok.ink); sm(ctx, fP(v), xR - 4, Rpos[i][0] + Math.min(Rpos[i][1], 20) / 2 + 2, 'right', tok.ink); };
+    ins.forEach((d, i) => labL(i, d)); outs.forEach((d, i) => labR(i, d));
+    lab(ctx, 'MACHINE', xM + nodeW / 2, mTop - 10, 'center', 12, tok.copper);
+    sm(ctx, `COP ${fmt(r.cop, 2)} = ${fP(q)} ÷ ${fP(r.qg)}`, w / 2, 10, 'center', tok.muted);
+  }
+
+  // ---------- size: isometric boxes against a familiar object ----------
+  const REFOBJ = {
+    person: { name: 'Person', dims: '1.75 m tall' }, fridge: { name: 'Kitchen fridge', dims: '0.9 × 0.75 × 1.8 m' },
+    truck: { name: 'Fire truck', dims: '10 × 2.5 × 3.3 m' }, house: { name: 'Cape-style house', dims: '10 × 8 m, 7 m to the ridge' },
+    church: { name: 'Village church', dims: '18 × 10 m, steeple 32 m' },
+  };
+  function drawSize() {
+    const { ctx, w, h } = fit($('size')), r = R, p = r.p, [uw, ud, uh] = p.dims, n = Math.max(1, r.n), shown = Math.min(n, 8);
+    const rowLen = shown * uw + (shown - 1) * 0.3;
+    let ref = S.cmpObj;
+    if (ref === 'auto') ref = rowLen < 1.5 && uh < 2 ? 'person' : rowLen < 4 ? 'fridge' : rowLen < 12 ? 'truck' : rowLen < 25 ? 'house' : 'church';
+    $('cmpObj').value = S.cmpObj;
+    const C30 = Math.cos(Math.PI / 6), S30 = 0.5, polys = [];
+    const P = (x, y, z) => [(x - y) * C30, (x + y) * S30 - z];
+    const shade = (hex, f) => { const m = hex.match(/\w\w/g); if (!m || hex[0] !== '#') return hex; return '#' + m.map(c => Math.round(clamp(parseInt(c, 16) * f, 0, 255)).toString(16).padStart(2, '0')).join(''); };
+    const face = (pts, col) => polys.push({ pts: pts.map(q => P(...q)), col });
+    const box = (x, y, z, W, D, H, col) => {
+      face([[x + W, y, z], [x + W, y + D, z], [x + W, y + D, z + H], [x + W, y, z + H]], shade(col, 0.72));
+      face([[x, y + D, z], [x + W, y + D, z], [x + W, y + D, z + H], [x, y + D, z + H]], shade(col, 0.88));
+      face([[x, y, z + H], [x + W, y, z + H], [x + W, y + D, z + H], [x, y + D, z + H]], shade(col, 1.08));
+    };
+    const roof = (x, y, z, W, D, R2, col) => {
+      face([[x, y, z], [x + W, y, z], [x + W, y + D / 2, z + R2], [x, y + D / 2, z + R2]], shade(col, 0.8));
+      face([[x + W, y, z], [x + W, y + D, z], [x + W, y + D / 2, z + R2]], shade(col, 0.7));
+      face([[x, y + D, z], [x + W, y + D, z], [x + W, y + D / 2, z + R2], [x, y + D / 2, z + R2]], shade(col, 1));
+    };
+    const spire = (x, y, z, B, H, col) => {
+      face([[x + B, y, z], [x + B, y + B, z], [x + B / 2, y + B / 2, z + H]], shade(col, 0.72));
+      face([[x, y + B, z], [x + B, y + B, z], [x + B / 2, y + B / 2, z + H]], shade(col, 0.95));
+    };
+    const mcol = '#b06a35';
+    for (let i = 0; i < shown; i++) box(i * (uw + 0.3), 0, 0, uw, ud, uh, mcol);
+    const ox = rowLen + Math.max(1.2, rowLen * 0.25);
+    if (ref === 'person') { box(ox, 0.1, 0, 0.42, 0.24, 1.48, '#5d7b93'); box(ox + 0.11, 0.12, 1.5, 0.2, 0.2, 0.25, '#d9a77c'); }
+    else if (ref === 'fridge') box(ox, 0, 0, 0.9, 0.75, 1.8, '#d5dadf');
+    else if (ref === 'truck') { box(ox, 0, 0.5, 7.4, 2.5, 2.8, '#c0392b'); box(ox + 7.4, 0, 0.5, 2.6, 2.5, 2.6, '#a93226'); box(ox, 0, 0, 10, 2.5, 0.5, '#2b2b2b'); box(ox + 0.5, 0.2, 3.3, 6.4, 2.1, 0.15, '#bdc3c7'); }
+    else if (ref === 'house') { box(ox, 0, 0, 10, 8, 3.4, '#d9cfb8'); roof(ox, 0, 3.4, 10, 8, 3.6, '#6b4f3a'); box(ox + 4.4, 3.6, 3.4, 1.2, 0.8, 4.4, '#8e5b45'); }
+    else { box(ox, 0, 0, 18, 10, 9, '#e8e4da'); roof(ox, 0, 9, 18, 10, 5, '#5a5f66'); box(ox + 18, 3, 0, 4, 4, 18, '#e8e4da'); spire(ox + 18, 3, 18, 4, 14, '#5a5f66'); }
+    // fit to canvas
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const pl of polys) for (const [x, y] of pl.pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    const pad = 26, sc = Math.min((w - 2 * pad) / (x1 - x0), (h - 2 * pad - 20) / (y1 - y0)), tx = pad - x0 * sc + ((w - 2 * pad) - (x1 - x0) * sc) / 2, ty = pad - y0 * sc;
+    ctx.strokeStyle = tok.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(pad / 2, ty + y1 * sc + 4); ctx.lineTo(w - pad / 2, ty + y1 * sc + 4); ctx.stroke();
+    for (const pl of polys) { ctx.fillStyle = pl.col; ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 0.8; ctx.beginPath(); pl.pts.forEach(([x, y], i) => i ? ctx.lineTo(tx + x * sc, ty + y * sc) : ctx.moveTo(tx + x * sc, ty + y * sc)); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    const [mx] = P(rowLen / 2, ud, 0), [rx] = P(ox + 2, 4, 0);
+    sm(ctx, `${n} × ${p.unit.split(' (')[0]}${n > shown ? ` (${shown} drawn)` : ''}`, clamp(tx + mx * sc, 80, w - 80), h - 22, 'center', tok.ink);
+    sm(ctx, `${fmt(uw, 2)} × ${fmt(ud, 2)} × ${fmt(uh, 2)} m each`, clamp(tx + mx * sc, 80, w - 80), h - 8, 'center', tok.muted);
+    sm(ctx, REFOBJ[ref].name, clamp(tx + rx * sc, 80, w - 60), 12, 'center', tok.ink);
+    sm(ctx, REFOBJ[ref].dims, clamp(tx + rx * sc, 80, w - 60), 26, 'center', tok.muted);
   }
 
   // ---------- readouts ----------
@@ -747,9 +1182,13 @@ table.t tr.no td { color: var(--muted); }
   ];
   $('srcList').innerHTML = SOURCES_LIST.map(([t, u]) => `<li><a href="${u}" target="_blank" rel="noopener">${t}</a></li>`).join('') + '<li>LiBr–water equilibrium: ASHRAE Handbook of Fundamentals, Dühring equation (45–70% LiBr).</li><li>Fuel energy, prices and CO₂ factors are typical US figures; edit the price field to use your own.</li>';
 
-  function recalc() { R = solve(pairById(S.pair), S); render(); drawPT(); drawCOP(); }
+  function recalc() {
+    const key = S.pair + '|' + S.src + '|' + S.sink; if (key !== flowKey) { flowKey = key; buildFlowCtl(); }
+    R = solve(pairById(S.pair), S); render(); syncFlowCtl(); renderTubes(); drawPT(); drawCOP(); drawSankey(); drawSize();
+  }
   function tick(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; phase += dt; if (R) drawMimic(); requestAnimationFrame(tick); }
-  window.addEventListener('resize', () => { if (R) { drawPT(); drawCOP(); } });
+  window.addEventListener('resize', () => { if (R) { drawPT(); drawCOP(); drawSankey(); drawSize(); } });
+  $('cmpObj').addEventListener('change', e => { S.cmpObj = e.target.value; drawSize(); });
   new MutationObserver(() => { readTokens(); recalc(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { readTokens(); recalc(); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => R && recalc());
