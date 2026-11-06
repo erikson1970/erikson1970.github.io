@@ -574,14 +574,22 @@ show combustion air and flue where fuel burns, including shared or preheated air
 | Req | Requirement | Source | Status | Evidence |
 |---|---|---|---|---|
 | M14-1 | Heat source at the bottom, under the heated vessel | User request | Met | `cycleSpec()` layout: source box under the generator (or the bubble pump for Einstein–Szilard); vessels placed roughly by elevation |
-| M14-2 | Animated flow directions checked | User request | Met (ad hoc) | Every tube's path starts on its source vessel and ends on its destination for all 7 pairs (34 tubes); in-vessel lanes follow inlet sides; bubble pump lifts rich solution absorber → generator (correct for Platen–Munters); check not committed (ISSUE-018) |
+| M14-2 | Animated flow directions checked | User request | Met (ad hoc) | Every tube's path starts on its source vessel and ends on its destination for all 7 pairs (33 tubes); in-vessel lanes follow inlet sides; bubble pump lifts rich solution absorber → generator (correct for Platen–Munters); check not committed (ISSUE-018) |
 | M14-3 | Gravity / buoyancy driven flows marked | User request | Met | Tags: gravity (condensate, weak solution, heavy gas, butane return, falling film), buoyancy (lean hydrogen), bubble lift, natural draft / convection |
 | M14-4 | Combustion air and flue marked for burning sources, incl. shared and preheated air | User request | Met | `airMode()` + selector; ambient intake, shared lower vent (RV/vaccine), flue-gas air preheater (+6 points efficiency); not shown for process or waste heat |
 | M14-5 | Static-only, self-contained page | AGENTS.md § Project intent | Met | One HTML file, Google Fonts only |
 
 ### Milestone 14 council review
 
-_Recorded on merge._
+Reviewed 2026-11-06 by an independent council reviewer covering all three
+lenses: content integrity PASS_WITH_MINOR_ISSUES, static-site constraints PASS,
+process & documentation PASS_WITH_MINOR_ISSUES. No gatekeepers. The bubble-pump
+direction (absorber → generator) was confirmed correct for Platen–Munters. Fixed
+inline: adsorption trap icon, shared-air label for water sinks, preheater
+animation path, tube count, prose. Tabled: in parallel-flow mode the absorber,
+condenser and evaporator lanes flip against their drawn inlet pipes (headers
+reversed inside the shell). See `ISSUES.md` § Milestone council reviews.
+Merged to `main`.
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 

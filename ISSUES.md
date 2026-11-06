@@ -479,3 +479,17 @@ Gatekeeper (fixed before merge): unbounded crystallization temperature at the
 solution heat exchanger cold end. Minor, fixed: parallel-flow sign, unit-count
 leak after presets, rectifier vapour temperature, traceability wording. Open
 minor: condenser share in the Sankey is a fixed ratio (approximation).
+
+### Milestone 14 — Einstein Refrigerator Lab v1.2
+Reviewed 2026-11-06 on branch `feature/einstein-v1-2` vs. `main` by one
+independent council reviewer covering all three lenses.
+
+| Lens | Verdict |
+|---|---|
+| Content integrity & plausibility | PASS_WITH_MINOR_ISSUES |
+| Static-site architecture / constraints | PASS |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No gatekeepers. Minor fixed inline: adsorption trap icon, shared-air label,
+preheater animation path, tube count, prose. Open minor: parallel-flow lanes
+for absorber/condenser/evaporator run against their drawn inlet pipes.
