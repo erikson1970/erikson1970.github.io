@@ -591,6 +591,24 @@ condenser and evaporator lanes flip against their drawn inlet pipes (headers
 reversed inside the shell). See `ISSUES.md` § Milestone council reviews.
 Merged to `main`.
 
+## Milestone 15 — Exhaust-Driven Car AC Lab
+
+Goal (user request, 2026-11-06): an Einstein-style AC plant for an automobile driven
+by engine exhaust heat, with a demand model for the car interior heated by its
+surroundings; placed with the other absorption plants.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M15-1 | Exhaust-driven Einstein-style AC for a car | User request | Met | `simulate()`: drive cycle → engine load → exhaust heat and temperature → exhaust heat exchanger → generator with thermal mass and bypass → machine (Einstein–Szilard default, plus diffusion, NH3–H2O, LiBr, zeolite) |
+| M15-2 | Cabin demand model heated by the environment | User request | Met | Two-node cabin (air + interior): solar through glass, sol-air conduction scaling with speed, ventilation and leakage with latent load, occupants, hot soak; thermostat |
+| M15-3 | Scaled to published prototypes | Project practice | Met (ad hoc) | 0.5 kW idle and 2–3 kW at load from 3–16 kW exhaust heat (Hilali & Söylemez; Vicatos et al.); compressor reference 6 kW; checks not committed (ISSUE-018) |
+| M15-4 | With the other absorption plants | User request | Met | Card in the heat-driven refrigeration section of `projects/plant_models/index.html`; README entry |
+| M15-5 | Static-only, self-contained page | AGENTS.md § Project intent | Met | One HTML file, Google Fonts only |
+
+### Milestone 15 council review
+
+_Recorded on merge._
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s

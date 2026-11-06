@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Exhaust-Driven Car AC</title>
+<meta name="description" content="An Einstein-style absorption air conditioner driven by car exhaust heat, with a cabin heat-load model, drive cycles and a side-by-side compressor car.">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.site-crumb{font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:10px 20px 0;max-width:1400px;margin:0 auto;opacity:.8}
+.site-crumb a{color:inherit}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: plant lab family. Inputs in a left rail (machine, heat source, heat sink, load, prices);
+   results on the right: headline tiles, the live cycle mimic, the pressure–temperature diagram,
+   COP against driving temperature, and a comparison of every working pair at the same conditions. */
+:root {
+  --bg: #eef0ee;
+  --panel: #f8f9f8;
+  --raised: #ffffff;
+  --ink: #1b2120;
+  --muted: #5c6763;
+  --line: #d1d8d5;
+  --hot: #c2471c;
+  --cold: #1f6fb5;
+  --copper: #a05a2c;
+  --steel: #3c5560;
+  --vapour: #8a96a0;
+  --sol: #7a5c12;
+  --ok: #2e7d4f;
+  --ok-bg: #e1f1e7;
+  --warn: #9a5a06;
+  --warn-bg: #fbefd9;
+  --danger: #b42318;
+  --danger-bg: #fbe3e0;
+  --c1: #1f6fb5; --c2: #c2471c; --c3: #2e8b57; --c4: #6d4fc2; --c5: #b57a00; --c6: #11808a; --c7: #b8467a; --c8: #6b7a14;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111615; --panel: #171e1c; --raised: #1d2522; --ink: #e2e9e6; --muted: #91a09a; --line: #2b3633;
+    --hot: #f27a3e; --cold: #5ea9ea; --copper: #d99460; --steel: #9fb6c4; --vapour: #7c8a94; --sol: #d9b43c;
+    --ok: #5cc48f; --ok-bg: #12301f; --warn: #e7ad48; --warn-bg: #33270f; --danger: #ff8a7a; --danger-bg: #3a1714;
+    --c1: #5ea9ea; --c2: #f27a3e; --c3: #5cc48f; --c4: #a98ff0; --c5: #e3b23c; --c6: #4cc3cc; --c7: #e57aa8; --c8: #b9c95a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111615; --panel: #171e1c; --raised: #1d2522; --ink: #e2e9e6; --muted: #91a09a; --line: #2b3633;
+  --hot: #f27a3e; --cold: #5ea9ea; --copper: #d99460; --steel: #9fb6c4; --vapour: #7c8a94; --sol: #d9b43c;
+  --ok: #5cc48f; --ok-bg: #12301f; --warn: #e7ad48; --warn-bg: #33270f; --danger: #ff8a7a; --danger-bg: #3a1714;
+  --c1: #5ea9ea; --c2: #f27a3e; --c3: #5cc48f; --c4: #a98ff0; --c5: #e3b23c; --c6: #4cc3cc; --c7: #e57aa8; --c8: #b9c95a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1400px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 40px; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 480px) { .wrap { padding-inline: 16px; } }
+.mono, .v, td.n { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; }
+.eyebrow { margin: 0 0 2px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; text-wrap: balance; }
+h1 .ver { font-family: var(--f-mono); font-size: .42em; font-weight: 500; color: var(--muted); vertical-align: .55em; margin-left: 6px; }
+.sub { font-size: 13px; color: var(--muted); max-width: 70ch; margin: 4px 0 0; }
+
+.grid { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); } .grid > main { order: -1; } }
+.rail { display: flex; flex-direction: column; gap: 12px; }
+.group { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 13px 13px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.group h2 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.group h2 span { font-family: var(--f-body); font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.group.m { border-top: 3px solid var(--copper); }
+.group.s { border-top: 3px solid var(--hot); }
+.group.k { border-top: 3px solid var(--steel); }
+.group.l { border-top: 3px solid var(--cold); }
+.group.p { border-top: 3px solid var(--vapour); }
+.group.f2 { border-top: 3px solid var(--danger); }
+.chk { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); min-height: 30px; }
+.chk input { accent-color: var(--copper); width: 18px; height: 18px; }
+.arr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; font-size: 12.5px; }
+.arr > span { color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 12px; padding: 4px 9px; min-height: 30px; border: 0; background: var(--raised); color: var(--ink); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--steel); color: #fff; }
+.reset { font: inherit; font-size: 13px; padding: 6px 10px; min-height: 34px; border-radius: 6px; border: 1px solid var(--line); background: var(--raised); color: var(--ink); cursor: pointer; }
+.ctl.off output { color: var(--danger); }
+select, .f input { font: inherit; font-size: 13.5px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; min-height: 34px; }
+.f { display: grid; grid-template-columns: minmax(0, 1fr) 104px; gap: 8px; align-items: center; font-size: 13.5px; }
+.f label { color: var(--muted); }
+.f input { font-family: var(--f-mono); font-size: 13px; }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: baseline; }
+.ctl .lab { font-size: 13px; color: var(--muted); }
+.ctl output { font-family: var(--f-mono); font-size: 13px; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 4px 0 0; accent-color: var(--copper); }
+.ctl small { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-family: var(--f-mono); }
+.hint { font-size: 12.5px; color: var(--muted); margin: 0; }
+.fluids { font-size: 12.5px; color: var(--muted); display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; margin: 0; }
+.fluids dt { font-weight: 600; color: var(--ink); }
+.fluids dd { margin: 0; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.presets button { font: inherit; font-size: 12.5px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; min-height: 30px; }
+.presets button:hover { border-color: var(--copper); }
+.presets button[aria-pressed="true"] { background: var(--copper); color: #fff; border-color: var(--copper); }
+button:focus-visible, select:focus-visible, input:focus-visible, tr:focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
+
+main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+@media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi { background: var(--panel); padding: 9px 11px; min-width: 0; }
+.kpi .k { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kpi .v { font-size: 20px; font-weight: 500; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.kpi .s { font-size: 12px; color: var(--muted); }
+.kpi.alm { box-shadow: inset 0 3px 0 var(--warn); }
+.kpi.bad { box-shadow: inset 0 3px 0 var(--danger); }
+.kpi.good { box-shadow: inset 0 3px 0 var(--ok); }
+.flags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+.chip { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 5px; }
+.chip.ok { color: var(--ok); background: var(--ok-bg); }
+.chip.alm { color: var(--warn); background: var(--warn-bg); }
+.chip.bad { color: var(--danger); background: var(--danger-bg); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; margin-bottom: 6px; }
+.card-head h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+.sch-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#mimic { display: block; width: 100%; min-width: 760px; }
+.sysrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.sysrow > * { min-width: 0; }
+@media (min-width: 1560px) { .wrap { max-width: 1680px; } .sysrow { grid-template-columns: minmax(0, 1fr) 280px; align-items: start; } }
+canvas.chart { display: block; width: 100%; }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1100px) { .duo { grid-template-columns: minmax(0, 1fr); } }
+.bal { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
+.bal .row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 90px; gap: 8px; align-items: center; }
+.bal .bar { height: 14px; display: flex; border-radius: 3px; overflow: hidden; background: var(--line); }
+.bal .bar i { display: block; height: 100%; }
+.bal em { font-style: normal; font-family: var(--f-mono); text-align: right; }
+.tbl-wrap { overflow-x: auto; }
+table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.t th { text-align: right; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 5px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.t td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.t th:first-child, table.t td:first-child, table.t td.l, table.t th.l { text-align: left; }
+table.t td.l { white-space: normal; min-width: 180px; color: var(--muted); font-size: 12.5px; }
+table.t tbody tr { cursor: pointer; }
+table.t tbody tr:hover td { background: var(--raised); }
+table.t tr.cur td { background: var(--ok-bg); }
+table.t tr.no td { color: var(--muted); }
+table.tubes tbody tr { cursor: default; }
+table.tubes td.l { min-width: 220px; }
+.nb { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: var(--bg); font: 700 12px var(--f-display); }
+.mix { display: inline-flex; width: 110px; height: 12px; border: 1px solid var(--ink); vertical-align: middle; }
+.mix i { display: block; height: 100%; }
+.tag { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; }
+.tag.rich { color: var(--ok); background: var(--ok-bg); } .tag.poor { color: var(--warn); background: var(--warn-bg); }
+.notes { font-size: 13.5px; color: var(--muted); }
+.notes > div { max-width: 86ch; }
+.notes h3 { font-family: var(--f-display); font-weight: 600; font-size: 18px; color: var(--ink); margin: 6px 0 6px; }
+.notes p { margin: 0 0 8px; }
+.notes b { color: var(--ink); font-weight: 600; }
+.notes a { color: var(--steel); }
+.notes ul { margin: 0 0 8px; padding-left: 18px; }
+
+.play { display: flex; gap: 8px; align-items: center; }
+.play button { font: inherit; font-size: 13px; padding: 5px 12px; min-height: 34px; border-radius: 6px; border: 1px solid var(--copper); background: var(--copper); color: #fff; cursor: pointer; }
+.play select { width: auto; min-height: 34px; }
+.scrub { width: 100%; accent-color: var(--copper); margin: 2px 0 8px; }
+#carCv { display: block; width: 100%; min-width: 720px; }
+</style>
+</head>
+<body>
+<nav class="site-crumb" aria-label="Breadcrumb"><a href="../../../">erikson1970</a> / <a href="../">Plant models</a> / <span>Exhaust-Driven Car AC</span></nav>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Heat-driven refrigeration · vehicle air conditioning</p>
+      <h1>Exhaust-Driven Car AC Lab <span class="ver">v1.0</span></h1>
+      <p class="sub">An Einstein-style absorption air conditioner powered by engine exhaust instead of a belt-driven compressor. Pick a car, a climate and a trip. A hot car is cooled two ways side by side: by the heat-driven machine and by a normal compressor.</p>
+    </div>
+  </header>
+
+  <div class="grid">
+    <aside class="rail" aria-label="Inputs">
+      <section class="group k">
+        <h2>Scenarios <span>Start here</span></h2>
+        <div class="presets" id="presets"></div>
+      </section>
+      <section class="group m">
+        <h2>Machine <span>Heat-driven AC</span></h2>
+        <select id="mach" aria-label="Machine"></select>
+        <p class="hint" id="machNote"></p>
+        <label class="ctl"><span class="lab">Rated cooling</span><output id="o_size"></output><input type="range" id="size" min="1" max="8" step="0.5"></label>
+        <label class="ctl"><span class="lab">Exhaust heat-exchanger effectiveness</span><output id="o_hxEff"></output><input type="range" id="hxEff" min="0.2" max="0.9" step="0.05"></label>
+        <label class="ctl"><span class="lab">Condenser fan at the grille</span><output id="o_fan"></output><input type="range" id="fan" min="0" max="1.5" step="0.1"></label>
+        <label class="ctl"><span class="lab">Evaporator coil temperature</span><output id="o_coil"></output><input type="range" id="coil" min="0" max="14" step="1"></label>
+      </section>
+      <section class="group l">
+        <h2>Car and cabin <span>Demand</span></h2>
+        <select id="car" aria-label="Vehicle"></select>
+        <div class="f"><label for="occ">Occupants</label><input id="occ" type="number" min="1" max="7" step="1"></div>
+        <label class="ctl"><span class="lab">Thermostat setpoint</span><output id="o_set"></output><input type="range" id="set" min="18" max="28" step="0.5"></label>
+        <label class="ctl"><span class="lab">Blower</span><output id="o_blower"></output><input type="range" id="blower" min="0.3" max="1.5" step="0.1"></label>
+        <label class="chk"><input type="checkbox" id="recirc"> Recirculate cabin air</label>
+        <label class="chk"><input type="checkbox" id="tint"> Solar-control (tinted) glass</label>
+        <label class="chk"><input type="checkbox" id="dark"> Dark paint</label>
+      </section>
+      <section class="group s">
+        <h2>Weather <span>Heat gains</span></h2>
+        <select id="climate" aria-label="Climate"></select>
+        <div id="custom">
+          <div class="f"><label for="Tamb">Air temperature (°C)</label><input id="Tamb" type="number" step="0.5"></div>
+          <div class="f"><label for="RH">Relative humidity (%)</label><input id="RH" type="number" min="5" max="100" step="1"></div>
+          <div class="f"><label for="sun">Sunshine (W/m²)</label><input id="sun" type="number" min="0" max="1100" step="10"></div>
+        </div>
+        <label class="ctl"><span class="lab">Parked in the sun before the trip</span><output id="o_soak"></output><input type="range" id="soak" min="0" max="180" step="5"></label>
+      </section>
+      <section class="group k">
+        <h2>Trip <span>Heat source</span></h2>
+        <select id="cycle" aria-label="Drive cycle"></select>
+        <label class="ctl"><span class="lab">Trip length</span><output id="o_mins"></output><input type="range" id="mins" min="10" max="90" step="5"></label>
+        <label class="chk"><input type="checkbox" id="stopStart"> Engine stop-start at red lights</label>
+      </section>
+      <section class="group p">
+        <h2>Costs <span>Comparison</span></h2>
+        <div class="f"><label for="fuelP">Fuel ($/L)</label><input id="fuelP" type="number" min="0" step="0.05"></div>
+      </section>
+    </aside>
+
+    <main>
+      <section class="kpis" aria-label="Results">
+        <div class="kpi" id="kb_reach"><div class="k">Time to comfort</div><div class="v" id="k_reach"></div><div class="s" id="s_reach"></div></div>
+        <div class="kpi" id="kb_end"><div class="k">Cabin at the end</div><div class="v" id="k_end"></div><div class="s" id="s_end"></div></div>
+        <div class="kpi"><div class="k">Average cooling</div><div class="v" id="k_q"></div><div class="s" id="s_q"></div></div>
+        <div class="kpi"><div class="k">Exhaust heat used</div><div class="v" id="k_exh"></div><div class="s" id="s_exh"></div></div>
+        <div class="kpi"><div class="k">Fuel for AC</div><div class="v" id="k_fuel"></div><div class="s" id="s_fuel"></div></div>
+        <div class="kpi"><div class="k">Fuel saved</div><div class="v" id="k_save"></div><div class="s" id="s_save"></div></div>
+        <div class="kpi"><div class="k">Machine mass</div><div class="v" id="k_mass"></div><div class="s" id="s_mass"></div></div>
+        <div class="kpi"><div class="k">Trip</div><div class="v" id="k_trip"></div><div class="s" id="s_trip"></div></div>
+      </section>
+      <div class="flags" id="flags" aria-live="polite"></div>
+
+      <section class="card">
+        <div class="card-head"><h3 id="carTitle">The car</h3>
+          <div class="play"><button type="button" id="playBtn" aria-label="Play or pause">▶ Play</button>
+            <select id="pspeed" aria-label="Playback speed"><option value="30">30×</option><option value="60" selected>60×</option><option value="120">120×</option><option value="240">240×</option></select>
+            <span class="mono" id="clock"></span></div>
+        </div>
+        <input type="range" id="scrub" class="scrub" min="0" max="1000" value="0" aria-label="Trip time">
+        <div class="sch-wrap"><canvas id="carCv" aria-label="Animated side view of the car: sun, cabin temperature, engine, exhaust heat exchanger, generator, condenser at the grille and evaporator in the dash"></canvas></div>
+        <div class="legend" id="lgCar" style="margin-top:6px"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h3>Cabin temperature</h3><div class="legend" id="lgT"></div></div>
+        <canvas id="cT" class="chart" data-h="260" aria-label="Cabin air temperature over the trip for the heat-driven and compressor cars"></canvas>
+      </section>
+      <div class="duo">
+        <section class="card">
+          <div class="card-head"><h3>Heat into the cabin</h3><div class="legend" id="lgQ"></div></div>
+          <canvas id="cQ" class="chart" data-h="240" aria-label="Cabin heat gains and cooling over the trip"></canvas>
+          <p class="hint">The interior (seats, dash) soaks up sun and then gives heat back to the air for a long time after the AC starts. That stored heat is most of the pull-down load.</p>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Engine, exhaust and generator</h3><div class="legend" id="lgE"></div></div>
+          <canvas id="cE" class="chart" data-h="240" aria-label="Vehicle speed, exhaust heat available and used, and generator temperature over the trip"></canvas>
+          <p class="hint">Exhaust heat follows engine load: plenty on the highway, little at idle, none with stop-start. The generator's thermal mass smooths it out, but takes minutes to warm up.</p>
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="card-head"><h3>Every machine on this trip</h3><span class="hint">Tap a row to switch machine.</span></div>
+        <div class="tbl-wrap"><table class="t" id="cmp"></table></div>
+      </section>
+
+      <section class="card notes">
+        <div>
+          <h3>How the model works</h3>
+          <p><b>The trip.</b> A drive cycle sets the speed every second. Road load is aerodynamic drag, rolling resistance, grade and acceleration. The engine's efficiency falls at light load and idle. About a third of the fuel energy leaves as exhaust at 260 °C (idle) to about 700 °C (full load). An exhaust heat exchanger after the catalyst passes part of it to the generator, which has its own thermal mass. A bypass valve protects the generator from overheating.</p>
+          <p><b>The machine.</b> Each working pair uses the same characteristic-temperature model as the Einstein Refrigerator Lab, sized to the rated cooling at 35 °C air and a 5 °C coil. Cooling is limited by three things: the lift margin (generator against absorber and condenser, which sit at the grille), the exhaust heat times the COP, and a start-up lag. The start-up lag is long for diffusion machines, whose hydrogen has to circulate. Machines that rely on gravity (bubble pump, gravity drains) lose capacity when grade, braking, acceleration or cornering tilt their liquid levels by more than about 3°. Air-cooled lithium bromide crystallizes when the absorber passes about 40 °C.</p>
+          <p><b>The cabin.</b> The cabin has two thermal nodes. The <b>air</b> node takes conduction through the body and glass, ventilation and leakage, occupants (85 W each), and a fifth of the solar gain. The <b>interior</b> node (seats, dash, trim) absorbs the rest of the sun and trades heat with the air. A hot soak in the sun before the trip sets their starting temperatures. With fresh air, the coil must also condense moisture, which takes cooling away from the cabin. The thermostat throttles cooling near the setpoint.</p>
+          <p><b>The comparison.</b> The reference car has a normal 6 kW compressor air conditioner (COP about half of Carnot), driven off the engine at its marginal efficiency, and it cannot use stop-start with the AC on. The heat-driven car pays only for its pump and fan, the extra mass it carries, and a little exhaust back-pressure.</p>
+          <p><b>Not modelled.</b> Engine warm-up and catalyst light-off, battery-electric cars (no exhaust), reheat and humidity control, and detailed refrigerant charge dynamics.</p>
+          <h3>Where the numbers come from</h3>
+          <ul id="srcList"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const fmt = (v, d = 0) => (Math.abs(v) < 0.5 * 10 ** -d ? 0 : v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const K = c => c + 273.15;
+  const fP = kw => Math.abs(kw) >= 1000 ? `${fmt(kw / 1000, 2)} MW` : Math.abs(kw) >= 1 ? `${fmt(kw, kw >= 100 ? 0 : 1)} kW` : `${fmt(kw * 1000, 0)} W`;
+  const usd = v => v >= 100 ? `$${fmt(v, 0)}` : `$${fmt(v, 2)}`;
+
+  let tok = {};
+  function readTokens() { const cs = getComputedStyle(document.documentElement); for (const k of ['bg', 'panel', 'raised', 'ink', 'muted', 'line', 'hot', 'cold', 'copper', 'steel', 'vapour', 'sol', 'ok', 'warn', 'danger', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8']) tok[k] = cs.getPropertyValue('--' + k).trim(); }
+  function fit(cv, W, H) {
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, sc = W ? w / W : 1, h = W ? H * sc : +cv.dataset.h;
+    cv.style.height = h + 'px';
+    if (cv.width !== Math.round(w * dpr)) cv.width = Math.round(w * dpr);
+    if (cv.height !== Math.round(h * dpr)) cv.height = Math.round(h * dpr);
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr * sc, 0, 0, dpr * sc, 0, 0); ctx.clearRect(0, 0, W || w, W ? H : h);
+    return { ctx, w: W || w, h: W ? H : h };
+  }
+  function heat(T) { // −30 … 220 °C → blue … red
+    const f = clamp((T + 30) / 250, 0, 1), st = [[0, [44, 75, 209]], [0.25, [47, 164, 196]], [0.45, [232, 211, 90]], [0.7, [239, 138, 45]], [1, [215, 48, 31]]];
+    for (let j = 1; j < st.length; j++) if (f <= st[j][0]) { const [a, c0] = st[j - 1], [b, c1] = st[j], u = (f - a) / (b - a); return `rgb(${c0.map((c, i) => Math.round(c + (c1[i] - c) * u)).join(',')})`; }
+    return 'rgb(215,48,31)';
+  }
+  const lab = (ctx, t, x, y, al = 'center', size = 14, c = tok.ink, wt = 600) => { ctx.font = `${wt} ${size}px "Barlow Condensed", sans-serif`; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); };
+  const sm = (ctx, t, x, y, al = 'center', c = tok.muted) => { ctx.font = '500 11px "JetBrains Mono", monospace'; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); };
+  function arrowHead(ctx, x, y, dx, dy, c, s = 7) { const L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L; ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - ux * s - uy * s * 0.6, y - uy * s + ux * s * 0.6); ctx.lineTo(x - ux * s + uy * s * 0.6, y - uy * s - ux * s * 0.6); ctx.closePath(); ctx.fill(); }
+  function line(ctx, pts, c, w, dash) { ctx.strokeStyle = c; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); ctx.setLineDash([]); }
+  function flowDots(ctx, pts, c, speed, n = 6, r = 3) {
+    if (speed <= 0) return;
+    let L = 0; const seg = []; for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(l); L += l; }
+    ctx.fillStyle = c;
+    for (let k = 0; k < n; k++) {
+      let d = ((phase * speed * 40 + k * L / n) % L + L) % L, i = 0; while (i < seg.length - 1 && d > seg[i]) { d -= seg[i]; i++; }
+      const u = d / seg[i], x = pts[i][0] + (pts[i + 1][0] - pts[i][0]) * u, y = pts[i][1] + (pts[i + 1][1] - pts[i][1]) * u;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // =====================================================================================
+  // Physics core: drive cycle → engine and exhaust → generator → absorption machine → cabin
+  // =====================================================================================
+  const G0 = 9.81, CP_AIR = 1005, RHO_AIR = 1.18;
+
+  // ---------- vehicles ----------
+  const CARS = {
+    compact: { name: 'Compact sedan', m: 1400, CdA: 0.62, Crr: 0.010, Pmax: 90, V: 2.8, glass: 3.2, roof: 1.9, UA0: 22, UAv: 1.5, Cint: 80e3, Cair: 18e3, hAi: 110, dims: [4.5, 1.8, 1.45] },
+    suv: { name: 'Mid-size SUV', m: 2050, CdA: 0.95, Crr: 0.011, Pmax: 150, V: 4.0, glass: 4.3, roof: 2.6, UA0: 30, UAv: 2.0, Cint: 120e3, Cair: 25e3, hAi: 150, dims: [4.8, 1.95, 1.75] },
+    pickup: { name: 'Crew-cab pickup', m: 2400, CdA: 1.10, Crr: 0.012, Pmax: 220, V: 3.6, glass: 3.9, roof: 2.3, UA0: 28, UAv: 1.9, Cint: 110e3, Cair: 22e3, hAi: 140, dims: [5.9, 2.0, 1.9] },
+  };
+
+  // ---------- heat-driven machines sized for a car (rated at 35 °C air, 5 °C coil) ----------
+  // gravity: liquid flows depend on level (bubble pump, gravity drains) and suffer from grade and acceleration
+  const MACH = [
+    { id: 'ein', name: 'Einstein–Szilard (butane, ammonia, water)', short: 'Einstein–Szilard', col: 'c3', Tg: 130, COPr: 0.25, COPinf: 0.32, B: 1.5, Dmin: 5, TeMin: -5, TgMax: 170, tau: 420, kgPerKW: 22, gravity: true, pumpW: 0, note: 'No pump, no valve: ammonia gas equalizes the pressure, butane is the refrigerant, water absorbs the ammonia. A bubble pump lifts the solution, so the unit must stay roughly level.' },
+    { id: 'dar', name: 'Diffusion absorption (ammonia, water, hydrogen)', short: 'Platen–Munters', col: 'c5', Tg: 190, COPr: 0.22, COPinf: 0.28, B: 1.6, Dmin: 5, TeMin: -15, TgMax: 220, tau: 900, kgPerKW: 26, gravity: true, pumpW: 0, note: 'The RV-fridge cycle scaled up. Hydrogen diffusion makes it slow to start, and the bubble pump hates tilt and sloshing.' },
+    { id: 'nh3', name: 'Ammonia–water with solution pump', short: 'NH₃–H₂O pumped', col: 'c2', Tg: 170, COPr: 0.50, COPinf: 0.62, B: 1.55, Dmin: 4, TeMin: -20, TgMax: 200, tau: 120, kgPerKW: 14, gravity: false, pumpW: 60, note: 'A small electric pump moves the solution, so road motion does not matter. Air-cooled ammonia–water works in heat; it needs a rectifier. Used in some truck and marine prototypes.' },
+    { id: 'libr', name: 'Lithium bromide–water, air-cooled', short: 'LiBr–H₂O', col: 'c1', Tg: 120, COPr: 0.65, COPinf: 0.75, B: 1.14, Dmin: 3, TeMin: 4, TgMax: 160, tau: 150, kgPerKW: 16, gravity: false, pumpW: 50, crystal: 41, note: 'Best COP, but air-cooled LiBr runs into crystallization once the absorber passes about 40 °C, which is why it is not used in cars.' },
+    { id: 'zeo', name: 'Zeolite–water adsorption, two beds', short: 'Zeolite–H₂O', col: 'c6', Tg: 200, COPr: 0.40, COPinf: 0.48, B: 1.5, Dmin: 4, TeMin: 3, TgMax: 260, tau: 300, kgPerKW: 30, gravity: false, pumpW: 40, cyclic: 360, note: 'Exhaust heat regenerates one bed while the other adsorbs; output ripples as the beds swap. PolyU built a 1.3 kW, COP 0.45 exhaust-driven car prototype.' },
+  ];
+  const liftD = (m, Tg, Tac, Te) => Tg - Tac - m.B * (Tac - Te);
+  MACH.forEach(m => { m.Dr = liftD(m, m.Tg, 45, 5); m.Dk = (m.Dr - m.Dmin) * (m.COPinf / m.COPr - 1); });
+  const carnotHD = (Tg, Tac, Te) => Tac <= Te || Tg <= Tac ? 0 : (1 - (Tac + 273.15) / (Tg + 273.15)) * (Te + 273.15) / (Tac - Te);
+  function machinePoint(m, Tg, Tac, Te) {
+    const D = liftD(m, Tg, Tac, Te), x = D - m.Dmin;
+    if (x <= 0 || Te < m.TeMin) return { cop: 0, frac: 0, D };
+    return { cop: Math.min(m.COPinf * x / (x + m.Dk), 0.85 * carnotHD(Tg, Tac, Te)), frac: Math.min(1.25, x / (m.Dr - m.Dmin)), D };
+  }
+
+  // ---------- climates ----------
+  const CLIMATES = {
+    phx: { name: 'Phoenix, July afternoon', T: 43, RH: 15, sun: 1000 },
+    dxb: { name: 'Dubai, August', T: 41, RH: 50, sun: 950 },
+    mia: { name: 'Miami, July', T: 33, RH: 65, sun: 900 },
+    del: { name: 'Delhi, May', T: 41, RH: 25, sun: 950 },
+    bos: { name: 'Boston, July', T: 30, RH: 55, sun: 850 },
+    night: { name: 'Humid night', T: 29, RH: 75, sun: 0 },
+  };
+  const psat = T => 0.61094 * Math.exp(17.625 * T / (T + 243.04));              // kPa
+  const wOf = (T, RH) => 0.622 * (RH / 100 * psat(T)) / (101.325 - RH / 100 * psat(T)); // kg/kg
+
+  // ---------- drive cycles: speed (m/s), grade (rad), lateral acceleration (m/s²) each second ----------
+  function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const CYCLES = {
+    city: { name: 'City stop-and-go' }, hwy: { name: 'Highway cruise' }, jam: { name: 'Traffic jam' },
+    mtn: { name: 'Mountain road' }, mix: { name: 'Commute: city, highway, city' }, park: { name: 'Parked, engine idling' },
+  };
+  function driveCycle(kind, mins, seed = 7) {
+    const N = Math.round(mins * 60), v = new Float64Array(N), gr = new Float64Array(N), lat = new Float64Array(N), r = rng(seed);
+    const stopGo = (i0, i1, vmax) => {
+      let i = i0;
+      while (i < i1) {
+        const vt = (0.6 + 0.4 * r()) * vmax, acc = 1.2, dec = 1.5, cruise = 15 + 35 * r(), stop = 10 + 35 * r();
+        let s = 0; while (s < vt && i < i1) { v[i++] = s; s += acc; }
+        for (let k = 0; k < cruise && i < i1; k++) v[i++] = vt + (r() - 0.5);
+        s = vt; while (s > 0 && i < i1) { v[i++] = s; s -= dec; }
+        for (let k = 0; k < stop && i < i1; k++) v[i++] = 0;
+      }
+    };
+    const cruiseTo = (i0, i1, vt) => { let s = v[i0 - 1] || 0; for (let i = i0; i < i1; i++) { s += clamp(vt + 1.5 * Math.sin(i / 40) - s, -1.0, 1.0); v[i] = s; } };
+    if (kind === 'city') stopGo(0, N, 50 / 3.6);
+    else if (kind === 'hwy') { stopGo(0, Math.min(N, 180), 40 / 3.6); cruiseTo(Math.min(N, 180), N, 110 / 3.6); }
+    else if (kind === 'jam') { for (let i = 0; i < N; i++) { const ph = (i % 90) / 90; v[i] = ph < 0.25 ? 3 * Math.sin(ph / 0.25 * Math.PI) : 0; } }
+    else if (kind === 'park') { /* all zero */ }
+    else if (kind === 'mtn') {
+      stopGo(0, Math.min(N, 120), 40 / 3.6);
+      for (let i = Math.min(N, 120); i < N; i++) { const vt = 60 / 3.6 - 8 * Math.abs(Math.sin(i / 37)); v[i] = v[i - 1] + clamp(vt - v[i - 1], -1, 0.8); gr[i] = 0.065 * Math.sin(2 * Math.PI * i / 600); lat[i] = 3.0 * Math.sin(2 * Math.PI * i / 23) * Math.min(1, v[i] / 12); }
+    } else { // mix
+      const a = Math.round(N * 0.25), b = Math.round(N * 0.75);
+      stopGo(0, a, 50 / 3.6); cruiseTo(a, b, 105 / 3.6);
+      for (let i = b; i < N; i++) v[i] = 0; // decelerate below
+      let s = v[b - 1]; let i = b; while (s > 0 && i < N) { v[i++] = s; s -= 1.5; } stopGo(i, N, 50 / 3.6);
+    }
+    for (let i = 0; i < N; i++) v[i] = Math.max(0, v[i]);
+    return { v, gr, lat, N };
+  }
+
+  // ---------- full trip simulation ----------
+  // two cabins side by side: one cooled by the heat-driven machine, one by a conventional compressor (reference)
+  function simulate(P) {
+    const car = CARS[P.car], cl = P.climate === 'custom' ? { T: P.Tamb, RH: P.RH, sun: P.sun } : CLIMATES[P.climate], m = MACH.find(x => x.id === P.mach);
+    const Ta = cl.T, sun = cl.sun * P.sunF, wAmb = wOf(Ta, cl.RH), dc = driveCycle(P.cycle, P.mins, P.seed);
+    const N = dc.N, dt = 1, out = { N, t: [], v: [], Tcab: [], Tint: [], TcabR: [], Tg: [], Texh: [], Qexh: [], Qgen: [], Qe: [], QeR: [], Qsol: [], Qcond: [], Qvent: [], Qocc: [], Qlat: [], tilt: [], cop: [], eng: [], bypass: [], fuelAbs: 0, fuelRef: 0, dist: 0 };
+    const tau = { glass: P.tint ? 0.32 : 0.52 }, alpha = P.dark ? 0.9 : 0.45;
+    const occ = P.occ, Mabs = m.kgPerKW * P.size;
+    // hot soak: parked in the sun for P.soak minutes (engine off), from ambient
+    let Tc = Ta, Ti = Ta;
+    const soakStep = (Tc, Ti, sunW, UA) => {
+      const Qs = sunW, qi = Qs * 0.8, qa = Qs * 0.2, To = Ta + alpha * sun / 20; // sol-air temperature of the roof, still air
+      const Qc = UA * (To - Tc) * 0.6 + UA * (Ta - Tc) * 0.4, Qx = car.hAi * 0.6 * (Ti - Tc), Qinf = 0.004 * CP_AIR * (Ta - Tc);
+      return [Tc + (qa + Qc + Qx + Qinf) * 60 / car.Cair, Ti + (qi - Qx) * 60 / car.Cint];
+    };
+    const Qsun0 = sun * car.glass * tau.glass * 0.45;
+    for (let k = 0; k < P.soak; k++) [Tc, Ti] = soakStep(Tc, Ti, Qsun0, car.UA0 * 0.7);
+    let TcR = Tc, TiR = Ti, Tg = Ta + 5, Qe = 0, QeR = 0, tiltF = 0, Iabs = 0, IR = 0;
+    out.soak = { Tc, Ti };
+    const mBlow = P.blower * 0.13, fresh = P.recirc ? 0.1 : 1, Cg = 6e3 + 4e3 * P.size;  // blower kg/s; generator + HX thermal mass J/K
+    for (let i = 0; i < N; i++) {
+      const v = dc.v[i], a = i > 0 ? (dc.v[i] - dc.v[i - 1]) / dt : 0, grade = dc.gr[i];
+      // engine: road load → shaft power → fuel; exhaust carries about a third of the fuel energy
+      const mt = car.m + Mabs;
+      const Proad = (0.5 * RHO_AIR * car.CdA * v ** 3 + mt * G0 * (car.Crr + Math.sin(grade)) * v + mt * a * v) / 0.9;
+      const stopped = v < 0.1 && P.stopStart && i > 10;
+      const Pshaft = Math.max(0, Proad) + 600;                                 // + alternator and accessories
+      const load = clamp(Pshaft / (car.Pmax * 1000), 0, 1);
+      const etaE = 0.12 + 0.24 * Math.sqrt(load) * (1 - 0.4 * Math.max(0, load - 0.6));
+      const idleFuel = 4500 + 30 * car.Pmax;                                   // W of fuel at idle
+      const Pfuel = stopped ? 0 : Math.max(idleFuel, Pshaft / etaE);
+      const Texh = stopped ? Ta : 260 + 430 * load ** 0.55;                    // after the catalyst
+      const mExh = stopped ? 0 : 0.32 * Pfuel / (1100 * Math.max(50, Texh - Ta));
+      // exhaust heat exchanger into the generator (bypass valve protects the generator)
+      let Qx = P.hxEff * mExh * 1100 * Math.max(0, Texh - Tg), bypass = 0;
+      if (Tg > m.TgMax - 5) { bypass = clamp((Tg - (m.TgMax - 5)) / 10, 0, 1); Qx *= 1 - bypass; }
+      // heat sink: ram air plus fan over the absorber–condenser at the grille
+      const airflow = P.fan + 0.12 * v;                                        // relative airflow
+      const Tac = Ta + 7 + 9 / Math.max(0.25, airflow) * (Qe / Math.max(1, P.size * 1000));
+      // coil (evaporator) temperature and machine state
+      const Tcoil = P.coil;
+      const pt = machinePoint(m, Tg, Tac, Tcoil);
+      // gravity-fed machines: grade plus filtered acceleration tilt the liquid surfaces
+      const tiltNow = Math.abs(Math.atan(Math.hypot(a, dc.lat[i]) / G0) * 180 / Math.PI) + Math.abs(grade) * 180 / Math.PI;
+      tiltF += (tiltNow - tiltF) * dt / 8;
+      const tiltK = m.gravity ? clamp(1 - Math.max(0, tiltF - 3) / 6, 0, 1) : 1;
+      let crystal = m.crystal && Tac > m.crystal;
+      // demand: thermostat on cabin air temperature (proportional), blower fixed
+      const Tin = fresh * Ta + (1 - fresh) * Tc, wIn = fresh * wAmb + (1 - fresh) * wOf(Tc, 50);
+      const QlatMax = Math.max(0, mBlow * 2.45e6 * (wIn - wOf(Tcoil + 3, 100)));
+      const QcoilMax = mBlow * CP_AIR * Math.max(0, Tin - (Tcoil + 3)) + QlatMax;
+      const want = clamp((Tc - P.set + 1) / 2, 0, 1) * QcoilMax;
+      const wantR = clamp((TcR - P.set + 1) / 2, 0, 1) * QcoilMax;
+      // heat-driven machine: capacity from lift margin, heat it can draw, start-up lag and tilt
+      const ripple = m.cyclic ? 0.75 + 0.25 * Math.cos(2 * Math.PI * i / m.cyclic) : 1;
+      const capT = crystal ? 0 : P.size * 1000 * pt.frac * tiltK * ripple;
+      const capQ = pt.cop > 0 ? pt.cop * (Qx + Cg * Math.max(0, Tg - (Tg - pt.D + m.Dmin)) / 600) : 0;
+      const target = Math.min(want, capT, capQ);
+      Qe += (target - Qe) * dt / (target > Qe ? m.tau : 30);
+      if (crystal) Qe *= 0.95;
+      const Qgen = pt.cop > 0 ? Qe / pt.cop : 0;
+      Tg += (Qx - Qgen - (1.5 + 0.5 * P.size) * (Tg - Ta)) * dt / Cg;   // insulated generator: a few W/K of loss
+      // reference compressor AC: 6 kW nominal, quick response
+      QeR += (Math.min(wantR, 6000) - QeR) * dt / 20;
+      // cabin loads (both cars see the same weather)
+      const step = (Tc, Ti, Qcool) => {
+        const hOut = 12 + 4 * v, To = Ta + alpha * sun / hOut, UA = car.UA0 + car.UAv * v;
+        const Qsol = sun * car.glass * tau.glass * 0.45, Qcond = UA * (0.5 * (To - Tc) + 0.5 * (Ta - Tc));
+        const hAi = car.hAi * (0.6 + P.blower * 0.6), Qx2 = hAi * (Ti - Tc), Qocc = occ * 85;
+        const Qvent = (mBlow * fresh + 0.006 + 0.0015 * v) * CP_AIR * (Ta - Tc);
+        const Qlat = Math.max(0, (mBlow * fresh + 0.006) * 2.45e6 * (wAmb - wOf(Tcoil + 3, 100)));
+        const sens = Math.max(0, Qcool - Math.min(Qcool * 0.6, Qlat));          // the coil spends part of its duty drying fresh air
+        const dTc = (0.2 * Qsol + Qcond + Qx2 + Qocc + Qvent - sens) * dt / car.Cair;
+        const dTi = (0.8 * Qsol - Qx2) * dt / car.Cint;
+        return [Tc + dTc, Ti + dTi, Qsol, Qcond, Qvent, Qocc, Qlat];
+      };
+      const s1 = step(Tc, Ti, Qe), s2 = step(TcR, TiR, QeR);
+      [Tc, Ti] = s1; [TcR, TiR] = s2;
+      // fuel: compressor needs shaft power (COP ~ 0.5 of Carnot) at the engine's marginal efficiency;
+      // the heat-driven car pays only for pump, extra mass and exhaust back-pressure
+      const copVC = clamp(0.5 * (Tcoil - 5 + 273.15) / Math.max(8, Ta + 15 - (Tcoil - 5)), 1.2, 4);
+      const etaM = stopped ? 0.25 : clamp(etaE * 1.15, 0.15, 0.38);
+      const PcompR = QeR / copVC, extraMass = Mabs * G0 * car.Crr * v + Math.max(0, Mabs * a * v);
+      out.fuelRef += (PcompR / etaM + (stopped && QeR > 100 ? idleFuel : 0)) * dt;            // compressor car cannot stop-start with AC on
+      out.fuelAbs += ((m.pumpW + 0.6 * P.fan * 120) / 0.5 / etaM + extraMass / etaM + 0.004 * Pfuel * (Qx > 0 ? 1 : 0)) * dt;
+      out.dist += v * dt;
+      if (i % P.rec === 0) {
+        out.t.push(i); out.v.push(v); out.Tcab.push(Tc); out.Tint.push(Ti); out.TcabR.push(TcR); out.Tg.push(Tg); out.Texh.push(Texh);
+        out.Qexh.push(mExh * 1100 * Math.max(0, Texh - Ta)); out.Qgen.push(Qx); out.Qe.push(Qe); out.QeR.push(QeR);
+        out.Qsol.push(s1[2]); out.Qcond.push(s1[3]); out.Qvent.push(s1[4]); out.Qocc.push(s1[5]); out.Qlat.push(s1[6]);
+        out.tilt.push(tiltF); out.cop.push(pt.cop); out.eng.push(stopped ? 0 : 1); out.bypass.push(bypass); out.crystal = out.crystal || crystal;
+      }
+      Iabs += Qe * dt; IR += QeR * dt;
+    }
+    out.Eabs = Iabs; out.Eref = IR; out.Ta = Ta; out.m = m; out.car = car; out.mass = Mabs; out.wAmb = wAmb;
+    const tTo = arr => { const k = arr.findIndex(T => T <= P.set + 2); return k < 0 ? null : out.t[k]; };
+    out.reach = tTo(out.Tcab); out.reachR = tTo(out.TcabR);
+    return out;
+  }
+  // =====================================================================================
+  // State, controls, readouts and charts
+  // =====================================================================================
+  const S = { car: 'compact', climate: 'phx', mach: 'ein', cycle: 'mix', mins: 40, seed: 7, sunF: 1, tint: false, dark: false, occ: 2, size: 3,
+    soak: 60, blower: 1, recirc: true, hxEff: 0.7, fan: 0.5, coil: 5, set: 22, stopStart: false, rec: 5, Tamb: 35, RH: 40, sun: 900, fuelP: 1.0 };
+  let R = null, RUNS = {}, cursor = 0, playing = false;
+  const PRESETS = [
+    { label: 'Phoenix commute', set: { car: 'compact', climate: 'phx', mach: 'ein', cycle: 'mix', mins: 40, size: 3, soak: 60, occ: 2 } },
+    { label: 'Highway road trip: where it works', set: { car: 'compact', climate: 'mia', mach: 'ein', cycle: 'hwy', mins: 60, size: 5, soak: 20, occ: 2 } },
+    { label: 'Desert highway, big unit', set: { car: 'suv', climate: 'dxb', mach: 'nh3', cycle: 'hwy', mins: 45, size: 6, soak: 30, occ: 4 } },
+    { label: 'Miami city traffic', set: { car: 'compact', climate: 'mia', mach: 'ein', cycle: 'city', mins: 30, size: 3, soak: 45, occ: 2 } },
+    { label: 'Stuck in a jam', set: { car: 'compact', climate: 'phx', mach: 'ein', cycle: 'jam', mins: 30, size: 3, soak: 30, occ: 2 } },
+    { label: 'Mountain pass', set: { car: 'pickup', climate: 'del', mach: 'ein', cycle: 'mtn', mins: 40, size: 4, soak: 30, occ: 3 } },
+    { label: 'Boston highway, LiBr', set: { car: 'compact', climate: 'bos', mach: 'libr', cycle: 'hwy', mins: 40, size: 3, soak: 30, occ: 2 } },
+    { label: 'Night drive, no sun', set: { car: 'compact', climate: 'night', mach: 'ein', cycle: 'mix', mins: 40, size: 3, soak: 0, occ: 2 } },
+    { label: 'Delivery van idling', set: { car: 'pickup', climate: 'mia', mach: 'zeo', cycle: 'park', mins: 30, size: 3, soak: 20, occ: 1 } },
+  ];
+  let presetIdx = 0;
+
+  for (const m of MACH) $('mach').add(new Option(m.name, m.id));
+  for (const [k, c] of Object.entries(CARS)) $('car').add(new Option(c.name, k));
+  for (const [k, c] of Object.entries(CLIMATES)) $('climate').add(new Option(`${c.name} · ${c.T} °C, ${c.RH}% RH`, k));
+  $('climate').add(new Option('Custom weather', 'custom'));
+  for (const [k, c] of Object.entries(CYCLES)) $('cycle').add(new Option(c.name, k));
+  for (const [i, pr] of PRESETS.entries()) { const b = document.createElement('button'); b.type = 'button'; b.textContent = pr.label; b.addEventListener('click', () => { presetIdx = i; Object.assign(S, { tint: false, dark: false, recirc: true, stopStart: false, hxEff: 0.7, fan: 0.5, coil: 5, set: 22, blower: 1 }, pr.set); recalc(true); }); $('presets').append(b); }
+  const FMT = { size: v => `${fmt(v, 1)} kW`, hxEff: v => fmt(v, 2), fan: v => v === 0 ? 'off (ram air only)' : `${fmt(v * 100, 0)}%`, coil: v => `${fmt(v, 0)} °C`, set: v => `${fmt(v, 1)} °C`, blower: v => `${fmt(v * 100, 0)}%`, soak: v => v ? `${fmt(v, 0)} min` : 'none', mins: v => `${fmt(v, 0)} min` };
+  for (const id of Object.keys(FMT)) $(id).addEventListener('input', e => { S[id] = +e.target.value; presetIdx = -1; recalc(); });
+  for (const id of ['mach', 'car', 'climate', 'cycle']) $(id).addEventListener('change', e => { S[id] = e.target.value; presetIdx = -1; recalc(); });
+  for (const id of ['recirc', 'tint', 'dark', 'stopStart']) $(id).addEventListener('change', e => { S[id] = e.target.checked; presetIdx = -1; recalc(); });
+  for (const id of ['occ', 'Tamb', 'RH', 'sun', 'fuelP']) $(id).addEventListener('input', e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) { S[id] = v; presetIdx = -1; recalc(); } });
+  function syncInputs() {
+    for (const [id, f] of Object.entries(FMT)) { if (document.activeElement !== $(id)) $(id).value = S[id]; $('o_' + id).textContent = f(S[id]); }
+    for (const id of ['mach', 'car', 'climate', 'cycle']) $(id).value = S[id];
+    for (const id of ['recirc', 'tint', 'dark', 'stopStart']) $(id).checked = S[id];
+    for (const id of ['occ', 'Tamb', 'RH', 'sun', 'fuelP']) if (document.activeElement !== $(id)) $(id).value = S[id];
+    $('custom').hidden = S.climate !== 'custom';
+    for (const [i, b] of [...$('presets').children].entries()) b.setAttribute('aria-pressed', i === presetIdx);
+  }
+
+  // ---------- run everything ----------
+  function recalc(resetCursor) {
+    RUNS = {}; for (const m of MACH) RUNS[m.id] = simulate({ ...S, mach: m.id });
+    R = RUNS[S.mach];
+    if (resetCursor || cursor >= R.t.length) cursor = 0;
+    syncInputs(); render(); drawCharts();
+  }
+  const L_FUEL = 8.9 * 3.6e6;          // J per litre of petrol (lower heating value)
+  const mmss = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+  function setK(id, v, s, cls) { $('k_' + id).innerHTML = v; $('s_' + id).textContent = s; if (cls !== undefined && $('kb_' + id)) $('kb_' + id).className = 'kpi' + (cls ? ' ' + cls : ''); }
+  function render() {
+    const r = R, m = r.m, n = r.t.length - 1, km = r.dist / 1000, avg = a => a.reduce((s, x) => s + x, 0) / a.length;
+    $('machNote').textContent = m.note;
+    setK('reach', r.reach !== null ? mmss(r.reach) : 'never', `to ${fmt(S.set + 2, 0)} °C · compressor car ${r.reachR !== null ? mmss(r.reachR) : 'never'}`, r.reach === null ? 'bad' : r.reach > (r.reachR ?? 0) * 2 ? 'alm' : 'good');
+    setK('end', `${fmt(r.Tcab[n], 1)} <small>°C</small>`, `compressor car ${fmt(r.TcabR[n], 1)} °C · started at ${fmt(r.soak.Tc, 0)} °C`, r.Tcab[n] > S.set + 4 ? 'bad' : r.Tcab[n] > S.set + 2 ? 'alm' : 'good');
+    $('k_q').innerHTML = `${fmt(avg(r.Qe) / 1000, 2)} <small>kW</small>`; $('s_q').textContent = `peak ${fmt(Math.max(...r.Qe) / 1000, 2)} kW · compressor car ${fmt(avg(r.QeR) / 1000, 2)} kW`;
+    const exhA = avg(r.Qexh), used = avg(r.Qgen);
+    $('k_exh').innerHTML = `${fmt(used / 1000, 1)} <small>kW</small>`; $('s_exh').textContent = `${fmt(exhA ? used / exhA * 100 : 0, 0)}% of ${fmt(exhA / 1000, 1)} kW in the exhaust`;
+    const lA = r.fuelAbs / L_FUEL, lR = r.fuelRef / L_FUEL;
+    $('k_fuel').innerHTML = `${fmt(lA, 2)} <small>L</small>`; $('s_fuel').textContent = `compressor car ${fmt(lR, 2)} L (${km > 1 ? fmt(lR / km * 100, 2) + ' L/100 km' : 'parked'})`;
+    $('k_save').innerHTML = `${fmt(lR - lA, 2)} <small>L</small>`; $('s_save').textContent = `$${fmt((lR - lA) * S.fuelP, 2)} this trip · but the cabin ends ${fmt(r.Tcab[n] - r.TcabR[n], 1)} K warmer`;
+    $('k_mass').innerHTML = `${fmt(r.mass, 0)} <small>kg</small>`; $('s_mass').textContent = `compressor system about 12 kg`;
+    $('k_trip').innerHTML = `${fmt(km, 1)} <small>km</small>`; $('s_trip').textContent = `${fmt(S.mins, 0)} min · ${CYCLES[S.cycle].name.toLowerCase()}`;
+    // flags
+    const fl = [], maxTilt = Math.max(...r.tilt), maxTg = Math.max(...r.Tg);
+    if (r.reach !== null) fl.push(['ok', `${m.short} cools the cabin to ${fmt(S.set + 2, 0)} °C in ${mmss(r.reach)}`]);
+    if (r.crystal) fl.push(['bad', 'Air-cooled LiBr crystallized: the absorber ran above about 40 °C']);
+    if (m.gravity && maxTilt > 3) fl.push([maxTilt > 7 ? 'bad' : 'alm', `Liquid levels tilted up to ${fmt(maxTilt, 1)}° by grade, braking and cornering: the bubble pump and gravity drains stall`]);
+    if (r.bypass.some(b => b > 0.05)) fl.push(['alm', `Generator hit its limit (${m.TgMax} °C): the exhaust bypass valve opened`]);
+    if (Math.max(...r.Qe) < 0.3 * S.size * 1000) fl.push(['alm', `Never reached a third of its rated ${fmt(S.size, 1)} kW: ${maxTg < m.Tg - 10 ? 'the generator never got hot enough' : 'too little exhaust heat or too hot a sink'}`]);
+    if (S.stopStart) fl.push(['alm', 'Stop-start: no exhaust heat at red lights. The compressor car has to keep its engine running.']);
+    if (S.cycle === 'park' || S.cycle === 'jam') fl.push(['alm', `Idling gives about ${fmt(Math.min(...r.Qexh.filter(x => x > 0)) / 1000, 1)} kW of exhaust heat: little to drive cooling`]);
+    $('flags').innerHTML = fl.map(([c, t]) => `<span class="chip ${c}">${t}</span>`).join('');
+    $('carTitle').textContent = `${r.car.name} · ${m.short} · ${CYCLES[S.cycle].name.toLowerCase()}`;
+    // comparison table
+    $('cmp').innerHTML = '<thead><tr><th>Machine</th><th>Comfort</th><th>Cabin at end</th><th>Avg cooling</th><th>Fuel for AC</th><th>Mass</th><th class="l">What limits it</th></tr></thead><tbody>' + MACH.map(mm => {
+      const o = RUNS[mm.id], k = o.t.length - 1, mt = Math.max(...o.tilt);
+      const lim = o.crystal ? 'Crystallization (absorber too hot)' : mm.gravity && mt > 5 ? `Tilt and sloshing (${fmt(mt, 1)}°)` : Math.max(...o.Tg) < mm.Tg - 10 ? 'Generator never hot enough' : avg(o.Qe) < 0.4 * S.size * 1000 ? 'Exhaust heat × COP' : 'Rated size';
+      return `<tr data-id="${mm.id}" tabindex="0" class="${mm.id === S.mach ? 'cur' : ''}"><td><b style="color:var(--${mm.col})">●</b> ${mm.short}</td><td>${o.reach !== null ? mmss(o.reach) : 'never'}</td><td>${fmt(o.Tcab[k], 1)} °C</td><td>${fmt(avg(o.Qe) / 1000, 2)} kW</td><td>${fmt(o.fuelAbs / L_FUEL, 2)} L</td><td>${fmt(o.mass, 0)} kg</td><td class="l">${lim}</td></tr>`;
+    }).join('') + `<tr class="no"><td>Compressor (reference)</td><td>${R.reachR !== null ? mmss(R.reachR) : 'never'}</td><td>${fmt(R.TcabR[n], 1)} °C</td><td>${fmt(avg(R.QeR) / 1000, 2)} kW</td><td>${fmt(R.fuelRef / L_FUEL, 2)} L</td><td>12 kg</td><td class="l">Engine power, at a fuel cost</td></tr></tbody>`;
+  }
+  const pickRow = e => { const tr = e.target.closest('tr[data-id]'); if (!tr) return; S.mach = tr.dataset.id; presetIdx = -1; recalc(); };
+  $('cmp').addEventListener('click', pickRow); $('cmp').addEventListener('keydown', e => { if (e.key === 'Enter') pickRow(e); });
+
+  // ---------- charts ----------
+  function axes(ctx, w, h, m, xlo, xhi, ylo, yhi, xt, yt, xf, yf) {
+    const X = x => m.l + (x - xlo) / (xhi - xlo) * (w - m.l - m.r), Y = y => h - m.b - (y - ylo) / (yhi - ylo) * (h - m.t - m.b);
+    ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.muted; ctx.strokeStyle = tok.line; ctx.lineWidth = 1;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (const y of yt) { ctx.beginPath(); ctx.moveTo(m.l, Y(y)); ctx.lineTo(w - m.r, Y(y)); ctx.stroke(); ctx.fillText(yf(y), m.l - 5, Y(y)); }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (const x of xt) { ctx.beginPath(); ctx.moveTo(X(x), m.t); ctx.lineTo(X(x), h - m.b); ctx.stroke(); ctx.fillText(xf(x), X(x), h - m.b + 5); }
+    return { X, Y };
+  }
+  const niceStep = span => { const r = span / 6, p = 10 ** Math.floor(Math.log10(r)), f = r / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; };
+  const ticks = (lo, hi) => { const s = niceStep(hi - lo), out = []; for (let v = Math.ceil(lo / s) * s; v <= hi + 1e-9; v += s) out.push(+v.toFixed(6)); return out; };
+  function series(ctx, X, Y, xs, ys, col, w = 2, dash) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); xs.forEach((x, i) => i ? ctx.lineTo(X(x), Y(ys[i])) : ctx.moveTo(X(x), Y(ys[i]))); ctx.stroke(); ctx.setLineDash([]); }
+  function cursorLine(ctx, X, m, h) { const x = X(R.t[cursor] / 60); ctx.strokeStyle = tok.ink; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x, m.t); ctx.lineTo(x, h - m.b); ctx.stroke(); ctx.setLineDash([]); }
+  const tMin = () => R.t.map(t => t / 60);
+  function drawCharts() {
+    const xs = tMin(), xhi = S.mins, xt = ticks(0, xhi);
+    { // temperatures
+      const { ctx, w, h } = fit($('cT')), m = { l: 40, r: 10, t: 10, b: 24 };
+      const all = [...R.Tcab, ...R.TcabR, ...R.Tint, R.Ta, S.set], lo = Math.floor(Math.min(...all) / 5) * 5, hi = Math.ceil(Math.max(...all) / 5) * 5;
+      const { X, Y } = axes(ctx, w, h, m, 0, xhi, lo, hi, xt, ticks(lo, hi), x => `${x}′`, y => `${y}°`);
+      ctx.fillStyle = tok.ok; ctx.globalAlpha = 0.12; ctx.fillRect(m.l, Y(S.set + 2), w - m.l - m.r, Y(S.set - 2) - Y(S.set + 2)); ctx.globalAlpha = 1;
+      series(ctx, X, Y, [0, xhi], [R.Ta, R.Ta], tok.hot, 1.2, [6, 4]);
+      series(ctx, X, Y, xs, R.Tint, tok.c5, 1.5, [2, 3]);
+      series(ctx, X, Y, xs, R.TcabR, tok.muted, 2);
+      series(ctx, X, Y, xs, R.Tcab, tok[R.m.col], 3);
+      cursorLine(ctx, X, m, h);
+      $('lgT').innerHTML = `<span><i style="background:var(--${R.m.col})"></i>${R.m.short} car</span><span><i style="background:var(--muted)"></i>compressor car</span><span><i style="background:var(--c5)"></i>seats and dash</span><span><i style="background:var(--hot)"></i>outside</span><span><i style="background:var(--ok)"></i>comfort band</span>`;
+    }
+    { // heat flows
+      const { ctx, w, h } = fit($('cQ')), m = { l: 44, r: 10, t: 10, b: 24 };
+      const k = 1 / 1000, sets = [[R.Qsol.map(x => x * 0.2 * k), tok.c5, 'sun on air'], [R.Qcond.map(x => x * k), tok.hot, 'through body and glass'], [R.Qvent.map(x => x * k), tok.c8, 'ventilation'], [R.Qocc.map(x => x * k), tok.c7, 'people'], [R.Tint.map((Ti, i) => R.car.hAi * (0.6 + S.blower * 0.6) * (Ti - R.Tcab[i]) * k), tok.c4, 'from hot interior'], [R.Qe.map(x => -x * k), tok.cold, 'cooling']];
+      const vals = sets.flatMap(s2 => s2[0]), lo = Math.min(-0.5, Math.floor(Math.min(...vals))), hi = Math.max(1, Math.ceil(Math.max(...vals)));
+      const { X, Y } = axes(ctx, w, h, m, 0, xhi, lo, hi, xt, ticks(lo, hi), x => `${x}′`, y => `${fmt(y, 1)}`);
+      for (const [ys, c] of sets) series(ctx, X, Y, xs, ys, c, 1.8);
+      cursorLine(ctx, X, m, h);
+      sm(ctx, 'kW', m.l - 4, 4, 'right', tok.muted);
+      $('lgQ').innerHTML = sets.map(([, c, n]) => `<span><i style="background:${c}"></i>${n}</span>`).join('');
+    }
+    { // engine and exhaust
+      const { ctx, w, h } = fit($('cE')), m = { l: 44, r: 40, t: 10, b: 24 };
+      const qhi = Math.max(5, Math.ceil(Math.max(...R.Qexh) / 5000) * 5);
+      const { X, Y } = axes(ctx, w, h, m, 0, xhi, 0, qhi, xt, ticks(0, qhi), x => `${x}′`, y => `${y}`);
+      const Yt = T => h - m.b - T / 300 * (h - m.t - m.b);
+      ctx.fillStyle = tok.line; ctx.globalAlpha = 0.6; xs.forEach((x, i) => { const hh = R.v[i] * 3.6 / 140 * (h - m.t - m.b); ctx.fillRect(X(x), h - m.b - hh, Math.max(1, X(xs[1] || 1) - X(0)), hh); }); ctx.globalAlpha = 1;
+      series(ctx, X, Y, xs, R.Qexh.map(x => x / 1000), tok.hot, 1.5);
+      series(ctx, X, Y, xs, R.Qgen.map(x => x / 1000), tok.copper, 2.4);
+      series(ctx, X, Yt, xs, R.Tg, tok.c4, 2, [5, 3]);
+      ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.c4; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      for (const T of [0, 100, 200, 300]) ctx.fillText(`${T}°`, w - m.r + 4, Yt(T));
+      cursorLine(ctx, X, m, h);
+      sm(ctx, 'kW', m.l - 4, 4, 'right', tok.muted);
+      $('lgE').innerHTML = `<span><i style="background:var(--line)"></i>speed (to 140 km/h)</span><span><i style="background:var(--hot)"></i>exhaust heat</span><span><i style="background:var(--copper)"></i>into generator</span><span><i style="background:var(--c4)"></i>generator °C (right)</span>`;
+    }
+  }
+  const SRC = [
+    ['Hilali & Söylemez: exhaust-driven absorption car AC, 0.5 kW at idle to 2.8 kW at load from 3–16 kW of exhaust heat', 'https://dergipark.org.tr/en/download/article-file/400570'],
+    ['Vicatos et al.: absorption air conditioner on a Nissan 1400 using exhaust heat (J. Energy in Southern Africa, 2008)', 'https://journals.assaf.org.za/index.php/jesa/article/view/3331/3909'],
+    ['PolyU: exhaust-heat-powered adsorption car air conditioner, 1.3 kW, COP 0.45 (SAE 2015-01-0358)', 'https://saemobilus.sae.org/papers/exhaust-heat-powered-adsorption-air-conditioner-automotive-applications-2015-01-0358'],
+    ['NREL: vehicle cabin thermal loads and the cooldown after a hot soak', 'https://webarchive.library.unt.edu/eot2008/20090506203120/http:/www.nrel.gov/vehiclesandfuels/ancillary_loads/pdfs/evs15paper.pdf'],
+    ['Transient thermal model of a vehicle cabin under variable ambient conditions', 'https://aplicat.upv.es/exploraupv/ficha-publicacion/publicacion/268276'],
+    ['Einstein refrigerator (Wikipedia)', 'https://en.wikipedia.org/wiki/Einstein_refrigerator'],
+  ];
+  $('srcList').innerHTML = SRC.map(([t, u]) => `<li><a href="${u}" target="_blank" rel="noopener">${t}</a></li>`).join('') + '<li>Vehicle, engine and cabin parameters are typical textbook values; fuel energy 8.9 kWh per litre of petrol.</li>';
+  // =====================================================================================
+  // Animated side view of the car and playback
+  // =====================================================================================
+  const CW = 1060, CH = 430;
+  let roadOff = 0, wheelA = 0, phase = 0;
+  const kW = w => fP(w / 1000), heatC = T => heat(-30 + (T - 15) * 3.4);   // cabin colour scale: 15 °C blue … 70 °C red
+  function drawCar() {
+    const { ctx } = fit($('carCv'), CW, CH), r = R, i = cursor, m = r.m, P = S;
+    const v = r.v[i], Tc = r.Tcab[i], Tg = r.Tg[i], Qe = r.Qe[i], Texh = r.Texh[i], eng = r.eng[i], tilt = r.tilt[i];
+    const sun = (S.climate === 'custom' ? S.sun : CLIMATES[S.climate].sun) * S.sunF, Ta = r.Ta, run = Qe > 50;
+    const grade = 0; // drawn level; the tilt gauge shows what the liquid sees
+    // sky and road
+    ctx.fillStyle = sun > 0 ? tok.raised : tok.panel; ctx.fillRect(0, 0, CW, 360);
+    if (sun > 0) {
+      ctx.fillStyle = '#f4c542'; ctx.beginPath(); ctx.arc(80, 62, 26, 0, Math.PI * 2); ctx.fill();
+      const nR = Math.round(sun / 200);
+      for (let k = 0; k < nR; k++) { const x0 = 110 + k * 18, y0 = 80 + k * 6, x1 = 330 + k * 45, y1 = 185 + k * 3; line(ctx, [[x0, y0], [x1, y1]], '#f4c542', 2.5, [6, 5]); arrowHead(ctx, x1, y1, x1 - x0, y1 - y0, '#e0a91f', 7); }
+      sm(ctx, `sun ${fmt(sun, 0)} W/m²`, 80, 106, 'center', tok.ink);
+    } else sm(ctx, 'night', 80, 62, 'center', tok.muted);
+    ctx.fillStyle = tok.line; ctx.fillRect(0, 360, CW, 70);
+    ctx.fillStyle = tok.muted; for (let x = -((roadOff % 80) + 80); x < CW; x += 80) ctx.fillRect(x, 392, 40, 5);
+    // body
+    const body = [[150, 330], [150, 262], [250, 252], [330, 188], [600, 182], [700, 250], [890, 262], [912, 292], [906, 330]];
+    ctx.fillStyle = tok.panel; ctx.strokeStyle = tok.ink; ctx.lineWidth = 2.5; ctx.beginPath(); body.forEach(([x, y], k) => k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fill(); ctx.stroke();
+    // cabin glass coloured by cabin air temperature
+    const glass = [[300, 252], [342, 198], [592, 194], [672, 252]];
+    ctx.fillStyle = heatC(Tc); ctx.globalAlpha = 0.85; ctx.beginPath(); glass.forEach(([x, y], k) => k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2; ctx.stroke(); ctx.beginPath(); ctx.moveTo(470, 196); ctx.lineTo(470, 252); ctx.stroke();
+    if (S.tint) { ctx.fillStyle = 'rgba(20,40,60,.25)'; ctx.beginPath(); glass.forEach(([x, y], k) => k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fill(); }
+    // occupants
+    const seats = [565, 410, 450, 370].slice(0, Math.min(4, S.occ));
+    for (const sx of seats) { ctx.fillStyle = tok.ink; ctx.beginPath(); ctx.arc(sx, 222, 11, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(sx - 12, 234, 24, 18); }
+    lab(ctx, `CABIN ${fmt(Tc, 1)} °C`, 486, 270, 'center', 16, tok.ink, 700);
+    sm(ctx, `compressor car ${fmt(r.TcabR[i], 1)} °C`, 486, 288, 'center', tok.muted);
+    // engine and exhaust
+    ctx.fillStyle = eng ? '#7a7f86' : '#a9adb3'; ctx.fillRect(718, 258, 110, 36); ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; ctx.strokeRect(718, 258, 110, 36);
+    lab(ctx, eng ? 'ENGINE' : 'ENGINE OFF', 773, 270, 'center', 13, '#fff', 700); sm(ctx, `${fmt(v * 3.6, 0)} km/h`, 773, 285, 'center', '#fff');
+    const exPath = [[740, 312], [740, 348], [470, 348], [470, 348], [140, 348]];
+    line(ctx, exPath, eng ? heat(Math.min(220, Texh / 3)) : tok.muted, 7);
+    if (eng) flowDots(ctx, exPath, '#fff', 0.6 + v / 15, 8, 2.2);
+    // generator on the exhaust (heat exchanger jacket) with bypass
+    const gx = 360, gy = 318;
+    ctx.fillStyle = heat(Tg); ctx.fillRect(gx, gy, 120, 42); ctx.strokeStyle = tok.ink; ctx.lineWidth = 2; ctx.strokeRect(gx, gy, 120, 42);
+    lab(ctx, 'GENERATOR', gx + 60, gy + 12, 'center', 12, '#fff', 700); sm(ctx, `${fmt(Tg, 0)} °C · ${kW(r.Qgen[i])}`, gx + 60, gy + 30, 'center', '#fff');
+    if (r.bypass[i] > 0.05) { sm(ctx, 'bypass open', gx + 60, gy + 52, 'center', tok.danger); }
+    sm(ctx, `exhaust ${fmt(Texh, 0)} °C`, 610, 362, 'center', tok.ink);
+    if (eng) { ctx.fillStyle = tok.vapour; for (let k = 0; k < 3; k++) { const pf = (phase * 1.5 + k / 3) % 1; ctx.globalAlpha = 1 - pf; ctx.beginPath(); ctx.arc(130 - pf * 60, 346 - pf * 20, 5 + pf * 10, 0, Math.PI * 2); ctx.fill(); } ctx.globalAlpha = 1; }
+    // absorber–condenser at the grille, with ram air
+    const Tac = Ta + 7 + 9 / Math.max(0.25, S.fan + 0.12 * v) * (Qe / Math.max(1, S.size * 1000));
+    ctx.fillStyle = heat(Tac); ctx.fillRect(884, 266, 26, 60); ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; ctx.strokeRect(884, 266, 26, 60);
+    sm(ctx, 'absorber +', 960, 252, 'center', tok.ink); sm(ctx, 'condenser', 960, 264, 'center', tok.ink); sm(ctx, `${fmt(Tac, 0)} °C`, 960, 340, 'center', tok.ink);
+    const air = S.fan + 0.12 * v;
+    for (let k = 0; k < 3; k++) { const y = 278 + k * 18, x0 = 1040 - ((phase * 60 * Math.min(3, air) + k * 20) % 100); line(ctx, [[x0 + 30, y], [x0, y]], tok.steel, 2); arrowHead(ctx, x0, y, -1, 0, tok.steel, 6); }
+    // evaporator in the dash, cold air into the cabin
+    ctx.fillStyle = heat(S.coil); ctx.fillRect(628, 236, 46, 22); ctx.strokeStyle = tok.ink; ctx.strokeRect(628, 236, 46, 22);
+    sm(ctx, 'evap', 651, 247, 'center', '#fff');
+    if (run) { const nA = Math.max(1, Math.round(Qe / 800)); for (let k = 0; k < nA; k++) { const y = 226 + k * 7, x1 = 600 - ((phase * 40 + k * 13) % 50); line(ctx, [[626, y + 8], [x1, y]], tok.cold, 2.5); arrowHead(ctx, x1, y, x1 - 626, y - y - 8, tok.cold, 6); } }
+    sm(ctx, `${kW(Qe)} cooling`, 600, 168, 'center', run ? tok.cold : tok.muted);
+    // refrigerant and solution lines between generator, grille module and evaporator
+    const vap = [[480, 325], [700, 325], [700, 318], [884, 318]], liq = [[884, 270], [860, 252], [674, 250]], sucA = [[628, 252], [612, 262], [612, 330], [700, 336], [884, 336]];
+    line(ctx, vap, tok.vapour, 4); line(ctx, liq, tok.cold, 3); line(ctx, sucA, tok.vapour, 3, [5, 3]);
+    if (run) { flowDots(ctx, vap, '#fff', 1, 5, 2); flowDots(ctx, liq, '#fff', 0.5, 3, 1.8); flowDots(ctx, sucA, '#fff', 0.8, 5, 1.8); }
+    // wheels
+    for (const wx of [265, 790]) {
+      ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(wx, 330, 32, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#888'; ctx.beginPath(); ctx.arc(wx, 330, 14, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#222'; ctx.lineWidth = 3; for (let k = 0; k < 3; k++) { const a = wheelA + k * 2.094; ctx.beginPath(); ctx.moveTo(wx, 330); ctx.lineTo(wx + 13 * Math.cos(a), 330 + 13 * Math.sin(a)); ctx.stroke(); }
+    }
+    // HUD
+    ctx.fillStyle = tok.panel; ctx.globalAlpha = 0.92; ctx.fillRect(150, 14, 330, 66); ctx.globalAlpha = 1; ctx.strokeStyle = tok.line; ctx.strokeRect(150, 14, 330, 66);
+    sm(ctx, `t = ${mmss(r.t[i])}   ${fmt(v * 3.6, 0)} km/h   engine ${eng ? 'on' : 'off'}`, 160, 30, 'left', tok.ink);
+    sm(ctx, `outside ${fmt(Ta, 0)} °C · exhaust heat ${kW(r.Qexh[i])}`, 160, 48, 'left', tok.ink);
+    sm(ctx, `${m.short}: COP ${fmt(r.cop[i], 2)} · ${kW(Qe)} of ${fmt(S.size, 1)} kW`, 160, 66, 'left', tok[m.col]);
+    // gauge: what the liquid in the machine sees
+    const gx2 = 860, gy2 = 20;
+    ctx.fillStyle = tok.panel; ctx.fillRect(gx2, gy2, 185, 140); ctx.strokeStyle = tok.line; ctx.lineWidth = 1; ctx.strokeRect(gx2, gy2, 185, 140);
+    lab(ctx, m.gravity ? 'BUBBLE PUMP LEVEL' : 'SOLUTION PUMP', gx2 + 92, gy2 + 14, 'center', 12, tok.ink);
+    if (m.gravity) {
+      ctx.save(); ctx.translate(gx2 + 92, gy2 + 72); ctx.rotate(tilt * Math.PI / 180 * (Math.sin(phase * 0.7) >= 0 ? 1 : -1));
+      ctx.strokeStyle = tok.ink; ctx.lineWidth = 2; ctx.strokeRect(-50, -30, 100, 60);
+      ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.rect(gx2 + 30, gy2 + 40, 125, 70); ctx.clip();
+      ctx.fillStyle = tok.cold; ctx.globalAlpha = 0.5; ctx.fillRect(gx2 + 30, gy2 + 74, 125, 40); ctx.globalAlpha = 1; ctx.restore();
+      const ok = tilt <= 3;
+      sm(ctx, `tilt ${fmt(tilt, 1)}° · limit 3°`, gx2 + 92, gy2 + 122, 'center', ok ? tok.ok : tok.danger);
+    } else {
+      sm(ctx, run ? 'running' : 'idle', gx2 + 92, gy2 + 60, 'center', tok.ink);
+      sm(ctx, `${m.pumpW} W electric`, gx2 + 92, gy2 + 80, 'center', tok.muted);
+      sm(ctx, 'road motion does not matter', gx2 + 92, gy2 + 100, 'center', tok.muted);
+      if (m.crystal) sm(ctx, `absorber ${fmt(Tac, 0)} °C · limit ${m.crystal} °C`, gx2 + 92, gy2 + 122, 'center', Tac > m.crystal ? tok.danger : tok.ok);
+    }
+    if (!S.recirc) { line(ctx, [[720, 230], [690, 242]], tok.hot, 3); arrowHead(ctx, 690, 242, -30, 12, tok.hot, 7); sm(ctx, 'fresh air', 730, 222, 'left', tok.hot); }
+  }
+  $('lgCar').innerHTML = '<span>Cabin glass is coloured by cabin air temperature, the generator by its temperature. Yellow arrows: sun. Blue: cold air from the evaporator. Grey: refrigerant vapour.</span>';
+
+  // ---------- playback ----------
+  let last = performance.now(), acc = 0;
+  function tick(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now; phase += dt;
+    if (R) {
+      const v = R.v[cursor] || 0;
+      roadOff += v * dt * 12 * (playing ? 1 : 0); wheelA += v * dt * (playing ? 1.2 : 0);
+      if (playing) {
+        acc += dt * +$('pspeed').value / S.rec;
+        if (acc >= 1) { cursor = Math.min(R.t.length - 1, cursor + Math.floor(acc)); acc %= 1; syncScrub(); drawCharts(); if (cursor >= R.t.length - 1) setPlay(false); }
+      }
+      drawCar();
+    }
+    requestAnimationFrame(tick);
+  }
+  function syncScrub() { $('scrub').value = Math.round(cursor / Math.max(1, R.t.length - 1) * 1000); $('clock').textContent = `${mmss(R.t[cursor])} / ${mmss(S.mins * 60)}`; }
+  function setPlay(on) { playing = on; $('playBtn').textContent = on ? '❚❚ Pause' : '▶ Play'; if (on && cursor >= R.t.length - 1) cursor = 0; }
+  $('playBtn').addEventListener('click', () => setPlay(!playing));
+  $('scrub').addEventListener('input', e => { cursor = Math.round(+e.target.value / 1000 * (R.t.length - 1)); syncScrub(); drawCharts(); });
+
+  window.addEventListener('resize', () => { if (R) drawCharts(); });
+  new MutationObserver(() => { readTokens(); drawCharts(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { readTokens(); drawCharts(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => R && drawCharts());
+  readTokens();
+  recalc(true); syncScrub();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

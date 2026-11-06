@@ -17,6 +17,7 @@ pwr-plant-v5-2/       v5.2  v5.1 electric plant plus a limit board, smarter trip
 rbmk-1986/            v1.0  RBMK-1000 model of the 1986 Chernobyl excursion (void coefficient, xenon, positive scram)
 einstein-refrigerator/
                       v1.2  heat-driven refrigeration: Einstein–Szilard, diffusion, LiBr, NH3–water, adsorption
+car-exhaust-ac/        v1.0  exhaust-driven absorption car air conditioner with cabin load model
 ```
 
 Each model's `index.html` is one self-contained file: HTML, CSS and JavaScript
