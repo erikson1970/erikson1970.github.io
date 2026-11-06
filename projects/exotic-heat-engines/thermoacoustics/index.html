@@ -329,7 +329,7 @@ table.tubes td.l { min-width: 220px; }
     const sw = standingWave(P), Wabs = Math.max(0, -sw.Wst), Wac = Wabs + sw.Wwall;
     const Qc = sw.Qpump - sw.Qcond - P.leak;                                 // net cooling at the cold heat exchanger
     const Wel = Wac / P.etaDrv, cop = Qc > 0 ? Qc / Wel : 0, copC = (P.Tc + 273.15) / Math.max(1, P.Th - P.Tc);
-    return { ...sw, mode: 'fridge', Wabs, Wac, Qc, Wel, cop, copC, Qh: Qc + Wabs };
+    return { ...sw, mode: 'fridge', Wabs, Wac, Qc, Wel, cop, copC, Qh: Qc + P.leak + Wabs };
   }
   // Prime mover: heat at the hot end drives sound; it starts when the stack makes more sound than the walls and load absorb.
   function primeMover(P) {
@@ -365,7 +365,7 @@ table.tubes td.l { min-width: 220px; }
     const rOn = 1.45 * (P.jetPump ? 1 : 1.15) * (P.taper ? 1 : 1.04);
     let rel = r > rOn ? 0.80 * (1 - rOn / r) * (r / (r + 0.25)) : 0;          // fraction of Carnot
     let streamLeak = 0;
-    if (!P.jetPump) { rel *= 0.55; streamLeak = 0.0012 * P.Qin * (Th - Tc) / 700; }   // Gedeon streaming carries heat straight round the loop
+    if (!P.jetPump) { rel *= 0.55; streamLeak = 0.3 * P.Qin * (Th - Tc) / 700; }   // W: a large share of the heater power short-circuits round the loop   // Gedeon streaming carries heat straight round the loop
     if (!P.taper) rel *= 0.85;                                             // Rayleigh streaming in the thermal buffer tube
     const eff = effC * rel, Wout = Math.min(P.Qin * eff, 1000 * (P.pm / 30) * (P.D / 0.089) ** 2 * 0.9);
     return { mode: 'tw', r, effC, rel, eff: Wout / P.Qin, Wout, streamLeak, on: rel > 0, Qrej: P.Qin - Wout };
@@ -401,7 +401,7 @@ table.tubes td.l { min-width: 220px; }
         ['Th', 'Hot-end temperature', 10, 60, 1, v => `${fmt(v, 0)} °C`], ['etaDrv', 'Loudspeaker efficiency', 0.2, 0.9, 0.05, pct]],
       presets: [['Tijani et al. 2002', { gas: 'he', pm: 10, f: 400, drive: 2, xs: 0.0845, dx: 0.085, gapRatio: 1, porosity: 0.75, stack: 'mylar', D: 0.038, Tc: -20, Th: 27, etaDrv: 0.4 }, 'Eindhoven demonstration refrigerator: helium at 10 bar, 400 Hz, Mylar spiral stack. Measured lowest temperature −65 °C.'],
         ['Space Shuttle STAR (1992), inspired', { gas: 'hear', pm: 10, f: 400, drive: 3, xs: 0.06, dx: 0.06, gapRatio: 1.2, porosity: 0.75, stack: 'mylar', D: 0.038, Tc: -40, Th: 30, etaDrv: 0.35 }, 'The Naval Postgraduate School Space ThermoAcoustic Refrigerator flew on Discovery (STS-42) in January 1992, cooling electronics with a helium–argon mix. Dimensions here are approximate.'],
-        ["Ben & Jerry's freezer (2004), inspired", { gas: 'he', pm: 10, f: 100, drive: 3, xs: 0.25, dx: 0.12, gapRatio: 1.2, porosity: 0.8, stack: 'mylar', D: 0.3, Tc: -24, Th: 30, etaDrv: 0.6 }, "Penn State's low-lift ice-cream cabinet chiller, funded by Ben & Jerry's and shown on Earth Day 2004. The real unit used a regenerator and a bellows; this standing-wave version is only sized like it."],
+        ["Ben & Jerry's freezer (2004), inspired", { gas: 'he', pm: 10, f: 100, drive: 3, xs: 0.25, dx: 0.12, gapRatio: 1.2, porosity: 0.8, stack: 'mylar', D: 0.3, Tc: -24, Th: 30, etaDrv: 0.6 }, "Penn State's low-lift ice-cream cabinet chiller, funded by Ben & Jerry's and shown on Earth Day 2004. The real unit was compact and regenerator-based; this long standing-wave stand-in only matches its cooling duty, not its size."],
         ['Classroom demo in air', { gas: 'air', pm: 1, f: 400, drive: 4, xs: 0.05, dx: 0.04, gapRatio: 1, porosity: 0.75, stack: 'cer', D: 0.04, Tc: 15, Th: 25, etaDrv: 0.3 }, 'A speaker, a tube and a ceramic catalytic-converter stack at atmospheric pressure: it makes a few degrees of temperature difference, enough to feel.']] },
     engine: { name: 'Standing-wave engine', title: 'Standing-wave prime mover: heat in, sound out', hint: 'A heated stack near the closed end drives the resonator once the gradient beats the critical gradient',
       sel: [['gas', 'Gas', GASES], ['stack', 'Stack', STACKS]],
@@ -413,15 +413,15 @@ table.tubes td.l { min-width: 220px; }
     tw: { name: 'Traveling-wave engine', title: 'Thermoacoustic Stirling engine (traveling wave)', hint: 'A regenerator in a feedback loop runs a true Stirling cycle; a jet pump acts as a gas diode',
       ctl: [['Th', 'Hot heat-exchanger temperature', 100, 800, 5, v => `${fmt(v, 0)} °C`], ['Tc', 'Cold heat-exchanger temperature', 10, 60, 1, v => `${fmt(v, 0)} °C`], ['pm', 'Mean pressure (helium)', 5, 40, 1, v => `${fmt(v, 0)} bar`], ['Qin', 'Heater power', 500, 5000, 50, v => `${fmt(v / 1000, 2)} kW`]],
       chk: [['jetPump', 'Jet pump ("gas diode") stops Gedeon streaming'], ['taper', 'Tapered thermal buffer tube']],
-      presets: [['Backhaus & Swift 1999', { Th: 725, Tc: 27, pm: 30, Qin: 3000, jetPump: true, taper: true, D: 0.089 }, 'Los Alamos thermoacoustic Stirling heat engine: helium at 30 bar, 30% efficient (41% of Carnot), up to about 890 W of acoustic power. Nature 399, 335 (1999).'],
+      presets: [['Backhaus & Swift 1999', { Th: 725, Tc: 27, pm: 30, Qin: 3000, jetPump: true, taper: true, D: 0.089 }, 'Los Alamos thermoacoustic Stirling heat engine: helium at 30 bar, 30% efficient (41% of Carnot) at about 710 W of acoustic power; up to about 890 W at lower efficiency. Nature 399, 335 (1999).'],
         ['Before the jet pump', { Th: 725, Tc: 27, pm: 30, Qin: 3000, jetPump: false, taper: true, D: 0.089 }, 'Without the gas diode, steady Gedeon streaming carries hot gas round the loop and dumps heat at the cold exchanger: efficiency roughly halves.'],
         ['Waste heat at 300 °C', { Th: 300, Tc: 27, pm: 30, Qin: 3000, jetPump: true, taper: true, D: 0.089 }, 'Industrial waste heat: the engine still runs, but Carnot sets a low ceiling.']] },
     lng: { name: 'Gas-fired liquefier', title: 'Burning gas to liquefy gas: thermoacoustic engine + pulse-tube cooler', hint: 'A flame drives a thermoacoustic engine, whose sound drives an orifice pulse-tube refrigerator at about −160 °C',
       ctl: [['Th', 'Engine hot temperature', 300, 800, 5, v => `${fmt(v, 0)} °C`], ['Tcold', 'Cold head temperature', 100, 160, 1, v => `${fmt(v, 0)} K (${fmt(v - 273.15, 0)} °C)`], ['ptrRel', 'Pulse-tube cooler, fraction of Carnot', 0.03, 0.4, 0.01, pct], ['etaBurn', 'Burner and hot exchanger efficiency', 0.5, 0.95, 0.01, pct], ['feed', 'Feed gas (as LNG equivalent)', 100, 20000, 100, v => `${fmt(v, 0)} gal/day`]],
       chk: [['jetPump', 'Jet pump in the engine loop']],
-      presets: [['LANL electric demo, 1989', { Th: 450, Tc: 27, Tcold: 120, ptrRel: 0.06, etaBurn: 0.85, feed: 500, jetPump: false, taper: false, pm: 30, D: 0.089 }, 'The first thermoacoustically driven pulse-tube refrigerator (LANL, 1989) was electrically heated; its efficiency was equivalent to liquefying only about 9% of a gas stream while burning the rest.'],
-        ['Praxair–LANL prototype, 2002', { Th: 700, Tc: 27, Tcold: 120, ptrRel: 0.2, etaBurn: 0.8, feed: 500, jetPump: true, taper: true, pm: 30, D: 0.089 }, 'A natural-gas-fired thermoacoustic Stirling engine driving an orifice pulse tube; projected capacity about 500 gal/day of LNG. No moving parts at all.'],
-        ['Target: 10,000 gal/day', { Th: 750, Tc: 27, Tcold: 120, ptrRel: 0.25, etaBurn: 0.85, feed: 10000, jetPump: true, taper: true, pm: 30, D: 0.089 }, 'The program aimed at 10,000–20,000 gal/day units for stranded gas fields: liquefy most of the gas and burn the rest to power the plant.']] },
+      presets: [['LANL electric demo, 1989', { Th: 450, Tc: 27, Tcold: 120, ptrRel: 0.06, etaBurn: 0.85, feed: 500, jetPump: false, taper: false, pm: 30, D: 0.089 }, 'The first thermoacoustically driven pulse-tube refrigerator (LANL, 1989) was electrically heated; its efficiency was equivalent to liquefying only about 9% of a gas stream while burning the rest. It used a standing-wave engine; here it is stood in for by the traveling-wave engine with its fixes switched off.'],
+        ['Praxair–LANL prototype, 2002', { Th: 700, Tc: 27, Tcold: 120, ptrRel: 0.2, etaBurn: 0.8, feed: 800, jetPump: true, taper: true, pm: 30, D: 0.089 }, 'A natural-gas-fired thermoacoustic Stirling engine driving an orifice pulse tube; projected capacity about 500 gal/day of LNG. No moving parts at all.'],
+        ['Target: 10,000 gal/day', { Th: 750, Tc: 27, Tcold: 120, ptrRel: 0.25, etaBurn: 0.85, feed: 14300, jetPump: true, taper: true, pm: 30, D: 0.089 }, 'The program aimed at 10,000–20,000 gal/day units for stranded gas fields: liquefy most of the gas and burn the rest to power the plant.']] },
   };
   const P = {
     rijke: { L: 1, xh: 0.25, Q: 400, D: 0.05, flow: true, loss: 0.15 },
@@ -481,9 +481,9 @@ table.tubes td.l { min-width: 220px; }
     } else if (mode === 'engine') {
       kpis([['State', r.Dss > 0 ? 'Running' : 'Silent', r.Ton ? `starts at about ${fmt(r.Ton, 0)} °C` : 'no onset below 1000 °C', r.Dss > 0 ? 'good' : 'alm'], ['Acoustic power to load', W(r.Wout), `drive ratio ${fmt(r.Dss, 2)}%`], ['Efficiency', r.eff > 0 ? pct(r.eff) : '—', `${fmt(r.eff / r.effC * 100, 1)}% of Carnot (${pct(r.effC)})`], ['Heat input', W(r.Qh), 'at the hot exchanger'],
         ['Γ (gradient / critical)', fmt(r.Gam, 2), r.Gam > 1 ? 'above 1: makes sound' : 'below 1: absorbs sound'], ['Sound level inside', r.Dss > 0 ? `${fmt(r.spl, 0)} <small>dB</small>` : '—', 'at the pressure antinode'], ['Resonator', `${fmt(r.L * 100, 1)} <small>cm</small>`, `λ ${fmt(r.lam, 2)} m`], ['Thermal penetration', `${fmt(r.dk * 1000, 3)} <small>mm</small>`, `plate gap ${fmt(2 * r.y0 * 1000, 2)} mm`]]);
-      if (r.Dss >= p.maxDrive - 1e-6) fl.push(['alm', 'Amplitude capped at 8% drive: real engines saturate through turbulence and harmonics']);
+      if (r.Dss >= p.maxDrive - 1e-6) fl.push(['alm', `Amplitude capped at ${fmt(p.maxDrive, 1)}% drive: real engines saturate through turbulence and harmonics`]);
     } else if (mode === 'tw') {
-      kpis([['Acoustic power', W(r.Wout), r.on ? 'to the resonator and load' : 'below onset'], ['Efficiency', pct(r.eff), `${fmt(r.rel * 100, 0)}% of Carnot (${pct(r.effC)})`, r.rel > 0.35 ? 'good' : ''], ['Heat rejected', W(r.Qrej), 'at the cold exchanger'], ['Streaming heat leak', r.streamLeak > 0 ? W(r.streamLeak * 1000) : '0 <small>W</small>', p.jetPump ? 'stopped by the jet pump' : 'Gedeon streaming round the loop', p.jetPump ? '' : 'alm']]);
+      kpis([['Acoustic power', W(r.Wout), r.on ? 'to the resonator and load' : 'below onset'], ['Efficiency', pct(r.eff), `${fmt(r.rel * 100, 0)}% of Carnot (${pct(r.effC)})`, r.rel > 0.35 ? 'good' : ''], ['Heat rejected', W(r.Qrej), 'at the cold exchanger'], ['Streaming heat leak', r.streamLeak > 0 ? W(r.streamLeak) : '0 <small>W</small>', p.jetPump ? 'stopped by the jet pump' : 'Gedeon streaming round the loop', p.jetPump ? '' : 'alm']]);
       if (!p.jetPump) fl.push(['alm', 'No gas diode: steady flow round the torus carries heat from the hot exchanger straight to the cold one']);
     } else {
       kpis([['Liquefied', pct(r.frac), `of the feed; ${pct(1 - r.frac)} burned to run it`, r.frac > 0.5 ? 'good' : 'alm'], ['LNG out', `${fmt(r.liqGalDay, 0)} <small>gal/day</small>`, `${fmt(r.liqGalDay * 3.785 * 0.42 / 1000, 2)} t/day`], ['Engine efficiency', pct(r.tw.eff), `${fmt(r.tw.rel * 100, 0)}% of Carnot`], ['Cooler COP', fmt(r.cop, 3), `${pct(P.lng.ptrRel)} of Carnot (${fmt(r.copC, 2)}) at ${fmt(P.lng.Tcold, 0)} K`],

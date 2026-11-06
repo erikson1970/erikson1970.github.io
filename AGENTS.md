@@ -16,7 +16,7 @@ This repo serves `erikson1970.github.io` as a whole:
   `projects/representing-3d-shapes/`, is a single generated page plus
   downloadable STL/SCAD files (see its own `README.md`). Two further
   sections hold collections of single-file pages, one sub-directory per
-  page: `projects/plant_models/` (thermal plant models) and
+  page: `projects/plant_models/` (thermal plant models),
   `projects/HVAC-stuff/` (home heating and cooling analyses) and
   `projects/exotic-heat-engines/` (thermoacoustic and other unusual
   engines), each with a section `index.html` and `README.md`.

@@ -508,3 +508,17 @@ independent council reviewer covering all three lenses.
 No gatekeepers. Minor fixed inline: reference-car coil coupling, crystallization
 latch, fan accounting, scrubber sync, dead code, traceability wording, page count.
 Open: idle cooling is below the cited prototype figure in hot climates.
+
+### Milestone 16 — Exotic heat engines section: Thermoacoustics Lab
+Reviewed 2026-11-06 on branch `feature/exotic-heat-engines` vs. `main` by one
+independent council reviewer covering all three lenses.
+
+| Lens | Verdict |
+|---|---|
+| Content integrity & plausibility | FAIL → fixed on the branch |
+| Static-site architecture / constraints | PASS |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+Gatekeeper (fixed before merge): streaming heat-leak unit error. Minor fixed
+inline: cap message, LNG preset sizing, 1999 figures, Ben & Jerry's wording,
+heat-rejected sum, AGENTS.md and traceability wording.
