@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thermoacoustics Lab</title>
+<meta name="description" content="Thermoacoustic engines and refrigerators with no moving parts: Rijke tube, standing-wave refrigerator and engine, the Los Alamos traveling-wave Stirling engine and a gas-fired LNG liquefier.">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.site-crumb{font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:10px 20px 0;max-width:1400px;margin:0 auto;opacity:.8}
+.site-crumb a{color:inherit}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: plant lab family. Inputs in a left rail (machine, heat source, heat sink, load, prices);
+   results on the right: headline tiles, the live cycle mimic, the pressure–temperature diagram,
+   COP against driving temperature, and a comparison of every working pair at the same conditions. */
+:root {
+  --bg: #eef0ee;
+  --panel: #f8f9f8;
+  --raised: #ffffff;
+  --ink: #1b2120;
+  --muted: #5c6763;
+  --line: #d1d8d5;
+  --hot: #c2471c;
+  --cold: #1f6fb5;
+  --copper: #a05a2c;
+  --steel: #3c5560;
+  --vapour: #8a96a0;
+  --sol: #7a5c12;
+  --ok: #2e7d4f;
+  --ok-bg: #e1f1e7;
+  --warn: #9a5a06;
+  --warn-bg: #fbefd9;
+  --danger: #b42318;
+  --danger-bg: #fbe3e0;
+  --c1: #1f6fb5; --c2: #c2471c; --c3: #2e8b57; --c4: #6d4fc2; --c5: #b57a00; --c6: #11808a; --c7: #b8467a; --c8: #6b7a14;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111615; --panel: #171e1c; --raised: #1d2522; --ink: #e2e9e6; --muted: #91a09a; --line: #2b3633;
+    --hot: #f27a3e; --cold: #5ea9ea; --copper: #d99460; --steel: #9fb6c4; --vapour: #7c8a94; --sol: #d9b43c;
+    --ok: #5cc48f; --ok-bg: #12301f; --warn: #e7ad48; --warn-bg: #33270f; --danger: #ff8a7a; --danger-bg: #3a1714;
+    --c1: #5ea9ea; --c2: #f27a3e; --c3: #5cc48f; --c4: #a98ff0; --c5: #e3b23c; --c6: #4cc3cc; --c7: #e57aa8; --c8: #b9c95a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111615; --panel: #171e1c; --raised: #1d2522; --ink: #e2e9e6; --muted: #91a09a; --line: #2b3633;
+  --hot: #f27a3e; --cold: #5ea9ea; --copper: #d99460; --steel: #9fb6c4; --vapour: #7c8a94; --sol: #d9b43c;
+  --ok: #5cc48f; --ok-bg: #12301f; --warn: #e7ad48; --warn-bg: #33270f; --danger: #ff8a7a; --danger-bg: #3a1714;
+  --c1: #5ea9ea; --c2: #f27a3e; --c3: #5cc48f; --c4: #a98ff0; --c5: #e3b23c; --c6: #4cc3cc; --c7: #e57aa8; --c8: #b9c95a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1400px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 40px; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 480px) { .wrap { padding-inline: 16px; } }
+.mono, .v, td.n { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; }
+.eyebrow { margin: 0 0 2px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; text-wrap: balance; }
+h1 .ver { font-family: var(--f-mono); font-size: .42em; font-weight: 500; color: var(--muted); vertical-align: .55em; margin-left: 6px; }
+.sub { font-size: 13px; color: var(--muted); max-width: 70ch; margin: 4px 0 0; }
+
+.grid { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); } .grid > main { order: -1; } }
+.rail { display: flex; flex-direction: column; gap: 12px; }
+.group { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 13px 13px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.group h2 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.group h2 span { font-family: var(--f-body); font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.group.m { border-top: 3px solid var(--copper); }
+.group.s { border-top: 3px solid var(--hot); }
+.group.k { border-top: 3px solid var(--steel); }
+.group.l { border-top: 3px solid var(--cold); }
+.group.p { border-top: 3px solid var(--vapour); }
+.group.f2 { border-top: 3px solid var(--danger); }
+.chk { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); min-height: 30px; }
+.chk input { accent-color: var(--copper); width: 18px; height: 18px; }
+.arr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; font-size: 12.5px; }
+.arr > span { color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 12px; padding: 4px 9px; min-height: 30px; border: 0; background: var(--raised); color: var(--ink); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--steel); color: #fff; }
+.reset { font: inherit; font-size: 13px; padding: 6px 10px; min-height: 34px; border-radius: 6px; border: 1px solid var(--line); background: var(--raised); color: var(--ink); cursor: pointer; }
+.ctl.off output { color: var(--danger); }
+select, .f input { font: inherit; font-size: 13.5px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; min-height: 34px; }
+.f { display: grid; grid-template-columns: minmax(0, 1fr) 104px; gap: 8px; align-items: center; font-size: 13.5px; }
+.f label { color: var(--muted); }
+.f input { font-family: var(--f-mono); font-size: 13px; }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: baseline; }
+.ctl .lab { font-size: 13px; color: var(--muted); }
+.ctl output { font-family: var(--f-mono); font-size: 13px; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 4px 0 0; accent-color: var(--copper); }
+.ctl small { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-family: var(--f-mono); }
+.hint { font-size: 12.5px; color: var(--muted); margin: 0; }
+.fluids { font-size: 12.5px; color: var(--muted); display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; margin: 0; }
+.fluids dt { font-weight: 600; color: var(--ink); }
+.fluids dd { margin: 0; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.presets button { font: inherit; font-size: 12.5px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; min-height: 30px; }
+.presets button:hover { border-color: var(--copper); }
+.presets button[aria-pressed="true"] { background: var(--copper); color: #fff; border-color: var(--copper); }
+button:focus-visible, select:focus-visible, input:focus-visible, tr:focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
+
+main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+@media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi { background: var(--panel); padding: 9px 11px; min-width: 0; }
+.kpi .k { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kpi .v { font-size: 20px; font-weight: 500; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.kpi .s { font-size: 12px; color: var(--muted); }
+.kpi.alm { box-shadow: inset 0 3px 0 var(--warn); }
+.kpi.bad { box-shadow: inset 0 3px 0 var(--danger); }
+.kpi.good { box-shadow: inset 0 3px 0 var(--ok); }
+.flags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+.chip { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 5px; }
+.chip.ok { color: var(--ok); background: var(--ok-bg); }
+.chip.alm { color: var(--warn); background: var(--warn-bg); }
+.chip.bad { color: var(--danger); background: var(--danger-bg); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; margin-bottom: 6px; }
+.card-head h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+.sch-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#mimic { display: block; width: 100%; min-width: 760px; }
+.sysrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.sysrow > * { min-width: 0; }
+@media (min-width: 1560px) { .wrap { max-width: 1680px; } .sysrow { grid-template-columns: minmax(0, 1fr) 280px; align-items: start; } }
+canvas.chart { display: block; width: 100%; }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1100px) { .duo { grid-template-columns: minmax(0, 1fr); } }
+.bal { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
+.bal .row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 90px; gap: 8px; align-items: center; }
+.bal .bar { height: 14px; display: flex; border-radius: 3px; overflow: hidden; background: var(--line); }
+.bal .bar i { display: block; height: 100%; }
+.bal em { font-style: normal; font-family: var(--f-mono); text-align: right; }
+.tbl-wrap { overflow-x: auto; }
+table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.t th { text-align: right; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 5px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.t td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.t th:first-child, table.t td:first-child, table.t td.l, table.t th.l { text-align: left; }
+table.t td.l { white-space: normal; min-width: 180px; color: var(--muted); font-size: 12.5px; }
+table.t tbody tr { cursor: pointer; }
+table.t tbody tr:hover td { background: var(--raised); }
+table.t tr.cur td { background: var(--ok-bg); }
+table.t tr.no td { color: var(--muted); }
+table.tubes tbody tr { cursor: default; }
+table.tubes td.l { min-width: 220px; }
+.nb { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: var(--bg); font: 700 12px var(--f-display); }
+.mix { display: inline-flex; width: 110px; height: 12px; border: 1px solid var(--ink); vertical-align: middle; }
+.mix i { display: block; height: 100%; }
+.tag { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; }
+.tag.rich { color: var(--ok); background: var(--ok-bg); } .tag.poor { color: var(--warn); background: var(--warn-bg); }
+.notes { font-size: 13.5px; color: var(--muted); }
+.notes > div { max-width: 86ch; }
+.notes h3 { font-family: var(--f-display); font-weight: 600; font-size: 18px; color: var(--ink); margin: 6px 0 6px; }
+.notes p { margin: 0 0 8px; }
+.notes b { color: var(--ink); font-weight: 600; }
+.notes a { color: var(--steel); }
+.notes ul { margin: 0 0 8px; padding-left: 18px; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs button { font: inherit; font-size: 13.5px; font-weight: 600; padding: 7px 14px; min-height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--steel); color: #fff; border-color: var(--steel); }
+#sch { display: block; width: 100%; min-width: 720px; }
+</style>
+</head>
+<body>
+<nav class="site-crumb" aria-label="Breadcrumb"><a href="../../../">erikson1970</a> / <a href="../">Exotic heat engines</a> / <span>Thermoacoustics Lab</span></nav>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Exotic heat engines · sound as the working medium</p>
+      <h1>Thermoacoustics Lab <span class="ver">v1.0</span></h1>
+      <p class="sub">Heat engines and refrigerators with no moving parts, where a sound wave does the work of the pistons. Start with a singing Rijke tube. Then come the standing-wave refrigerator that flew on the Space Shuttle, the traveling-wave engine that reached 41% of Carnot, and the gas-fired machine that liquefies natural gas by sound.</p>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Machine type"></nav>
+
+  <div class="grid">
+    <aside class="rail" aria-label="Inputs">
+      <section class="group k">
+        <h2>Examples <span>Start here</span></h2>
+        <div class="presets" id="presets"></div>
+        <p class="hint" id="presetNote"></p>
+      </section>
+      <section class="group m" id="ctlGroup">
+        <h2 id="ctlTitle">Design</h2>
+        <div id="ctl"></div>
+      </section>
+    </aside>
+
+    <main>
+      <section class="kpis" id="kpis" aria-label="Results"></section>
+      <div class="flags" id="flags" aria-live="polite"></div>
+      <section class="card">
+        <div class="card-head"><h3 id="schTitle">Machine</h3><span class="hint" id="schHint"></span></div>
+        <div class="sch-wrap"><canvas id="sch" aria-label="Animated schematic of the thermoacoustic machine, with the sound wave, heat exchangers and a close-up of a gas parcel"></canvas></div>
+        <div class="legend" id="lgSch" style="margin-top:6px"></div>
+      </section>
+      <div class="duo">
+        <section class="card">
+          <div class="card-head"><h3 id="c1Title"></h3><div class="legend" id="lg1"></div></div>
+          <canvas id="c1" class="chart" data-h="250"></canvas>
+          <p class="hint" id="c1Note"></p>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3 id="c2Title"></h3><div class="legend" id="lg2"></div></div>
+          <canvas id="c2" class="chart" data-h="250"></canvas>
+          <p class="hint" id="c2Note"></p>
+        </section>
+      </div>
+      <section class="card notes">
+        <div id="modeNotes"></div>
+        <div>
+          <h3>How thermoacoustics works</h3>
+          <p><b>A parcel of gas is a tiny piston engine.</b> In a sound wave, each parcel of gas moves back and forth and is squeezed and released at the same time. Next to a solid plate, it can swap heat with the plate while it moves. Whether it pumps heat or makes sound depends on the plate's temperature gradient compared with the <b>critical gradient</b>: the gradient that matches the parcel's own temperature swing from compression.</p>
+          <ul>
+            <li><b>Below the critical gradient (Γ &lt; 1):</b> the parcel arrives hot from compression, dumps heat to the plate, moves back, expands cold and takes heat. Heat is pumped toward the pressure antinode. That is a refrigerator, and it absorbs acoustic power.</li>
+            <li><b>Above it (Γ &gt; 1):</b> the plate is hotter than the parcel. The parcel takes heat at high pressure and gives it up at low pressure, so it does net work on the wave. That is an engine, and it makes sound.</li>
+          </ul>
+          <p>The plates must be spaced a few <b>thermal penetration depths</b> apart (δκ, a fraction of a millimetre in pressurized helium). Too close and the gas is locked to the plate's temperature; too far and most of it never feels the plate.</p>
+          <p><b>Standing waves and traveling waves.</b> In a standing wave, pressure and velocity are a quarter-cycle apart. Heat transfer has to be imperfect for any heat to move, which makes these devices inherently irreversible (typically 5–20% of Carnot). In a traveling wave, pressure and velocity are in phase, and the gas in a fine-mesh regenerator follows a true Stirling cycle. That is why Backhaus and Swift's 1999 traveling-wave engine reached 30% efficiency. Its feedback loop lets gas stream steadily around the torus (Gedeon streaming), carrying heat away. A <b>jet pump</b> acts as a gas diode, with an asymmetric flow resistance that stops it.</p>
+          <p><b>The model.</b> Standing-wave stacks use the short-stack, boundary-layer theory of Swift (1988), normalized as in Tijani et al. (2002), in a half-wave resonator. It includes the Prandtl-number corrections, conduction down the stack, and thermoviscous losses on the resonator walls. For Tijani's published refrigerator (helium, 10 bar, 400 Hz, 2% drive) it predicts the cooling running out at about −62 °C, against the −65 °C measured. The traveling-wave engine and the pulse-tube liquefier are lumped models calibrated to the published machines. Nonlinear effects (turbulence, harmonics, streaming in stacks) are represented only by a saturation term that sets the engine's steady amplitude.</p>
+          <h3>Where the numbers come from</h3>
+          <ul id="srcList"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const fmt = (v, d = 0) => (Math.abs(v) < 0.5 * 10 ** -d ? 0 : v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const K = c => c + 273.15;
+  const fP = kw => Math.abs(kw) >= 1000 ? `${fmt(kw / 1000, 2)} MW` : Math.abs(kw) >= 1 ? `${fmt(kw, kw >= 100 ? 0 : 1)} kW` : `${fmt(kw * 1000, 0)} W`;
+  const usd = v => v >= 100 ? `$${fmt(v, 0)}` : `$${fmt(v, 2)}`;
+
+  let tok = {};
+  function readTokens() { const cs = getComputedStyle(document.documentElement); for (const k of ['bg', 'panel', 'raised', 'ink', 'muted', 'line', 'hot', 'cold', 'copper', 'steel', 'vapour', 'sol', 'ok', 'warn', 'danger', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8']) tok[k] = cs.getPropertyValue('--' + k).trim(); }
+  function fit(cv, W, H) {
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, sc = W ? w / W : 1, h = W ? H * sc : +cv.dataset.h;
+    cv.style.height = h + 'px';
+    if (cv.width !== Math.round(w * dpr)) cv.width = Math.round(w * dpr);
+    if (cv.height !== Math.round(h * dpr)) cv.height = Math.round(h * dpr);
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr * sc, 0, 0, dpr * sc, 0, 0); ctx.clearRect(0, 0, W || w, W ? H : h);
+    return { ctx, w: W || w, h: W ? H : h };
+  }
+  function heat(T) { // −30 … 220 °C → blue … red
+    const f = clamp((T + 30) / 250, 0, 1), st = [[0, [44, 75, 209]], [0.25, [47, 164, 196]], [0.45, [232, 211, 90]], [0.7, [239, 138, 45]], [1, [215, 48, 31]]];
+    for (let j = 1; j < st.length; j++) if (f <= st[j][0]) { const [a, c0] = st[j - 1], [b, c1] = st[j], u = (f - a) / (b - a); return `rgb(${c0.map((c, i) => Math.round(c + (c1[i] - c) * u)).join(',')})`; }
+    return 'rgb(215,48,31)';
+  }
+  const lab = (ctx, t, x, y, al = 'center', size = 14, c = tok.ink, wt = 600) => { ctx.font = `${wt} ${size}px "Barlow Condensed", sans-serif`; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); };
+  const sm = (ctx, t, x, y, al = 'center', c = tok.muted) => { ctx.font = '500 11px "JetBrains Mono", monospace'; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); };
+  function arrowHead(ctx, x, y, dx, dy, c, s = 7) { const L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L; ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - ux * s - uy * s * 0.6, y - uy * s + ux * s * 0.6); ctx.lineTo(x - ux * s + uy * s * 0.6, y - uy * s - ux * s * 0.6); ctx.closePath(); ctx.fill(); }
+  function line(ctx, pts, c, w, dash) { ctx.strokeStyle = c; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); ctx.setLineDash([]); }
+  function flowDots(ctx, pts, c, speed, n = 6, r = 3) {
+    if (speed <= 0) return;
+    let L = 0; const seg = []; for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(l); L += l; }
+    ctx.fillStyle = c;
+    for (let k = 0; k < n; k++) {
+      let d = ((phase * speed * 40 + k * L / n) % L + L) % L, i = 0; while (i < seg.length - 1 && d > seg[i]) { d -= seg[i]; i++; }
+      const u = d / seg[i], x = pts[i][0] + (pts[i + 1][0] - pts[i][0]) * u, y = pts[i][1] + (pts[i + 1][1] - pts[i][1]) * u;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // =====================================================================================
+  // Thermoacoustics physics
+  // Standing-wave stacks use the short-stack, boundary-layer approximation (Swift 1988;
+  // normalised as in Tijani, Zeegers & de Waele, Cryogenics 2002). Traveling-wave engines
+  // and the heat-driven pulse-tube cooler are lumped models calibrated to published machines.
+  // =====================================================================================
+  const RU = 8.314;
+  // gas properties at 300 K (viscosity and conductivity scale with temperature)
+  const GASES = {
+    he: { name: 'Helium', M: 4.0026e-3, g: 5 / 3, mu: 1.99e-5, k: 0.152, pr: 0.67 },
+    ar: { name: 'Argon', M: 39.95e-3, g: 5 / 3, mu: 2.27e-5, k: 0.0177, pr: 0.67 },
+    air: { name: 'Air', M: 28.97e-3, g: 1.4, mu: 1.85e-5, k: 0.0263, pr: 0.71 },
+    hear: { name: 'Helium–argon 80/20', M: 11.2e-3, g: 5 / 3, mu: 2.35e-5, k: 0.085, pr: 0.42 },
+    hexe: { name: 'Helium–xenon 70/30', M: 42.2e-3, g: 5 / 3, mu: 2.6e-5, k: 0.045, pr: 0.25 },
+    n2: { name: 'Nitrogen', M: 28.01e-3, g: 1.4, mu: 1.78e-5, k: 0.0259, pr: 0.72 },
+  };
+  function gasState(gk, pm, T) {
+    const G = GASES[gk], rho = pm * G.M / (RU * T), cp = G.g / (G.g - 1) * RU / G.M, a = Math.sqrt(G.g * RU * T / G.M);
+    const mu = G.mu * (T / 300) ** 0.68, k = G.k * (T / 300) ** 0.72;
+    return { ...G, rho, cp, a, mu, k, T, pm };
+  }
+  // stack plates (thermal conductivity of the solid, for the conduction loss)
+  const STACKS = { mylar: { name: 'Mylar film (spiral)', k: 0.16 }, cer: { name: 'Ceramic honeycomb (Celcor)', k: 1.5 }, ss: { name: 'Stainless-steel plates', k: 15 }, mesh: { name: 'Stainless screen regenerator', k: 15 } };
+
+  // ---------- standing-wave stack in a half-wave resonator closed at both ends ----------
+  // x measured from the driver / closed end; p1 = pA cos(kx), u1 = pA sin(kx) / (rho a)
+  function standingWave(P) {
+    const Tm = (P.Th + P.Tc) / 2 + 273.15, g = gasState(P.gas, P.pm * 1e5, Tm), w = 2 * Math.PI * P.f;
+    const lam = g.a / P.f, L = lam / 2, k = 2 * Math.PI / lam, A = Math.PI * (P.D / 2) ** 2;
+    const dk = Math.sqrt(2 * g.k / (g.rho * g.cp * w)), dv = Math.sqrt(2 * g.mu / (g.rho * w)), s = g.pr, rs = Math.sqrt(s);
+    const y0 = P.gapRatio * dk, B = P.porosity;                          // half plate gap, blockage ratio (porosity)
+    const xn = k * P.xs, Lsn = k * P.dx, dkn = dk / y0, Dr = P.drive / 100, dTn = (P.Th - P.Tc) / Tm, gm = g.g;
+    const Lam = 1 - rs * dkn + s / 2 * dkn * dkn;
+    // normalised cooling power and acoustic power (positive W = produced by the stack)
+    const Qcn = -(dkn * Dr * Dr * Math.sin(2 * xn)) / (8 * gm * (1 + s) * Lam) * (dTn * Math.tan(xn) / ((gm - 1) * B * Lsn) * (1 + rs + s) / (1 + rs) - (1 + rs - rs * dkn));
+    const Wn = (dkn * Lsn * Dr * Dr * (gm - 1) * B * Math.cos(xn) ** 2) / (4 * gm) * (dTn * Math.tan(xn) / (B * Lsn * (gm - 1) * (1 + rs) * Lam) - 1) - (dkn * Lsn * Dr * Dr * rs * Math.sin(xn) ** 2) / (4 * gm * B * Lam);
+    const S = g.pm * g.a * A, pA = Dr * g.pm;
+    // critical gradient ratio at the stack centre: Γ = actual / critical temperature gradient
+    const p1 = pA * Math.cos(xn), u1 = pA * Math.sin(xn) / (g.rho * g.a * B);
+    const gradCrit = Math.abs(p1) * w / (g.rho * g.cp * Math.max(1e-9, Math.abs(u1)));
+    const Gam = ((P.Th - P.Tc) / P.dx) / gradCrit;
+    // conduction down the stack: gas plus plates
+    const kEff = B * g.k + (1 - B) * STACKS[P.stack].k, Qcond = kEff * A * (P.Th - P.Tc) / P.dx;
+    // resonator wall losses (thermoviscous boundary layers), averaged over a half wavelength
+    const Swall = Math.PI * P.D * L, Wwall = 0.25 * w * pA * pA / (g.rho * g.a * g.a) * Swall * 0.5 * (dv + (gm - 1) * dk);
+    return { g, w, lam, L, k, A, dk, dv, y0, xn, Lsn, dkn, Gam, gradCrit, Qpump: Qcn * S, Wst: Wn * S, Qcond, Wwall, pA, p1, u1, S, Tm };
+  }
+
+  // ---------- modes ----------
+  // Refrigerator: a loudspeaker drives the resonator; the stack pumps heat from its cold end to its hot end.
+  function refrigerator(P) {
+    const sw = standingWave(P), Wabs = Math.max(0, -sw.Wst), Wac = Wabs + sw.Wwall;
+    const Qc = sw.Qpump - sw.Qcond - P.leak;                                 // net cooling at the cold heat exchanger
+    const Wel = Wac / P.etaDrv, cop = Qc > 0 ? Qc / Wel : 0, copC = (P.Tc + 273.15) / Math.max(1, P.Th - P.Tc);
+    return { ...sw, mode: 'fridge', Wabs, Wac, Qc, Wel, cop, copC, Qh: Qc + Wabs };
+  }
+  // Prime mover: heat at the hot end drives sound; it starts when the stack makes more sound than the walls and load absorb.
+  function primeMover(P) {
+    const sw = standingWave({ ...P, drive: 1 });                           // per (1 %)² of drive ratio
+    const gain = sw.Wst - sw.Wwall;                                         // W per (1 % drive)²
+    const load = P.loadF * Math.max(0, sw.Wst);                             // the load takes a share of what the stack makes
+    // amplitude grows until nonlinear losses (turbulence, harmonics) balance the net gain: D_ss = net / c_nl
+    const net = gain - load, cnl = P.cnl * sw.Wwall;                       // nonlinear loss per (1 %)³
+    const Dss = net > 0 ? Math.min(P.maxDrive, net / Math.max(1e-9, cnl)) : 0;
+    const at = standingWave({ ...P, drive: Math.max(Dss, 1e-6) });
+    const Wout = Dss > 0 ? P.loadF * Math.max(0, at.Wst) : 0;
+    const Qh = Dss > 0 ? -at.Qpump + at.Wst + at.Qcond : at.Qcond;         // heat in at the hot exchanger
+    const eff = Qh > 0 ? Wout / Qh : 0, effC = 1 - (P.Tc + 273.15) / (P.Th + 273.15);
+    // onset temperature: lowest hot-end temperature at which gain > 0 with no load
+    const lo = P.Tc + 5, hi = 1000;
+    const g0 = T => { const s2 = standingWave({ ...P, Th: T, drive: 1 }); return s2.Wst - s2.Wwall - P.loadF * Math.max(0, s2.Wst); };
+    let Ton = null; for (let T = lo; T <= hi; T += 5) if (g0(T) > 0) { Ton = T; break; }   // scan: the gain is not monotonic in T
+    return { ...at, mode: 'engine', Dss, Wout, Qh, eff, effC, Ton, gainPer: gain, spl: Dss > 0 ? 20 * Math.log10(Dss / 100 * P.pm * 1e5 / Math.SQRT2 / 2e-5) : 0 };
+  }
+  // Rijke tube: open both ends, heated gauze; the Rayleigh criterion says heat release in phase with pressure drives sound.
+  function rijke(P) {
+    const T = 300, g = gasState('air', 101325, T), L = P.L, f = g.a / (2 * L), xn = P.xh / L;
+    // driving ∝ heater power × sin(2πx/L) for heat added in the lower half where upward flow lags pressure; losses ∝ end radiation + walls
+    const drive = P.Q * Math.sin(2 * Math.PI * xn) * (P.flow ? 1 : 0), loss = P.loss * (1 + 0.5 * (P.D / 0.05));
+    const net = drive / 1000 - loss;
+    const amp = net > 0 ? Math.min(400, 140 * Math.sqrt(net)) : 0;        // pressure amplitude, Pa
+    return { mode: 'rijke', g, f, L, xn, net, amp, on: net > 0, spl: amp > 0 ? 20 * Math.log10(amp / Math.SQRT2 / 2e-5) : 0, Qcrit: P.flow && Math.sin(2 * Math.PI * xn) > 0 ? loss * 1000 / Math.sin(2 * Math.PI * xn) : null };
+  }
+  // Traveling-wave thermoacoustic Stirling engine (Backhaus & Swift 1999): regenerator in a feedback torus.
+  // Calibrated: 30 % efficient (41 % of Carnot) at 725 °C hot end; up to about 890 W of acoustic power.
+  function travelingWave(P) {
+    const Th = P.Th + 273.15, Tc = P.Tc + 273.15, r = Th / Tc, effC = 1 - 1 / r;
+    const rOn = 1.45 * (P.jetPump ? 1 : 1.15) * (P.taper ? 1 : 1.04);
+    let rel = r > rOn ? 0.80 * (1 - rOn / r) * (r / (r + 0.25)) : 0;          // fraction of Carnot
+    let streamLeak = 0;
+    if (!P.jetPump) { rel *= 0.55; streamLeak = 0.0012 * P.Qin * (Th - Tc) / 700; }   // Gedeon streaming carries heat straight round the loop
+    if (!P.taper) rel *= 0.85;                                             // Rayleigh streaming in the thermal buffer tube
+    const eff = effC * rel, Wout = Math.min(P.Qin * eff, 1000 * (P.pm / 30) * (P.D / 0.089) ** 2 * 0.9);
+    return { mode: 'tw', r, effC, rel, eff: Wout / P.Qin, Wout, streamLeak, on: rel > 0, Qrej: P.Qin - Wout };
+  }
+  // Heat-driven cooler: thermoacoustic engine drives an orifice pulse-tube refrigerator (LANL / Praxair TADOPTR).
+  // Burning part of the natural gas liquefies the rest.
+  function liquefier(P) {
+    const tw = travelingWave({ ...P, Qin: 1000 });
+    const Tcold = P.Tcold, Tamb = P.Tc + 273.15, copC = Tcold / (Tamb - Tcold), cop = copC * P.ptrRel;
+    const LHV = 50e6, hLiq = 2.2e3 * (Tamb - 111) + 510e3;                // J/kg to cool and condense methane at 1 bar
+    const perKgBurned = LHV * P.etaBurn * tw.eff * cop / hLiq;            // kg liquefied per kg burned
+    const frac = perKgBurned / (1 + perKgBurned);
+    const gasIn = P.feed / 86400 * 0.42 * 3.785;                          // kg/s feed (LNG 0.42 kg/L at 3.785 L/gal) — feed sized in gal/day of product
+    const liq = gasIn * frac;
+    return { mode: 'lng', tw, copC, cop, frac, perKgBurned, hLiq, liqGalDay: P.feed * frac, burnGalDay: P.feed * (1 - frac), Qcold: liq * hLiq, heatIn: (gasIn - liq) * LHV };
+  }
+  // =====================================================================================
+  // Modes, controls, results and charts
+  // =====================================================================================
+  const pct = v => `${fmt(v * 100, 0)}%`;
+  const MODES = {
+    rijke: { name: 'Rijke tube', title: 'Rijke tube: heat makes sound', hint: 'A heated gauze in a vertical tube sings when it sits in the lower half',
+      ctl: [['L', 'Tube length', 0.3, 2, 0.05, v => `${fmt(v, 2)} m`], ['xh', 'Heater position from the bottom', 0.05, 0.95, 0.01, v => `${fmt(v * 100, 0)}% of the length`], ['Q', 'Heater power', 0, 1000, 10, v => `${fmt(v, 0)} W`], ['D', 'Tube diameter', 0.02, 0.12, 0.005, v => `${fmt(v * 100, 1)} cm`]],
+      chk: [['flow', 'Tube vertical (hot air rises through it)']],
+      presets: [['Classic Rijke tube', { L: 1, xh: 0.25, Q: 400, D: 0.05, flow: true }, 'Pieter Rijke, 1859: a gauze a quarter of the way up a vertical tube, heated, makes the tube howl at its fundamental.'],
+        ['Heater in the upper half', { L: 1, xh: 0.75, Q: 400, D: 0.05, flow: true }, 'Same tube, gauze in the upper half: heat release falls out of phase with pressure and the tube stays silent.'],
+        ['Tube laid flat', { L: 1, xh: 0.25, Q: 400, D: 0.05, flow: false }, 'With no upward draft there is no steady flow to carry heat past the gauze at the right moment: silence.']] },
+    fridge: { name: 'Standing-wave refrigerator', title: 'Loudspeaker-driven standing-wave refrigerator', hint: 'A loudspeaker drives a half-wave resonator; the stack pumps heat toward the pressure antinode',
+      sel: [['gas', 'Gas', GASES], ['stack', 'Stack', STACKS]],
+      ctl: [['pm', 'Mean pressure', 1, 30, 0.5, v => `${fmt(v, 1)} bar`], ['f', 'Frequency', 50, 1000, 10, v => `${fmt(v, 0)} Hz`], ['drive', 'Drive ratio (pressure amplitude / mean)', 0.3, 6, 0.1, v => `${fmt(v, 1)}%`],
+        ['xs', 'Stack centre from the driver end', 0.005, 0.6, 0.001, v => `${fmt(v * 100, 1)} cm`], ['dx', 'Stack length', 0.01, 0.2, 0.002, v => `${fmt(v * 100, 1)} cm`], ['gapRatio', 'Plate half-gap / thermal penetration depth', 0.5, 5, 0.1, v => `${fmt(v, 1)} δκ`],
+        ['porosity', 'Stack porosity', 0.5, 0.95, 0.01, pct], ['D', 'Resonator diameter', 0.02, 0.2, 0.002, v => `${fmt(v * 100, 1)} cm`], ['Tc', 'Cold-end temperature', -120, 30, 1, v => `${fmt(v, 0)} °C`],
+        ['Th', 'Hot-end temperature', 10, 60, 1, v => `${fmt(v, 0)} °C`], ['etaDrv', 'Loudspeaker efficiency', 0.2, 0.9, 0.05, pct]],
+      presets: [['Tijani et al. 2002', { gas: 'he', pm: 10, f: 400, drive: 2, xs: 0.0845, dx: 0.085, gapRatio: 1, porosity: 0.75, stack: 'mylar', D: 0.038, Tc: -20, Th: 27, etaDrv: 0.4 }, 'Eindhoven demonstration refrigerator: helium at 10 bar, 400 Hz, Mylar spiral stack. Measured lowest temperature −65 °C.'],
+        ['Space Shuttle STAR (1992), inspired', { gas: 'hear', pm: 10, f: 400, drive: 3, xs: 0.06, dx: 0.06, gapRatio: 1.2, porosity: 0.75, stack: 'mylar', D: 0.038, Tc: -40, Th: 30, etaDrv: 0.35 }, 'The Naval Postgraduate School Space ThermoAcoustic Refrigerator flew on Discovery (STS-42) in January 1992, cooling electronics with a helium–argon mix. Dimensions here are approximate.'],
+        ["Ben & Jerry's freezer (2004), inspired", { gas: 'he', pm: 10, f: 100, drive: 3, xs: 0.25, dx: 0.12, gapRatio: 1.2, porosity: 0.8, stack: 'mylar', D: 0.3, Tc: -24, Th: 30, etaDrv: 0.6 }, "Penn State's low-lift ice-cream cabinet chiller, funded by Ben & Jerry's and shown on Earth Day 2004. The real unit used a regenerator and a bellows; this standing-wave version is only sized like it."],
+        ['Classroom demo in air', { gas: 'air', pm: 1, f: 400, drive: 4, xs: 0.05, dx: 0.04, gapRatio: 1, porosity: 0.75, stack: 'cer', D: 0.04, Tc: 15, Th: 25, etaDrv: 0.3 }, 'A speaker, a tube and a ceramic catalytic-converter stack at atmospheric pressure: it makes a few degrees of temperature difference, enough to feel.']] },
+    engine: { name: 'Standing-wave engine', title: 'Standing-wave prime mover: heat in, sound out', hint: 'A heated stack near the closed end drives the resonator once the gradient beats the critical gradient',
+      sel: [['gas', 'Gas', GASES], ['stack', 'Stack', STACKS]],
+      ctl: [['pm', 'Mean pressure', 1, 30, 0.5, v => `${fmt(v, 1)} bar`], ['f', 'Frequency', 50, 1000, 10, v => `${fmt(v, 0)} Hz`], ['Th', 'Hot-end temperature', 30, 900, 5, v => `${fmt(v, 0)} °C`], ['Tc', 'Cold-end temperature', 0, 60, 1, v => `${fmt(v, 0)} °C`],
+        ['xs', 'Stack centre from the closed end', 0.005, 0.6, 0.001, v => `${fmt(v * 100, 1)} cm`], ['dx', 'Stack length', 0.01, 0.2, 0.002, v => `${fmt(v * 100, 1)} cm`], ['gapRatio', 'Plate half-gap / thermal penetration depth', 0.5, 5, 0.1, v => `${fmt(v, 1)} δκ`],
+        ['porosity', 'Stack porosity', 0.5, 0.95, 0.01, pct], ['D', 'Resonator diameter', 0.02, 0.2, 0.002, v => `${fmt(v * 100, 1)} cm`], ['loadF', 'Share of sound taken by the load', 0, 0.9, 0.05, pct]],
+      presets: [['Helium prime mover', { gas: 'he', pm: 10, f: 300, Th: 500, Tc: 27, xs: 0.16, dx: 0.05, gapRatio: 1.5, porosity: 0.75, stack: 'mylar', D: 0.05, loadF: 0.5, maxDrive: 8 }, 'A pressurized-helium standing-wave engine. It starts above about 430 °C and converts only a few percent of its heat to sound: standing-wave heat transfer is inherently irreversible.'],
+        ['Glass-tube demo in air', { gas: 'air', pm: 1, f: 200, Th: 450, Tc: 25, xs: 0.12, dx: 0.04, gapRatio: 1.5, porosity: 0.75, stack: 'cer', D: 0.03, loadF: 0, maxDrive: 1.5 }, 'The classic science-fair engine: a test tube with a ceramic stack heated by a torch sings loudly but makes almost no useful power.']] },
+    tw: { name: 'Traveling-wave engine', title: 'Thermoacoustic Stirling engine (traveling wave)', hint: 'A regenerator in a feedback loop runs a true Stirling cycle; a jet pump acts as a gas diode',
+      ctl: [['Th', 'Hot heat-exchanger temperature', 100, 800, 5, v => `${fmt(v, 0)} °C`], ['Tc', 'Cold heat-exchanger temperature', 10, 60, 1, v => `${fmt(v, 0)} °C`], ['pm', 'Mean pressure (helium)', 5, 40, 1, v => `${fmt(v, 0)} bar`], ['Qin', 'Heater power', 500, 5000, 50, v => `${fmt(v / 1000, 2)} kW`]],
+      chk: [['jetPump', 'Jet pump ("gas diode") stops Gedeon streaming'], ['taper', 'Tapered thermal buffer tube']],
+      presets: [['Backhaus & Swift 1999', { Th: 725, Tc: 27, pm: 30, Qin: 3000, jetPump: true, taper: true, D: 0.089 }, 'Los Alamos thermoacoustic Stirling heat engine: helium at 30 bar, 30% efficient (41% of Carnot), up to about 890 W of acoustic power. Nature 399, 335 (1999).'],
+        ['Before the jet pump', { Th: 725, Tc: 27, pm: 30, Qin: 3000, jetPump: false, taper: true, D: 0.089 }, 'Without the gas diode, steady Gedeon streaming carries hot gas round the loop and dumps heat at the cold exchanger: efficiency roughly halves.'],
+        ['Waste heat at 300 °C', { Th: 300, Tc: 27, pm: 30, Qin: 3000, jetPump: true, taper: true, D: 0.089 }, 'Industrial waste heat: the engine still runs, but Carnot sets a low ceiling.']] },
+    lng: { name: 'Gas-fired liquefier', title: 'Burning gas to liquefy gas: thermoacoustic engine + pulse-tube cooler', hint: 'A flame drives a thermoacoustic engine, whose sound drives an orifice pulse-tube refrigerator at about −160 °C',
+      ctl: [['Th', 'Engine hot temperature', 300, 800, 5, v => `${fmt(v, 0)} °C`], ['Tcold', 'Cold head temperature', 100, 160, 1, v => `${fmt(v, 0)} K (${fmt(v - 273.15, 0)} °C)`], ['ptrRel', 'Pulse-tube cooler, fraction of Carnot', 0.03, 0.4, 0.01, pct], ['etaBurn', 'Burner and hot exchanger efficiency', 0.5, 0.95, 0.01, pct], ['feed', 'Feed gas (as LNG equivalent)', 100, 20000, 100, v => `${fmt(v, 0)} gal/day`]],
+      chk: [['jetPump', 'Jet pump in the engine loop']],
+      presets: [['LANL electric demo, 1989', { Th: 450, Tc: 27, Tcold: 120, ptrRel: 0.06, etaBurn: 0.85, feed: 500, jetPump: false, taper: false, pm: 30, D: 0.089 }, 'The first thermoacoustically driven pulse-tube refrigerator (LANL, 1989) was electrically heated; its efficiency was equivalent to liquefying only about 9% of a gas stream while burning the rest.'],
+        ['Praxair–LANL prototype, 2002', { Th: 700, Tc: 27, Tcold: 120, ptrRel: 0.2, etaBurn: 0.8, feed: 500, jetPump: true, taper: true, pm: 30, D: 0.089 }, 'A natural-gas-fired thermoacoustic Stirling engine driving an orifice pulse tube; projected capacity about 500 gal/day of LNG. No moving parts at all.'],
+        ['Target: 10,000 gal/day', { Th: 750, Tc: 27, Tcold: 120, ptrRel: 0.25, etaBurn: 0.85, feed: 10000, jetPump: true, taper: true, pm: 30, D: 0.089 }, 'The program aimed at 10,000–20,000 gal/day units for stranded gas fields: liquefy most of the gas and burn the rest to power the plant.']] },
+  };
+  const P = {
+    rijke: { L: 1, xh: 0.25, Q: 400, D: 0.05, flow: true, loss: 0.15 },
+    fridge: { ...MODES.fridge.presets[0][1], leak: 0.5 },
+    engine: { ...MODES.engine.presets[0][1], cnl: 0.05, maxDrive: 8, leak: 0, etaDrv: 1, drive: 1 },
+    tw: { ...MODES.tw.presets[0][1] },
+    lng: { ...MODES.lng.presets[1][1] },
+  };
+  let mode = 'fridge', presetIdx = 0, R = null;
+  // tabs
+  for (const [k, m] of Object.entries(MODES)) { const b = document.createElement('button'); b.type = 'button'; b.role = 'tab'; b.dataset.k = k; b.textContent = m.name; b.addEventListener('click', () => { mode = k; presetIdx = 0; build(); recalc(); }); $('tabs').append(b); }
+  function build() {
+    const M = MODES[mode];
+    for (const b of $('tabs').children) b.setAttribute('aria-selected', b.dataset.k === mode);
+    $('presets').innerHTML = ''; M.presets.forEach(([lab0, set], i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = lab0; b.addEventListener('click', () => { Object.assign(P[mode], set); presetIdx = i; recalc(); }); $('presets').append(b); });
+    let h = '';
+    for (const [id, lab0, opts] of M.sel || []) h += `<div class="f"><label for="s_${id}">${lab0}</label><select id="s_${id}">${Object.entries(opts).map(([k, o]) => `<option value="${k}">${o.name}</option>`).join('')}</select></div>`;
+    for (const [id, lab0, mn, mx, st] of M.ctl) h += `<label class="ctl"><span class="lab">${lab0}</span><output id="o_${id}"></output><input type="range" id="r_${id}" min="${mn}" max="${mx}" step="${st}"></label>`;
+    for (const [id, lab0] of M.chk || []) h += `<label class="chk"><input type="checkbox" id="c_${id}"> ${lab0}</label>`;
+    $('ctl').innerHTML = h; $('ctlTitle').textContent = M.name;
+    for (const [id] of M.sel || []) $('s_' + id).addEventListener('change', e => { P[mode][id] = e.target.value; presetIdx = -1; recalc(); });
+    for (const [id] of M.ctl) $('r_' + id).addEventListener('input', e => { P[mode][id] = +e.target.value; presetIdx = -1; recalc(); });
+    for (const [id] of M.chk || []) $('c_' + id).addEventListener('change', e => { P[mode][id] = e.target.checked; presetIdx = -1; recalc(); });
+  }
+  function sync() {
+    const M = MODES[mode], p = P[mode];
+    for (const [id] of M.sel || []) $('s_' + id).value = p[id];
+    for (const [id, , , , , f] of M.ctl) { if (document.activeElement !== $('r_' + id)) $('r_' + id).value = p[id]; $('o_' + id).textContent = f(p[id]); }
+    for (const [id] of M.chk || []) $('c_' + id).checked = !!p[id];
+    for (const [i, b] of [...$('presets').children].entries()) b.setAttribute('aria-pressed', i === presetIdx);
+    $('presetNote').textContent = presetIdx >= 0 ? M.presets[presetIdx][2] : 'Custom design: change anything, the examples reset it.';
+    $('schTitle').textContent = M.title; $('schHint').textContent = M.hint;
+  }
+  function solveMode() {
+    const p = P[mode];
+    if (mode === 'rijke') return rijke(p);
+    if (mode === 'fridge') return refrigerator(p);
+    if (mode === 'engine') return primeMover(p);
+    if (mode === 'tw') return travelingWave(p);
+    return liquefier(p);
+  }
+  function kpis(list) { $('kpis').innerHTML = list.map(([k, v, s, c]) => `<div class="kpi${c ? ' ' + c : ''}"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join(''); }
+  const W = w => Math.abs(w) >= 1000 ? `${fmt(w / 1000, 2)} <small>kW</small>` : `${fmt(w, Math.abs(w) < 10 ? 2 : 0)} <small>W</small>`;
+  function render() {
+    const r = R, p = P[mode], fl = [];
+    if (mode === 'rijke') {
+      kpis([['State', r.on ? 'Singing' : 'Silent', r.on ? 'heat release is in phase with pressure' : 'losses beat the Rayleigh drive', r.on ? 'good' : 'alm'], ['Pitch', `${fmt(r.f, 0)} <small>Hz</small>`, `half-wave fundamental of a ${fmt(p.L, 2)} m tube`], ['Sound level', r.on ? `${fmt(r.spl, 0)} <small>dB</small>` : '—', 'inside the tube, at the pressure antinode'], ['Onset heater power', r.Qcrit ? `${fmt(r.Qcrit, 0)} <small>W</small>` : 'never', r.Qcrit ? 'at this position' : 'no position in the upper half or without draft']]);
+      if (!p.flow) fl.push(['alm', 'No draft: the Rijke effect needs steady flow through the heater']);
+      if (p.xh > 0.5) fl.push(['alm', 'Heater in the upper half: heat release opposes the oscillation']);
+    } else if (mode === 'fridge') {
+      kpis([['Cooling', W(r.Qc), `at ${fmt(p.Tc, 0)} °C`, r.Qc > 0 ? 'good' : 'bad'], ['COP', r.cop > 0 ? fmt(r.cop, 2) : '—', `${fmt(r.cop / r.copC * 100, 1)}% of Carnot (${fmt(r.copC, 2)})`], ['Electric input', W(r.Wel), `${W(r.Wac).replace(/<[^>]+>/g, '')} acoustic at ${pct(p.etaDrv)} driver efficiency`], ['Γ (gradient / critical)', fmt(r.Gam, 2), r.Gam < 1 ? 'below 1: pumps heat' : 'above 1: would be an engine', r.Gam < 1 ? '' : 'bad'],
+        ['Resonator', `${fmt(r.L * 100, 1)} <small>cm</small>`, `half-wave at ${fmt(p.f, 0)} Hz (λ ${fmt(r.lam, 2)} m)`], ['Thermal penetration', `${fmt(r.dk * 1000, 3)} <small>mm</small>`, `plate gap ${fmt(2 * r.y0 * 1000, 2)} mm`], ['Pressure amplitude', `${fmt(r.pA / 1000, 1)} <small>kPa</small>`, `${fmt(20 * Math.log10(r.pA / Math.SQRT2 / 2e-5), 0)} dB inside`], ['Heat rejected', W(r.Qh), 'at the hot exchanger']]);
+      if (r.Qc <= 0) fl.push(['bad', 'No net cooling: the temperature span is beyond what this stack can hold']);
+      if (p.xs + p.dx / 2 > r.L / 2) fl.push(['alm', 'Stack is past the velocity antinode (the middle of the resonator): its two halves fight each other']);
+      if (p.gapRatio < 0.8) fl.push(['alm', 'Plates too close: the gas is locked to the plate temperature and viscous loss grows']);
+      if (p.gapRatio > 3) fl.push(['alm', 'Plates too far apart: most of the gas never feels the plate']);
+    } else if (mode === 'engine') {
+      kpis([['State', r.Dss > 0 ? 'Running' : 'Silent', r.Ton ? `starts at about ${fmt(r.Ton, 0)} °C` : 'no onset below 1000 °C', r.Dss > 0 ? 'good' : 'alm'], ['Acoustic power to load', W(r.Wout), `drive ratio ${fmt(r.Dss, 2)}%`], ['Efficiency', r.eff > 0 ? pct(r.eff) : '—', `${fmt(r.eff / r.effC * 100, 1)}% of Carnot (${pct(r.effC)})`], ['Heat input', W(r.Qh), 'at the hot exchanger'],
+        ['Γ (gradient / critical)', fmt(r.Gam, 2), r.Gam > 1 ? 'above 1: makes sound' : 'below 1: absorbs sound'], ['Sound level inside', r.Dss > 0 ? `${fmt(r.spl, 0)} <small>dB</small>` : '—', 'at the pressure antinode'], ['Resonator', `${fmt(r.L * 100, 1)} <small>cm</small>`, `λ ${fmt(r.lam, 2)} m`], ['Thermal penetration', `${fmt(r.dk * 1000, 3)} <small>mm</small>`, `plate gap ${fmt(2 * r.y0 * 1000, 2)} mm`]]);
+      if (r.Dss >= p.maxDrive - 1e-6) fl.push(['alm', 'Amplitude capped at 8% drive: real engines saturate through turbulence and harmonics']);
+    } else if (mode === 'tw') {
+      kpis([['Acoustic power', W(r.Wout), r.on ? 'to the resonator and load' : 'below onset'], ['Efficiency', pct(r.eff), `${fmt(r.rel * 100, 0)}% of Carnot (${pct(r.effC)})`, r.rel > 0.35 ? 'good' : ''], ['Heat rejected', W(r.Qrej), 'at the cold exchanger'], ['Streaming heat leak', r.streamLeak > 0 ? W(r.streamLeak * 1000) : '0 <small>W</small>', p.jetPump ? 'stopped by the jet pump' : 'Gedeon streaming round the loop', p.jetPump ? '' : 'alm']]);
+      if (!p.jetPump) fl.push(['alm', 'No gas diode: steady flow round the torus carries heat from the hot exchanger straight to the cold one']);
+    } else {
+      kpis([['Liquefied', pct(r.frac), `of the feed; ${pct(1 - r.frac)} burned to run it`, r.frac > 0.5 ? 'good' : 'alm'], ['LNG out', `${fmt(r.liqGalDay, 0)} <small>gal/day</small>`, `${fmt(r.liqGalDay * 3.785 * 0.42 / 1000, 2)} t/day`], ['Engine efficiency', pct(r.tw.eff), `${fmt(r.tw.rel * 100, 0)}% of Carnot`], ['Cooler COP', fmt(r.cop, 3), `${pct(P.lng.ptrRel)} of Carnot (${fmt(r.copC, 2)}) at ${fmt(P.lng.Tcold, 0)} K`],
+        ['Cold produced', W(r.Qcold), 'at the pulse-tube cold head'], ['Gas burned', W(r.heatIn), 'heat of combustion'], ['Energy to liquefy', `${fmt(r.hLiq / 1e6, 2)} <small>MJ/kg</small>`, 'cool methane to 111 K and condense'], ['kg liquefied per kg burned', fmt(r.perKgBurned, 2), 'the figure of merit']]);
+    }
+    $('flags').innerHTML = fl.map(([c, t]) => `<span class="chip ${c}">${t}</span>`).join('');
+    $('modeNotes').innerHTML = '';
+  }
+
+  // ---------- charts ----------
+  function axes(ctx, w, h, m, xlo, xhi, ylo, yhi, xt, yt, xf, yf) {
+    const X = x => m.l + (x - xlo) / (xhi - xlo) * (w - m.l - m.r), Y = y => h - m.b - (y - ylo) / (yhi - ylo) * (h - m.t - m.b);
+    ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.muted; ctx.strokeStyle = tok.line; ctx.lineWidth = 1;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (const y of yt) { ctx.beginPath(); ctx.moveTo(m.l, Y(y)); ctx.lineTo(w - m.r, Y(y)); ctx.stroke(); ctx.fillText(yf(y), m.l - 5, Y(y)); }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (const x of xt) { ctx.beginPath(); ctx.moveTo(X(x), m.t); ctx.lineTo(X(x), h - m.b); ctx.stroke(); ctx.fillText(xf(x), X(x), h - m.b + 5); }
+    return { X, Y };
+  }
+  const niceStep = span => { const r = span / 6, p = 10 ** Math.floor(Math.log10(r || 1)), f = r / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; };
+  const ticks = (lo, hi) => { const s = niceStep(hi - lo), out = []; for (let v = Math.ceil(lo / s) * s; v <= hi + 1e-9; v += s) out.push(+v.toFixed(6)); return out; };
+  function curve(ctx, X, Y, xs, ys, col, w = 2, dash) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); let on = false; xs.forEach((x, i) => { const y = ys[i]; if (!Number.isFinite(y)) { on = false; return; } on ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y)); on = true; }); ctx.stroke(); ctx.setLineDash([]); }
+  const dot = (ctx, x, y, c) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill(); };
+  const span = (a, b, n = 80) => Array.from({ length: n + 1 }, (_, i) => a + (b - a) * i / n);
+  function drawCharts() {
+    const p = P[mode], r = R, c1 = fit($('c1')), c2 = fit($('c2')), m = { l: 46, r: 46, t: 12, b: 26 };
+    const leg = items => items.map(([c, n]) => `<span><i style="background:${c}"></i>${n}</span>`).join('');
+    if (mode === 'rijke') {
+      $('c1Title').textContent = 'Rayleigh drive along the tube'; $('c1Note').textContent = 'Drive ∝ heat × sin(2π x / L): positive in the lower half when the draft is upward. The tube sings where drive beats losses.';
+      const xs = span(0, 1), ys = xs.map(x => rijke({ ...p, xh: x }).net), lo = Math.min(...ys, -0.2), hi = Math.max(...ys, 0.2);
+      const { X, Y } = axes(c1.ctx, c1.w, c1.h, m, 0, 1, lo, hi, [0, 0.25, 0.5, 0.75, 1], ticks(lo, hi), x => `${x * 100}%`, y => fmt(y, 2));
+      curve(c1.ctx, X, Y, [0, 1], [0, 0], tok.ink, 1); curve(c1.ctx, X, Y, xs, ys, tok.hot, 2.5); dot(c1.ctx, X(p.xh), Y(r.net), tok.ink);
+      $('lg1').innerHTML = leg([[tok.hot, 'net gain (drive − losses)']]);
+      $('c2Title').textContent = 'Sound level against heater power'; $('c2Note').textContent = 'Below the onset power the tube is silent; above it the amplitude grows until nonlinear losses balance the drive.';
+      const qs = span(0, 1000), ss = qs.map(q => { const o = rijke({ ...p, Q: q }); return o.on ? o.spl : NaN; });
+      const b = axes(c2.ctx, c2.w, c2.h, m, 0, 1000, 80, 150, ticks(0, 1000), [80, 100, 120, 140], x => `${x}`, y => `${y}`);
+      curve(c2.ctx, b.X, b.Y, qs, ss, tok.c4, 2.5); if (r.on) dot(c2.ctx, b.X(p.Q), b.Y(r.spl), tok.ink);
+      $('lg2').innerHTML = leg([[tok.c4, 'dB inside the tube (W on the axis)']]);
+    } else if (mode === 'fridge' || mode === 'engine') {
+      $('c1Title').textContent = 'Pressure and velocity along the resonator';
+      $('c1Note').textContent = 'Half-wave resonator: pressure antinodes at the ends, a velocity antinode in the middle. The stack (shaded) needs both pressure and velocity, so it sits between them.';
+      const L = r.L, xs = span(0, L), pAmp = xs.map(x => Math.cos(r.k * x)), uAmp = xs.map(x => Math.sin(r.k * x));
+      const { X, Y } = axes(c1.ctx, c1.w, c1.h, m, 0, L, -1, 1, ticks(0, L), [-1, -0.5, 0, 0.5, 1], x => `${fmt(x * 100, 0)}`, y => fmt(y, 1));
+      c1.ctx.fillStyle = tok.c5; c1.ctx.globalAlpha = 0.2; c1.ctx.fillRect(X(p.xs - p.dx / 2), m.t, X(p.xs + p.dx / 2) - X(p.xs - p.dx / 2), c1.h - m.t - m.b); c1.ctx.globalAlpha = 1;
+      curve(c1.ctx, X, Y, xs, pAmp, tok.hot, 2.5); curve(c1.ctx, X, Y, xs, uAmp, tok.cold, 2.5);
+      sm(c1.ctx, 'cm from the closed end', c1.w - m.r, c1.h - 6, 'right', tok.muted);
+      $('lg1').innerHTML = leg([[tok.hot, 'pressure amplitude'], [tok.cold, 'velocity amplitude'], [tok.c5, 'stack']]);
+      if (mode === 'fridge') {
+        $('c2Title').textContent = 'Cooling and COP against stack position'; $('c2Note').textContent = 'Too near the closed end there is no gas motion; too near the middle there is no pressure swing and viscous loss dominates. The best spot is in between.';
+        const pos = span(0.005, L / 2 - p.dx / 2, 60), qs = pos.map(x => refrigerator({ ...p, xs: x })), Q = qs.map(o => o.Qc), C = qs.map(o => o.cop);
+        const qhi = Math.max(1, ...Q), qlo = Math.min(0, Math.max(-qhi, Math.min(...Q))), chi = Math.max(0.1, ...C);
+        const b = axes(c2.ctx, c2.w, c2.h, m, 0, L / 2, qlo, qhi * 1.1, ticks(0, L / 2), ticks(qlo, qhi * 1.1), x => `${fmt(x * 100, 0)}`, y => fmt(y, 1));
+        curve(c2.ctx, b.X, b.Y, pos, Q, tok.cold, 2.5); const Yc = y => b.Y(qlo + (y / (chi * 1.1)) * (qhi * 1.1 - qlo)); curve(c2.ctx, b.X, Yc, pos, C, tok.c4, 2, [5, 3]);
+        dot(c2.ctx, b.X(p.xs), b.Y(r.Qc), tok.ink);
+        $('lg2').innerHTML = leg([[tok.cold, 'cooling (W)'], [tok.c4, `COP (top = ${fmt(chi * 1.1, 2)})`]]);
+      } else {
+        $('c2Title').textContent = 'Acoustic power and efficiency against hot temperature'; $('c2Note').textContent = 'Nothing happens until the gradient across the stack beats the critical gradient; then the amplitude grows and the load takes its share.';
+        const Ts = span(p.Tc + 5, 900, 70), os = Ts.map(T => primeMover({ ...p, Th: T })), Wv = os.map(o => o.Wout), Ev = os.map(o => o.eff * 100), whi = Math.max(0.1, ...Wv), ehi = Math.max(1, ...Ev);
+        const b = axes(c2.ctx, c2.w, c2.h, m, Ts[0], 900, 0, whi * 1.1, ticks(0, 900), ticks(0, whi * 1.1), x => `${x}°`, y => fmt(y, 1));
+        curve(c2.ctx, b.X, b.Y, Ts, Wv, tok.hot, 2.5); const Ye = y => b.Y(y / (ehi * 1.1) * whi * 1.1); curve(c2.ctx, b.X, Ye, Ts, Ev, tok.c4, 2, [5, 3]);
+        if (r.Ton) curve(c2.ctx, b.X, b.Y, [r.Ton, r.Ton], [0, whi * 1.1], tok.muted, 1, [3, 3]);
+        dot(c2.ctx, b.X(p.Th), b.Y(r.Wout), tok.ink);
+        $('lg2').innerHTML = leg([[tok.hot, 'acoustic power to load (W)'], [tok.c4, `efficiency (top = ${fmt(ehi * 1.1, 1)}%)`], [tok.muted, 'onset']]);
+      }
+    } else if (mode === 'tw') {
+      $('c1Title').textContent = 'Efficiency against hot temperature'; $('c1Note').textContent = 'The jet pump and the tapered buffer tube were the two fixes that took the Los Alamos engine to 41% of Carnot.';
+      const Ts = span(100, 800, 70), combos = [[true, true, tok.ok, 'jet pump + taper'], [true, false, tok.c5, 'jet pump only'], [false, true, tok.hot, 'no jet pump'], [false, false, tok.muted, 'neither']];
+      const b = axes(c1.ctx, c1.w, c1.h, m, 100, 800, 0, 40, ticks(100, 800), [0, 10, 20, 30, 40], x => `${x}°`, y => `${y}%`);
+      curve(c1.ctx, b.X, b.Y, Ts, Ts.map(T => (1 - (p.Tc + 273.15) / (T + 273.15)) * 100 * 0.5), tok.line, 1.5, [4, 4]);
+      for (const [j, t, c] of combos) curve(c1.ctx, b.X, b.Y, Ts, Ts.map(T => travelingWave({ ...p, Th: T, jetPump: j, taper: t }).eff * 100), c, 2.2);
+      dot(c1.ctx, b.X(p.Th), b.Y(r.eff * 100), tok.ink);
+      $('lg1').innerHTML = leg(combos.map(([, , c, n]) => [c, n]).concat([[tok.line, 'half of Carnot']]));
+      $('c2Title').textContent = 'Heat engines compared'; $('c2Note').textContent = 'Typical thermal efficiencies quoted alongside the 1999 result: the thermoacoustic Stirling engine matched piston machines with no moving parts.';
+      barChart(c2, [['Standing-wave thermoacoustic', 5, 15, tok.c5], ['Traveling-wave (this model)', r.eff * 100, r.eff * 100, tok.ok], ['Piston Stirling engines', 20, 38, tok.c4], ['Car petrol engines', 25, 40, tok.hot]], '%');
+      $('lg2').innerHTML = '';
+    } else {
+      $('c1Title').textContent = 'Share of the gas liquefied'; $('c1Note').textContent = 'Every kilogram burned must supply the cold for the rest: engine efficiency × cooler COP × heating value ÷ energy to liquefy.';
+      const es = span(0.02, 0.4, 60), b = axes(c1.ctx, c1.w, c1.h, m, 0.02, 0.4, 0, 100, [0.1, 0.2, 0.3, 0.4], [0, 25, 50, 75, 100], x => `${fmt(x * 100, 0)}%`, y => `${y}%`);
+      const fracAt = (eff, rel) => { const k = 50e6 * P.lng.etaBurn * eff * rel * r.copC / r.hLiq; return k / (1 + k) * 100; };
+      const rels = [[0.08, tok.muted], [0.15, tok.c5], [0.25, tok.ok], [0.35, tok.c4]];
+      for (const [rel, c] of rels) curve(c1.ctx, b.X, b.Y, es, es.map(e => fracAt(e, rel)), c, 2);
+      dot(c1.ctx, b.X(clamp(r.tw.eff, 0.02, 0.4)), b.Y(r.frac * 100), tok.ink);
+      sm(c1.ctx, 'engine efficiency →', c1.w - m.r, c1.h - 6, 'right', tok.muted);
+      $('lg1').innerHTML = leg(rels.map(([rel, c]) => [c, `cooler at ${fmt(rel * 100, 0)}% of Carnot`]));
+      $('c2Title').textContent = 'Where the fuel energy goes'; $('c2Note').textContent = 'Per kilogram of gas burned. Most of the energy leaves as heat at room temperature; a small slice becomes cold at −150 °C.';
+      const LHV = 50, burn = LHV * (1 - P.lng.etaBurn), eng = LHV * P.lng.etaBurn * (1 - r.tw.eff), sound = LHV * P.lng.etaBurn * r.tw.eff, cold = sound * r.cop;
+      barChart(c2, [['Burner losses', burn, burn, tok.muted], ['Engine heat rejected', eng, eng, tok.hot], ['Sound made', sound, sound, tok.c5], ['Cold delivered', cold, cold, tok.cold]], ' MJ');
+      $('lg2').innerHTML = '';
+    }
+  }
+  function barChart(c, rows, unit) {
+    const { ctx, w, h } = c, m = { l: 190, r: 60, t: 16, b: 10 }, hi = Math.max(...rows.map(r => r[2])) * 1.1, bh = (h - m.t - m.b) / rows.length;
+    rows.forEach(([n, a, b, col], i) => {
+      const y = m.t + i * bh + bh * 0.2, X = v => m.l + v / hi * (w - m.l - m.r);
+      ctx.fillStyle = col; ctx.globalAlpha = 0.85; ctx.fillRect(X(0), y, Math.max(2, X(b) - X(0)), bh * 0.6); ctx.globalAlpha = 1;
+      if (b > a) { ctx.fillStyle = tok.panel; ctx.globalAlpha = 0.45; ctx.fillRect(X(0), y, X(a) - X(0), bh * 0.6); ctx.globalAlpha = 1; }
+      sm(ctx, n, m.l - 8, y + bh * 0.3, 'right', tok.ink);
+      sm(ctx, a === b ? `${fmt(a, 1)}${unit}` : `${fmt(a, 0)}–${fmt(b, 0)}${unit}`, X(b) + 6, y + bh * 0.3, 'left', tok.ink);
+    });
+  }
+  const SRC = [
+    ['G. W. Swift, "Thermoacoustic engines," J. Acoust. Soc. Am. 84, 1145 (1988): short-stack theory', 'https://doi.org/10.1121/1.396617'],
+    ['Tijani, Zeegers & de Waele, "Design of thermoacoustic refrigerators," Cryogenics 42, 49 (2002)', 'https://search.isc.ac/inventory/10/1172220.htm'],
+    ['Tijani et al., "Construction and performance of a thermoacoustic refrigerator," Cryogenics 42, 59 (2002): −65 °C measured', 'https://iifiir.org/en/fridoc/construction-and-performance-of-a-thermoacoustic-refrigerator-121029'],
+    ['Backhaus & Swift, "A thermoacoustic Stirling heat engine," Nature 399, 335 (1999)', 'https://ideas.repec.org/a/nat/nature/v399y1999i6734d10.1038_20624.html'],
+    ['Backhaus & Swift, detailed study, J. Acoust. Soc. Am. (2000): 30% efficiency, 41% of Carnot', 'https://sites.science.oregonstate.edu/~hetheriw/energy/topics/doc/thermo/heat_eng/Stirling_engine/thermoacoustic-Stirling.heat.engine.detailed.study.j.acous.soc.2000.pdf'],
+    ['Garrett, Adeff & Hofler, "Thermoacoustic refrigerator for space applications," J. Thermophys. Heat Transfer 7, 595 (1993): STAR on STS-42', 'https://iifiir.org/en/fridoc/thermoacoustic-refrigerator-for-space-applications-100394'],
+    ["Penn State and Ben & Jerry's thermoacoustic ice-cream chiller (2004)", 'https://www.eurekalert.org/news-releases/664521'],
+    ['Wollan et al., LANL/Praxair thermoacoustic natural gas liquefiers (2002)', 'https://neno.lanl.gov/org/ddste/aldps/materials-physics-applications/quantum/thermoacoustics/_assets/docs/Wollan.pdf'],
+    ['Thermoacoustic natural gas liquefiers and recent developments (IIR)', 'https://iifiir.org/en/fridoc/thermoacoustic-natural-gas-liquefiers-and-recent-developments-22319'],
+  ];
+  $('srcList').innerHTML = SRC.map(([t, u]) => `<li><a href="${u}" target="_blank" rel="noopener">${t}</a></li>`).join('');
+  // =====================================================================================
+  // Animated schematics
+  // =====================================================================================
+  const SW = 1060, SH = 390;
+  let phase = 0;
+  const wv = () => 2 * Math.PI * 0.55 * phase;                 // the sound, slowed down to about half a cycle per second
+  const pcol = v => v >= 0 ? `rgba(194,71,28,${Math.min(0.55, Math.abs(v) * 0.55)})` : `rgba(31,111,181,${Math.min(0.55, Math.abs(v) * 0.55)})`;
+  function txt(ctx, t, x, y, al = 'center', c = tok.ink, size = 11, wt = 500) { ctx.font = `${wt} ${size}px "JetBrains Mono", monospace`; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); }
+  function arrow(ctx, x0, y0, x1, y1, c, w = 3) { line(ctx, [[x0, y0], [x1, y1]], c, w); arrowHead(ctx, x1, y1, x1 - x0, y1 - y0, c, 8); }
+  function flame(ctx, x, y, n = 3) { for (let k = 0; k < n; k++) { const fx = x - (n - 1) * 9 + k * 18, fl = 10 + 4 * Math.sin(phase * 9 + k * 2); ctx.fillStyle = k % 2 ? '#f2b33d' : tok.hot; ctx.beginPath(); ctx.moveTo(fx - 7, y); ctx.quadraticCurveTo(fx, y - fl * 2.2, fx + 7, y); ctx.closePath(); ctx.fill(); } }
+
+  function drawSch() {
+    const { ctx } = fit($('sch'), SW, SH); ctx.fillStyle = tok.panel; ctx.fillRect(0, 0, SW, SH);
+    if (mode === 'rijke') return drawRijke(ctx);
+    if (mode === 'tw' || mode === 'lng') return drawLoop(ctx);
+    drawResonator(ctx);
+  }
+
+  // ---------- half-wave resonator with stack, and a close-up of one gas parcel ----------
+  function drawResonator(ctx) {
+    const p = P[mode], r = R, fr = mode === 'fridge', x0 = 130, x1 = 930, y0 = 70, y1 = 140, L = r.L, X = x => x0 + x / L * (x1 - x0);
+    const amp = fr ? Math.min(1, p.drive / 3) : Math.min(1, (r.Dss || 0) / 3), om = wv();
+    // pressure field
+    for (let px = x0; px < x1; px += 4) { const x = (px - x0) / (x1 - x0) * L, v = amp * Math.cos(r.k * x) * Math.cos(om); ctx.fillStyle = pcol(v); ctx.fillRect(px, y0, 4, y1 - y0); }
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 3; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0); ctx.fillStyle = tok.ink; ctx.fillRect(x0 - 6, y0 - 6, 6, y1 - y0 + 12); ctx.fillRect(x1, y0 - 6, 6, y1 - y0 + 12);
+    // gas particles: displacement ∝ sin(kx) sin(ωt)
+    ctx.fillStyle = tok.ink; for (let j = 0; j < 22; j++) { const xr = (j + 0.5) / 22 * L, d = amp * 18 * Math.sin(r.k * xr) * Math.sin(om); for (const yy of [y0 + 18, y0 + 52]) { ctx.beginPath(); ctx.arc(X(xr) + d, yy, 2.2, 0, Math.PI * 2); ctx.fill(); } }
+    // stack and heat exchangers
+    const sx0 = X(p.xs - p.dx / 2), sx1 = X(p.xs + p.dx / 2), sw = Math.max(10, sx1 - sx0);
+    ctx.fillStyle = tok.raised; ctx.fillRect(sx0, y0 + 2, sw, y1 - y0 - 4); ctx.strokeStyle = tok.muted; ctx.lineWidth = 1; for (let yy = y0 + 6; yy < y1 - 2; yy += 6) { ctx.beginPath(); ctx.moveTo(sx0, yy); ctx.lineTo(sx0 + sw, yy); ctx.stroke(); }
+    ctx.fillStyle = tok.hot; ctx.fillRect(sx0 - 7, y0 + 2, 7, y1 - y0 - 4); ctx.fillStyle = tok.cold; ctx.fillRect(sx0 + sw, y0 + 2, 7, y1 - y0 - 4);
+    txt(ctx, `stack ${fmt(p.dx * 100, 1)} cm`, sx0 + sw / 2, y1 + 14);
+    if (fr) {
+      arrow(ctx, sx0 - 4, y0 - 2, sx0 - 4, y0 - 34, tok.hot); txt(ctx, `${fmt(R.Qh, 1)} W out at ${fmt(p.Th, 0)} °C`, sx0 - 10, y0 - 42, 'right', tok.hot);
+      arrow(ctx, sx0 + sw + 4, y1 + 40, sx0 + sw + 4, y1 + 2, tok.cold); txt(ctx, `${fmt(Math.max(0, R.Qc), 1)} W cooling at ${fmt(p.Tc, 0)} °C`, sx0 + sw + 12, y1 + 30, 'left', tok.cold);
+      // loudspeaker
+      ctx.fillStyle = tok.steel; ctx.beginPath(); ctx.moveTo(x0 - 6, y0 + 10); ctx.lineTo(x0 - 40, y0 - 10); ctx.lineTo(x0 - 40, y1 + 10); ctx.lineTo(x0 - 6, y1 - 10); ctx.closePath(); ctx.fill(); ctx.fillRect(x0 - 62, y0 + 18, 22, y1 - y0 - 36);
+      const cone = 4 * amp * Math.cos(om); ctx.strokeStyle = tok.ink; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x0 - 8 + cone, y0 + 6); ctx.lineTo(x0 - 8 + cone, y1 - 6); ctx.stroke();
+      txt(ctx, 'loudspeaker', x0 - 40, y1 + 28); txt(ctx, `${fmt(R.Wel, 1)} W electric`, x0 - 40, y1 + 42, 'center', tok.muted);
+    } else {
+      flame(ctx, sx0 - 4, y0 - 4, 2); arrow(ctx, sx0 - 4, y0 - 48, sx0 - 4, y0 - 26, tok.hot); txt(ctx, `${fmt(R.Qh, 1)} W heat in at ${fmt(p.Th, 0)} °C`, sx0 - 10, y0 - 54, 'right', tok.hot);
+      arrow(ctx, sx0 + sw + 4, y1 + 2, sx0 + sw + 4, y1 + 36, tok.cold); txt(ctx, `rejected at ${fmt(p.Tc, 0)} °C`, sx0 + sw + 12, y1 + 30, 'left', tok.cold);
+      if (p.loadF > 0) { ctx.fillStyle = tok.raised; ctx.fillRect(x1 + 6, y0 - 4, 70, y1 - y0 + 8); ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; ctx.strokeRect(x1 + 6, y0 - 4, 70, y1 - y0 + 8); txt(ctx, 'load', x1 + 41, y0 + 20); txt(ctx, `${fmt(R.Wout, 2)} W`, x1 + 41, y0 + 40, 'center', tok.c4); }
+      txt(ctx, R.Dss > 0 ? `singing · ${fmt(R.spl, 0)} dB inside` : 'silent: below onset', (x0 + x1) / 2, y0 - 16, 'center', R.Dss > 0 ? tok.ok : tok.muted, 12, 700);
+    }
+    txt(ctx, 'pressure antinode', x0 + 40, y1 + 58, 'center', tok.muted); txt(ctx, 'velocity antinode', (x0 + x1) / 2, y1 + 58, 'center', tok.muted); txt(ctx, 'pressure antinode', x1 - 40, y1 + 58, 'center', tok.muted);
+    drawParcel(ctx, 140, 230, 780, 140);
+  }
+  // close-up: one parcel next to a plate. It is squeezed (hot) when displaced toward the closed end.
+  function drawParcel(ctx, x, y, w, h) {
+    const r = R, p = P[mode], Gam = r.Gam, om = wv(), fr = mode === 'fridge';
+    ctx.fillStyle = tok.raised; ctx.fillRect(x, y, w, h); ctx.strokeStyle = tok.line; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
+    txt(ctx, 'CLOSE-UP: ONE GAS PARCEL BESIDE A STACK PLATE', x + 10, y + 14, 'left', tok.ink, 11, 700);
+    // plate with its temperature gradient (hot toward the closed end, on the left)
+    const px0 = x + 120, px1 = x + w - 120, py = y + 84;
+    const grad = ctx.createLinearGradient(px0, 0, px1, 0); grad.addColorStop(0, tok.hot); grad.addColorStop(1, tok.cold);
+    ctx.fillStyle = grad; ctx.fillRect(px0, py, px1 - px0, 12);
+    txt(ctx, `${fmt(p.Th, 0)} °C end`, px0 - 8, py + 6, 'right', tok.hot); txt(ctx, `${fmt(p.Tc, 0)} °C end`, px1 + 8, py + 6, 'left', tok.cold);
+    // parcel motion: displacement d (−1 toward the closed end … +1), compression ∝ −d
+    const d = -Math.cos(om), cx = (px0 + px1) / 2 + d * (px1 - px0) * 0.3, cy = py - 24;
+    const swing = 1, plateT = -d * 0.3 * 2 * Gam * swing, gasT = -d * swing * 0.6;  // relative temperatures: plate local vs parcel
+    const hotter = gasT - plateT, rad = 17 - 4 * d;
+    ctx.fillStyle = hotter > 0 ? tok.hot : tok.cold; ctx.globalAlpha = 0.25 + 0.6 * Math.min(1, Math.abs(gasT)); ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; ctx.stroke();
+    const q = Math.abs(hotter) > 0.05;
+    if (q) { if (hotter > 0) arrow(ctx, cx, cy + rad, cx, py - 2, tok.hot, 2.5); else arrow(ctx, cx, py - 2, cx, cy + rad, tok.cold, 2.5); }
+    // explanation
+    const pump = Gam < 1;
+    txt(ctx, `Γ = ${fmt(Gam, 2)}`, x + 60, py - 24, 'center', tok.ink, 14, 700);
+    txt(ctx, pump ? 'gradient below critical' : 'gradient above critical', x + 60, py - 6, 'center', tok.muted);
+    txt(ctx, pump ? 'squeezed near the hot end, the parcel dumps heat to the plate; expanded near the cold end, it picks heat up.' : 'the plate is hotter than the squeezed parcel: heat goes in at high pressure and out at low pressure, so the parcel does net work on the wave.', x + w / 2, y + h - 12, 'center', tok.muted);
+    txt(ctx, pump ? '→ heat pumped toward the closed end (a refrigerator)' : '→ sound produced (an engine)', x + w / 2, y + 36, 'center', pump ? tok.cold : tok.hot, 12, 700);
+    if (fr !== pump) txt(ctx, fr ? 'this stack is running as an engine, not a fridge' : 'not enough gradient to drive sound', x + w - 10, y + 14, 'right', tok.danger, 11, 700);
+  }
+
+  // ---------- Rijke tube ----------
+  function drawRijke(ctx) {
+    const p = P.rijke, r = R, H = Math.min(330, 150 + p.L * 90), yb = 365, yt = yb - H, cx = 380, wT = Math.max(24, p.D * 900), om = wv(), amp = r.on ? Math.min(1, r.amp / 200) : 0;
+    for (let yy = yt; yy < yb; yy += 4) { const s = (yb - yy) / H, v = amp * Math.sin(Math.PI * s) * Math.cos(om); ctx.fillStyle = pcol(v); ctx.fillRect(cx - wT / 2, yy, wT, 4); }
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx - wT / 2, yt); ctx.lineTo(cx - wT / 2, yb); ctx.moveTo(cx + wT / 2, yt); ctx.lineTo(cx + wT / 2, yb); ctx.stroke();
+    const yh = yb - p.xh * H; ctx.strokeStyle = p.Q > 0 ? tok.hot : tok.muted; ctx.lineWidth = 4; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(cx - wT / 2, yh); ctx.lineTo(cx + wT / 2, yh); ctx.stroke(); ctx.setLineDash([]);
+    txt(ctx, `heated gauze · ${fmt(p.Q, 0)} W`, cx + wT / 2 + 12, yh, 'left', tok.hot);
+    if (p.flow) for (let k = 0; k < 4; k++) { const yy = yb - ((phase * 60 + k * H / 4) % H); arrow(ctx, cx, yy + 10, cx, yy - 6, tok.vapour, 2); }
+    txt(ctx, p.flow ? 'warm air rises' : 'no draft', cx - wT / 2 - 12, yb - 30, 'right', tok.muted);
+    if (r.on) for (const [ex, ey, dir] of [[cx, yt, -1], [cx, yb, 1]]) for (let k = 0; k < 3; k++) { const rr = ((phase * 40 + k * 20) % 60) + 8; ctx.strokeStyle = tok.c4; ctx.globalAlpha = 1 - rr / 70; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ex, ey, rr, dir < 0 ? Math.PI * 1.15 : Math.PI * 0.15, dir < 0 ? Math.PI * 1.85 : Math.PI * 0.85); ctx.stroke(); ctx.globalAlpha = 1; }
+    txt(ctx, r.on ? `SINGING · ${fmt(r.f, 0)} Hz · ${fmt(r.spl, 0)} dB` : 'SILENT', 760, 80, 'center', r.on ? tok.ok : tok.muted, 18, 700);
+    txt(ctx, 'Rayleigh (1878): heat added where and when the pressure is high drives the oscillation.', 760, 130, 'center', tok.muted);
+    txt(ctx, 'With upward draft, heat released by the gauze lags the air motion;', 760, 150, 'center', tok.muted);
+    txt(ctx, 'in the lower half that lag puts the heat release in phase with pressure.', 760, 168, 'center', tok.muted);
+    txt(ctx, 'Colours: pressure above (red) and below (blue) the mean.', 760, 200, 'center', tok.muted);
+  }
+
+  // ---------- traveling-wave loop (and the liquefier) ----------
+  function drawLoop(ctx) {
+    const lng = mode === 'lng', p = P[mode], r = lng ? R.tw : R, om = wv(), on = r.on;
+    const lx0 = 70, lx1 = 470, ly0 = 60, ly1 = 300;
+    // torus
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 18; ctx.strokeRect(lx0, ly0, lx1 - lx0, ly1 - ly0);
+    ctx.strokeStyle = tok.raised; ctx.lineWidth = 12; ctx.strokeRect(lx0, ly0, lx1 - lx0, ly1 - ly0);
+    // components on the top branch: cold HX, regenerator, hot HX, thermal buffer tube, secondary cold HX
+    const comp = [[140, 'cold HX', tok.cold, 14, 1], [200, 'regenerator', tok.c5, 60, -1], [262, 'hot HX', tok.hot, 14, 1], [340, 'buffer tube', tok.vapour, 70, -1], [425, '2nd cold HX', tok.cold, 14, 1]];
+    for (const [cxp, n, c, w2, side] of comp) { ctx.fillStyle = c; ctx.fillRect(cxp - w2 / 2, ly0 - 12, w2, 24); txt(ctx, n, cxp, side > 0 ? ly0 + 26 : ly0 - 24, 'center', tok.ink); }
+    if (!(p.taper)) txt(ctx, 'straight buffer tube: Rayleigh streaming', 340, ly0 + 26, 'center', tok.danger);
+    flame(ctx, 262, ly0 - 14, 2);
+    // jet pump on the left branch
+    ctx.fillStyle = p.jetPump ? tok.c4 : tok.line; ctx.beginPath(); ctx.moveTo(lx0 - 12, 160); ctx.lineTo(lx0 + 12, 160); ctx.lineTo(lx0 + 4, 190); ctx.lineTo(lx0 - 4, 190); ctx.closePath(); ctx.fill();
+    txt(ctx, p.jetPump ? 'jet pump (gas diode)' : 'no jet pump', lx0 + 18, 176, 'left', p.jetPump ? tok.c4 : tok.danger);
+    txt(ctx, 'inertance + compliance (feedback)', (lx0 + lx1) / 2, ly1 + 24, 'center', tok.muted);
+    // acoustic power circulates cold → hot through the regenerator (clockwise on top)
+    if (on) { const path = [[lx0, ly1], [lx0, ly0], [lx1, ly0], [lx1, ly1], [lx0, ly1]]; flowDots(ctx, path, tok.c4, 0.6, 10, 3.2); }
+    if (!p.jetPump && on) { const path = [[lx0 + 14, ly1 - 14], [lx0 + 14, ly0 + 14], [lx1 - 14, ly0 + 14], [lx1 - 14, ly1 - 14], [lx0 + 14, ly1 - 14]]; flowDots(ctx, path, tok.hot, 0.25, 8, 2.5); txt(ctx, 'Gedeon streaming: steady hot-gas flow', (lx0 + lx1) / 2, ly0 + 44, 'center', tok.hot); }
+    txt(ctx, `${fmt(r.eff * 100, 1)}% efficient · ${fmt(r.rel * 100, 0)}% of Carnot`, (lx0 + lx1) / 2 + 30, (ly0 + ly1) / 2 + 30, 'center', tok.ink, 13, 700);
+    txt(ctx, 'pressure and velocity in phase', (lx0 + lx1) / 2 + 30, (ly0 + ly1) / 2 + 50, 'center', tok.muted);
+    // resonator to the right
+    const rx0 = lx1 + 9, rx1 = lng ? 760 : 960, ry0 = 200, ry1 = 240;
+    for (let px = rx0; px < rx1; px += 4) { const v = on ? 0.8 * Math.cos(Math.PI * (px - rx0) / (rx1 - rx0) * 0.5) * Math.cos(om) : 0; ctx.fillStyle = pcol(v); ctx.fillRect(px, ry0, 4, ry1 - ry0); }
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2.5; ctx.strokeRect(rx0, ry0, rx1 - rx0, ry1 - ry0);
+    txt(ctx, lng ? 'resonator → pulse tube' : `resonator · ${fmt(r.Wout, 0)} W of sound to the load`, (rx0 + rx1) / 2, ry0 - 14, 'center', tok.ink);
+    if (!lng) { ctx.fillStyle = tok.raised; ctx.fillRect(rx1, ry0 - 30, 80, 100); ctx.strokeStyle = tok.ink; ctx.strokeRect(rx1, ry0 - 30, 80, 100); txt(ctx, 'load or', rx1 + 40, ry0 + 6); txt(ctx, 'alternator', rx1 + 40, ry0 + 22); return; }
+    // pulse-tube refrigerator and the gas flows of the liquefier
+    const L2 = R, ptx = 800;
+    ctx.fillStyle = tok.c5; ctx.fillRect(ptx - 18, 120, 36, 80); txt(ctx, 'regenerator', ptx + 26, 160, 'left');
+    ctx.fillStyle = tok.cold; ctx.fillRect(ptx - 22, 104, 44, 16); txt(ctx, `cold head ${fmt(P.lng.Tcold, 0)} K`, ptx + 30, 112, 'left', tok.cold);
+    ctx.strokeStyle = tok.ink; ctx.lineWidth = 2; ctx.strokeRect(ptx - 14, 20, 28, 84); txt(ctx, 'pulse tube', ptx + 24, 50, 'left');
+    ctx.beginPath(); ctx.arc(ptx, 14, 6, 0, Math.PI * 2); ctx.stroke(); txt(ctx, 'orifice + reservoir', ptx + 14, 14, 'left', tok.muted);
+    line(ctx, [[rx1, 220], [ptx, 220], [ptx, 200]], tok.ink, 3);
+    for (let k = 0; k < 3; k++) { const dy = (phase * 30 + k * 12) % 36; ctx.fillStyle = tok.cold; ctx.beginPath(); ctx.arc(ptx + 60, 122 + dy, 3, 0, Math.PI * 2); ctx.fill(); }
+    txt(ctx, `LNG ${fmt(L2.liqGalDay, 0)} gal/day`, ptx + 70, 176, 'left', tok.cold, 12, 700);
+    // pipeline: feed splits to the burner and to the cold head
+    line(ctx, [[1040, 340], [ptx + 60, 340], [ptx + 60, 122]], tok.vapour, 4); txt(ctx, `natural gas in · ${fmt(P.lng.feed, 0)} gal/day equivalent`, 1040, 360, 'right', tok.ink);
+    line(ctx, [[ptx + 60, 340], [262, 340], [262, ly0 + 40]], tok.hot, 3, [6, 4]); txt(ctx, `${fmt((1 - L2.frac) * 100, 0)}% burned to drive the engine`, 520, 330, 'center', tok.hot);
+    flowDots(ctx, [[1040, 340], [ptx + 60, 340], [ptx + 60, 122]], '#fff', 0.5, 6, 2);
+  }
+
+  function recalc() { R = solveMode(); sync(); render(); drawCharts(); }
+  let last = performance.now();
+  function tick(now) { const dt = Math.min(0.1, (now - last) / 1000); last = now; phase += dt; if (R) drawSch(); requestAnimationFrame(tick); }
+  window.addEventListener('resize', () => { if (R) drawCharts(); });
+  new MutationObserver(() => { readTokens(); drawCharts(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { readTokens(); drawCharts(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => R && drawCharts());
+  readTokens(); build(); recalc();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

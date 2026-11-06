@@ -17,8 +17,9 @@ This repo serves `erikson1970.github.io` as a whole:
   downloadable STL/SCAD files (see its own `README.md`). Two further
   sections hold collections of single-file pages, one sub-directory per
   page: `projects/plant_models/` (thermal plant models) and
-  `projects/HVAC-stuff/` (home heating and cooling analyses), each with a
-  section `index.html` and `README.md`.
+  `projects/HVAC-stuff/` (home heating and cooling analyses) and
+  `projects/exotic-heat-engines/` (thermoacoustic and other unusual
+  engines), each with a section `index.html` and `README.md`.
 - `ISSUES.md` and `TRACEABILITY.md` at the root are shared across the whole
   repo (one continuous history, not split per project) — see "Issue and
   requirement tracking" below.

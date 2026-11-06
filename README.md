@@ -12,7 +12,8 @@ Personal site and project host for [erikson1970](https://github.com/erikson1970)
     ├── world-history/  World History Explorer — see projects/world-history/README.md
     ├── representing-3d-shapes/  Epicycles vs wires vs mesh — see projects/representing-3d-shapes/README.md
     ├── plant_models/   Interactive thermal plant models — see projects/plant_models/README.md
-    └── HVAC-stuff/     Home heating & cooling analyses — see projects/HVAC-stuff/README.md
+    ├── HVAC-stuff/     Home heating & cooling analyses — see projects/HVAC-stuff/README.md
+    └── exotic-heat-engines/  Thermoacoustic and other unusual engines — see its README.md
 ```
 
 The root is a small, static landing page — no framework, no backend, no
@@ -40,9 +41,14 @@ split per project. See `AGENTS.md` for the full development workflow
   thermal plant models, from a counterflow heat exchanger and a storage-tank
   loop to a pressurized-water reactor plant with its steam and electric
   plants, an RBMK-1000 model of the 1986 Chernobyl excursion, and a
-  heat-driven refrigeration lab built around Einstein's fridge. Each
-  model is a sub-page. See `projects/plant_models/README.md`.
+  heat-driven refrigeration lab built around Einstein's fridge, and an
+  exhaust-driven car air conditioner. Each model is a sub-page. See `projects/plant_models/README.md`.
 - **[HVAC stuff](projects/HVAC-stuff/)** — home heating and cooling
   analyses, starting with a ground-source heat pump model for a
   Wellesley, MA home with a 20-year cost comparison. See
   `projects/HVAC-stuff/README.md`.
+- **[Exotic heat engines](projects/exotic-heat-engines/)** — engines and
+  refrigerators off the beaten track, starting with a thermoacoustics lab
+  (Rijke tube, the Space Shuttle refrigerator, the Los Alamos
+  traveling-wave engine, a gas-fired LNG liquefier). See
+  `projects/exotic-heat-engines/README.md`.
