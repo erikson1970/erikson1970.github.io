@@ -153,7 +153,7 @@ over the new project is still owed.
 - **Status:** Tabled
 - **Filed:** Milestone 9 (2026-10-12)
 
-The pages under `projects/plant_models/*/` (eleven as of Milestone 15, one of them a redirect stub) and
+The pages under `projects/plant_models/*/` (ten as of Milestone 15, one of them a redirect stub) and
 `projects/HVAC-stuff/ground-source-heat-pump/` were developed as single
 self-contained HTML files in a separate working folder
 (`Energy-Flow/visualization/`, not in this repo) and copied in, wrapped in a
@@ -493,3 +493,17 @@ independent council reviewer covering all three lenses.
 No gatekeepers. Minor fixed inline: adsorption trap icon, shared-air label,
 preheater animation path, tube count, prose. Open minor: parallel-flow lanes
 for absorber/condenser/evaporator run against their drawn inlet pipes.
+
+### Milestone 15 — Exhaust-Driven Car AC Lab
+Reviewed 2026-11-06 on branch `feature/car-exhaust-ac` vs. `main` by one
+independent council reviewer covering all three lenses.
+
+| Lens | Verdict |
+|---|---|
+| Content integrity & plausibility | PASS_WITH_MINOR_ISSUES |
+| Static-site architecture / constraints | PASS |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No gatekeepers. Minor fixed inline: reference-car coil coupling, crystallization
+latch, fan accounting, scrubber sync, dead code, traceability wording, page count.
+Open: idle cooling is below the cited prototype figure in hot climates.

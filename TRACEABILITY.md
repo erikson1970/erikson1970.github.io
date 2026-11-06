@@ -601,13 +601,20 @@ surroundings; placed with the other absorption plants.
 |---|---|---|---|---|
 | M15-1 | Exhaust-driven Einstein-style AC for a car | User request | Met | `simulate()`: drive cycle → engine load → exhaust heat and temperature → exhaust heat exchanger → generator with thermal mass and bypass → machine (Einstein–Szilard default, plus diffusion, NH3–H2O, LiBr, zeolite) |
 | M15-2 | Cabin demand model heated by the environment | User request | Met | Two-node cabin (air + interior): solar through glass, sol-air conduction scaling with speed, ventilation and leakage with latent load, occupants, hot soak; thermostat |
-| M15-3 | Scaled to published prototypes | Project practice | Met (ad hoc) | 0.5 kW idle and 2–3 kW at load from 3–16 kW exhaust heat (Hilali & Söylemez; Vicatos et al.); compressor reference 6 kW; checks not committed (ISSUE-018) |
+| M15-3 | Scaled to published prototypes | Project practice | Met (ad hoc, order of magnitude) | Prototypes report about 0.5 kW at idle and 2–3 kW at load from 3–16 kW of exhaust heat (Hilali & Söylemez; Vicatos et al.); the model gives 0.05–0.2 kW at idle in hot climates and 2–3.5 kW on the highway from a hotter, larger exhaust stream; compressor reference 6 kW; checks not committed (ISSUE-018) |
 | M15-4 | With the other absorption plants | User request | Met | Card in the heat-driven refrigeration section of `projects/plant_models/index.html`; README entry |
 | M15-5 | Static-only, self-contained page | AGENTS.md § Project intent | Met | One HTML file, Google Fonts only |
 
 ### Milestone 15 council review
 
-_Recorded on merge._
+Reviewed 2026-11-06 by an independent council reviewer covering all three
+lenses: content integrity PASS_WITH_MINOR_ISSUES, static-site constraints PASS,
+process & documentation PASS_WITH_MINOR_ISSUES. No gatekeepers. Fixed inline:
+the compressor reference car now sizes its coil load from its own cabin (it had
+borrowed the heat-driven car's), LiBr crystallization latches, both cars pay for
+the condenser fan, the playback scrubber resets after a preset, dead code
+removed, M15-3 reworded to an order-of-magnitude match, ISSUE-018 count
+corrected to ten. See `ISSUES.md` § Milestone council reviews. Merged to `main`.
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 

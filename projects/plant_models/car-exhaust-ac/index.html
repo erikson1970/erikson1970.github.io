@@ -299,7 +299,6 @@ table.tubes td.l { min-width: 220px; }
   const fmt = (v, d = 0) => (Math.abs(v) < 0.5 * 10 ** -d ? 0 : v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
   const K = c => c + 273.15;
   const fP = kw => Math.abs(kw) >= 1000 ? `${fmt(kw / 1000, 2)} MW` : Math.abs(kw) >= 1 ? `${fmt(kw, kw >= 100 ? 0 : 1)} kW` : `${fmt(kw * 1000, 0)} W`;
-  const usd = v => v >= 100 ? `$${fmt(v, 0)}` : `$${fmt(v, 2)}`;
 
   let tok = {};
   function readTokens() { const cs = getComputedStyle(document.documentElement); for (const k of ['bg', 'panel', 'raised', 'ink', 'muted', 'line', 'hot', 'cold', 'copper', 'steel', 'vapour', 'sol', 'ok', 'warn', 'danger', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8']) tok[k] = cs.getPropertyValue('--' + k).trim(); }
@@ -425,7 +424,7 @@ table.tubes td.l { min-width: 220px; }
     };
     const Qsun0 = sun * car.glass * tau.glass * 0.45;
     for (let k = 0; k < P.soak; k++) [Tc, Ti] = soakStep(Tc, Ti, Qsun0, car.UA0 * 0.7);
-    let TcR = Tc, TiR = Ti, Tg = Ta + 5, Qe = 0, QeR = 0, tiltF = 0, Iabs = 0, IR = 0;
+    let TcR = Tc, TiR = Ti, Tg = Ta + 5, Qe = 0, QeR = 0, tiltF = 0, Iabs = 0, IR = 0, latched = false;
     out.soak = { Tc, Ti };
     const mBlow = P.blower * 0.13, fresh = P.recirc ? 0.1 : 1, Cg = 6e3 + 4e3 * P.size;  // blower kg/s; generator + HX thermal mass J/K
     for (let i = 0; i < N; i++) {
@@ -454,20 +453,22 @@ table.tubes td.l { min-width: 220px; }
       const tiltNow = Math.abs(Math.atan(Math.hypot(a, dc.lat[i]) / G0) * 180 / Math.PI) + Math.abs(grade) * 180 / Math.PI;
       tiltF += (tiltNow - tiltF) * dt / 8;
       const tiltK = m.gravity ? clamp(1 - Math.max(0, tiltF - 3) / 6, 0, 1) : 1;
-      let crystal = m.crystal && Tac > m.crystal;
+      latched = latched || !!(m.crystal && Tac > m.crystal);   // once crystallized, the solution circuit stays blocked
+      const crystal = latched;
       // demand: thermostat on cabin air temperature (proportional), blower fixed
       const Tin = fresh * Ta + (1 - fresh) * Tc, wIn = fresh * wAmb + (1 - fresh) * wOf(Tc, 50);
       const QlatMax = Math.max(0, mBlow * 2.45e6 * (wIn - wOf(Tcoil + 3, 100)));
       const QcoilMax = mBlow * CP_AIR * Math.max(0, Tin - (Tcoil + 3)) + QlatMax;
       const want = clamp((Tc - P.set + 1) / 2, 0, 1) * QcoilMax;
-      const wantR = clamp((TcR - P.set + 1) / 2, 0, 1) * QcoilMax;
+      const TinR = fresh * Ta + (1 - fresh) * TcR, wInR = fresh * wAmb + (1 - fresh) * wOf(TcR, 50);
+      const QcoilMaxR = mBlow * CP_AIR * Math.max(0, TinR - (Tcoil + 3)) + Math.max(0, mBlow * 2.45e6 * (wInR - wOf(Tcoil + 3, 100)));
+      const wantR = clamp((TcR - P.set + 1) / 2, 0, 1) * QcoilMaxR;
       // heat-driven machine: capacity from lift margin, heat it can draw, start-up lag and tilt
       const ripple = m.cyclic ? 0.75 + 0.25 * Math.cos(2 * Math.PI * i / m.cyclic) : 1;
       const capT = crystal ? 0 : P.size * 1000 * pt.frac * tiltK * ripple;
-      const capQ = pt.cop > 0 ? pt.cop * (Qx + Cg * Math.max(0, Tg - (Tg - pt.D + m.Dmin)) / 600) : 0;
+      const capQ = pt.cop > 0 ? pt.cop * (Qx + Cg * Math.max(0, pt.D - m.Dmin) / 600) : 0;   // exhaust heat plus heat stored above the threshold
       const target = Math.min(want, capT, capQ);
       Qe += (target - Qe) * dt / (target > Qe ? m.tau : 30);
-      if (crystal) Qe *= 0.95;
       const Qgen = pt.cop > 0 ? Qe / pt.cop : 0;
       Tg += (Qx - Qgen - (1.5 + 0.5 * P.size) * (Tg - Ta)) * dt / Cg;   // insulated generator: a few W/K of loss
       // reference compressor AC: 6 kW nominal, quick response
@@ -491,7 +492,7 @@ table.tubes td.l { min-width: 220px; }
       const copVC = clamp(0.5 * (Tcoil - 5 + 273.15) / Math.max(8, Ta + 15 - (Tcoil - 5)), 1.2, 4);
       const etaM = stopped ? 0.25 : clamp(etaE * 1.15, 0.15, 0.38);
       const PcompR = QeR / copVC, extraMass = Mabs * G0 * car.Crr * v + Math.max(0, Mabs * a * v);
-      out.fuelRef += (PcompR / etaM + (stopped && QeR > 100 ? idleFuel : 0)) * dt;            // compressor car cannot stop-start with AC on
+      out.fuelRef += ((PcompR + 0.6 * P.fan * 120 / 0.5) / etaM + (stopped && QeR > 100 ? idleFuel : 0)) * dt;            // compressor car cannot stop-start with AC on
       out.fuelAbs += ((m.pumpW + 0.6 * P.fan * 120) / 0.5 / etaM + extraMass / etaM + 0.004 * Pfuel * (Qx > 0 ? 1 : 0)) * dt;
       out.dist += v * dt;
       if (i % P.rec === 0) {
@@ -551,7 +552,7 @@ table.tubes td.l { min-width: 220px; }
     RUNS = {}; for (const m of MACH) RUNS[m.id] = simulate({ ...S, mach: m.id });
     R = RUNS[S.mach];
     if (resetCursor || cursor >= R.t.length) cursor = 0;
-    syncInputs(); render(); drawCharts();
+    syncInputs(); render(); drawCharts(); if (typeof syncScrub === 'function' && $('scrub')) syncScrub();
   }
   const L_FUEL = 8.9 * 3.6e6;          // J per litre of petrol (lower heating value)
   const mmss = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
@@ -661,10 +662,9 @@ table.tubes td.l { min-width: 220px; }
   let roadOff = 0, wheelA = 0, phase = 0;
   const kW = w => fP(w / 1000), heatC = T => heat(-30 + (T - 15) * 3.4);   // cabin colour scale: 15 °C blue … 70 °C red
   function drawCar() {
-    const { ctx } = fit($('carCv'), CW, CH), r = R, i = cursor, m = r.m, P = S;
+    const { ctx } = fit($('carCv'), CW, CH), r = R, i = cursor, m = r.m;
     const v = r.v[i], Tc = r.Tcab[i], Tg = r.Tg[i], Qe = r.Qe[i], Texh = r.Texh[i], eng = r.eng[i], tilt = r.tilt[i];
     const sun = (S.climate === 'custom' ? S.sun : CLIMATES[S.climate].sun) * S.sunF, Ta = r.Ta, run = Qe > 50;
-    const grade = 0; // drawn level; the tilt gauge shows what the liquid sees
     // sky and road
     ctx.fillStyle = sun > 0 ? tok.raised : tok.panel; ctx.fillRect(0, 0, CW, 360);
     if (sun > 0) {
