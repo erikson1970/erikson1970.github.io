@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Nixon's Power Plant</title>
+<meta name="description" content="The twin-reactor power plant of the ship Nixon from Saturn Run: closed Brayton conversion, a 600 °C molten-ribbon radiator sail and the VASIMR burn budget to Saturn, with a Carnot check of the book's 55% conversion.">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.site-crumb{font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:10px 20px 0;max-width:1400px;margin:0 auto;opacity:.8}
+.site-crumb a{color:inherit}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: plant lab family. Inputs in a left rail (machine, heat source, heat sink, load, prices);
+   results on the right: headline tiles, the live cycle mimic, the pressure–temperature diagram,
+   COP against driving temperature, and a comparison of every working pair at the same conditions. */
+:root {
+  --bg: #eef0ee;
+  --panel: #f8f9f8;
+  --raised: #ffffff;
+  --ink: #1b2120;
+  --muted: #5c6763;
+  --line: #d1d8d5;
+  --hot: #c2471c;
+  --cold: #1f6fb5;
+  --copper: #a05a2c;
+  --steel: #3c5560;
+  --vapour: #8a96a0;
+  --sol: #7a5c12;
+  --ok: #2e7d4f;
+  --ok-bg: #e1f1e7;
+  --warn: #9a5a06;
+  --warn-bg: #fbefd9;
+  --danger: #b42318;
+  --danger-bg: #fbe3e0;
+  --c1: #1f6fb5; --c2: #c2471c; --c3: #2e8b57; --c4: #6d4fc2; --c5: #b57a00; --c6: #11808a; --c7: #b8467a; --c8: #6b7a14;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111615; --panel: #171e1c; --raised: #1d2522; --ink: #e2e9e6; --muted: #91a09a; --line: #2b3633;
+    --hot: #f27a3e; --cold: #5ea9ea; --copper: #d99460; --steel: #9fb6c4; --vapour: #7c8a94; --sol: #d9b43c;
+    --ok: #5cc48f; --ok-bg: #12301f; --warn: #e7ad48; --warn-bg: #33270f; --danger: #ff8a7a; --danger-bg: #3a1714;
+    --c1: #5ea9ea; --c2: #f27a3e; --c3: #5cc48f; --c4: #a98ff0; --c5: #e3b23c; --c6: #4cc3cc; --c7: #e57aa8; --c8: #b9c95a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111615; --panel: #171e1c; --raised: #1d2522; --ink: #e2e9e6; --muted: #91a09a; --line: #2b3633;
+  --hot: #f27a3e; --cold: #5ea9ea; --copper: #d99460; --steel: #9fb6c4; --vapour: #7c8a94; --sol: #d9b43c;
+  --ok: #5cc48f; --ok-bg: #12301f; --warn: #e7ad48; --warn-bg: #33270f; --danger: #ff8a7a; --danger-bg: #3a1714;
+  --c1: #5ea9ea; --c2: #f27a3e; --c3: #5cc48f; --c4: #a98ff0; --c5: #e3b23c; --c6: #4cc3cc; --c7: #e57aa8; --c8: #b9c95a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1400px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 40px; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 480px) { .wrap { padding-inline: 16px; } }
+.mono, .v, td.n { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; }
+.eyebrow { margin: 0 0 2px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; text-wrap: balance; }
+h1 .ver { font-family: var(--f-mono); font-size: .42em; font-weight: 500; color: var(--muted); vertical-align: .55em; margin-left: 6px; }
+.sub { font-size: 13px; color: var(--muted); max-width: 70ch; margin: 4px 0 0; }
+
+.grid { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); } .grid > main { order: -1; } }
+.rail { display: flex; flex-direction: column; gap: 12px; }
+.group { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 13px 13px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.group h2 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.group h2 span { font-family: var(--f-body); font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.group.m { border-top: 3px solid var(--copper); }
+.group.s { border-top: 3px solid var(--hot); }
+.group.k { border-top: 3px solid var(--steel); }
+.group.l { border-top: 3px solid var(--cold); }
+.group.p { border-top: 3px solid var(--vapour); }
+.group.f2 { border-top: 3px solid var(--danger); }
+.chk { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); min-height: 30px; }
+.chk input { accent-color: var(--copper); width: 18px; height: 18px; }
+.arr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; font-size: 12.5px; }
+.arr > span { color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 12px; padding: 4px 9px; min-height: 30px; border: 0; background: var(--raised); color: var(--ink); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--steel); color: #fff; }
+.reset { font: inherit; font-size: 13px; padding: 6px 10px; min-height: 34px; border-radius: 6px; border: 1px solid var(--line); background: var(--raised); color: var(--ink); cursor: pointer; }
+.ctl.off output { color: var(--danger); }
+select, .f input { font: inherit; font-size: 13.5px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; min-height: 34px; }
+.f { display: grid; grid-template-columns: minmax(0, 1fr) 104px; gap: 8px; align-items: center; font-size: 13.5px; }
+.f label { color: var(--muted); }
+.f input { font-family: var(--f-mono); font-size: 13px; }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: baseline; }
+.ctl .lab { font-size: 13px; color: var(--muted); }
+.ctl output { font-family: var(--f-mono); font-size: 13px; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; margin: 4px 0 0; accent-color: var(--copper); }
+.ctl small { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-family: var(--f-mono); }
+.hint { font-size: 12.5px; color: var(--muted); margin: 0; }
+.fluids { font-size: 12.5px; color: var(--muted); display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; margin: 0; }
+.fluids dt { font-weight: 600; color: var(--ink); }
+.fluids dd { margin: 0; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.presets button { font: inherit; font-size: 12.5px; color: var(--ink); background: var(--raised); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; min-height: 30px; }
+.presets button:hover { border-color: var(--copper); }
+.presets button[aria-pressed="true"] { background: var(--copper); color: #fff; border-color: var(--copper); }
+button:focus-visible, select:focus-visible, input:focus-visible, tr:focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
+
+main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+@media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi { background: var(--panel); padding: 9px 11px; min-width: 0; }
+.kpi .k { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kpi .v { font-size: 20px; font-weight: 500; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.kpi .s { font-size: 12px; color: var(--muted); }
+.kpi.alm { box-shadow: inset 0 3px 0 var(--warn); }
+.kpi.bad { box-shadow: inset 0 3px 0 var(--danger); }
+.kpi.good { box-shadow: inset 0 3px 0 var(--ok); }
+.flags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+.chip { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 5px; }
+.chip.ok { color: var(--ok); background: var(--ok-bg); }
+.chip.alm { color: var(--warn); background: var(--warn-bg); }
+.chip.bad { color: var(--danger); background: var(--danger-bg); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; margin-bottom: 6px; }
+.card-head h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 18px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+.sch-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#mimic { display: block; width: 100%; min-width: 760px; }
+.sysrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.sysrow > * { min-width: 0; }
+@media (min-width: 1560px) { .wrap { max-width: 1680px; } .sysrow { grid-template-columns: minmax(0, 1fr) 280px; align-items: start; } }
+canvas.chart { display: block; width: 100%; }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1100px) { .duo { grid-template-columns: minmax(0, 1fr); } }
+.bal { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
+.bal .row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 90px; gap: 8px; align-items: center; }
+.bal .bar { height: 14px; display: flex; border-radius: 3px; overflow: hidden; background: var(--line); }
+.bal .bar i { display: block; height: 100%; }
+.bal em { font-style: normal; font-family: var(--f-mono); text-align: right; }
+.tbl-wrap { overflow-x: auto; }
+table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.t th { text-align: right; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 5px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.t td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.t th:first-child, table.t td:first-child, table.t td.l, table.t th.l { text-align: left; }
+table.t td.l { white-space: normal; min-width: 180px; color: var(--muted); font-size: 12.5px; }
+table.t tbody tr { cursor: pointer; }
+table.t tbody tr:hover td { background: var(--raised); }
+table.t tr.cur td { background: var(--ok-bg); }
+table.t tr.no td { color: var(--muted); }
+table.tubes tbody tr { cursor: default; }
+table.tubes td.l { min-width: 220px; }
+.nb { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: var(--bg); font: 700 12px var(--f-display); }
+.mix { display: inline-flex; width: 110px; height: 12px; border: 1px solid var(--ink); vertical-align: middle; }
+.mix i { display: block; height: 100%; }
+.tag { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; }
+.tag.rich { color: var(--ok); background: var(--ok-bg); } .tag.poor { color: var(--warn); background: var(--warn-bg); }
+.notes { font-size: 13.5px; color: var(--muted); }
+.notes > div { max-width: 86ch; }
+.notes h3 { font-family: var(--f-display); font-weight: 600; font-size: 18px; color: var(--ink); margin: 6px 0 6px; }
+.notes p { margin: 0 0 8px; }
+.notes b { color: var(--ink); font-weight: 600; }
+.notes a { color: var(--steel); }
+.notes ul { margin: 0 0 8px; padding-left: 18px; }
+
+.seg2 { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg2 button { font: inherit; font-size: 12.5px; padding: 6px 8px; min-height: 34px; border: 0; background: var(--raised); color: var(--ink); cursor: pointer; }
+.seg2 button[aria-pressed="true"] { background: var(--copper); color: #fff; }
+#ship { display: block; width: 100%; min-width: 720px; border-radius: 6px; }
+.notes ul { margin-top: 0; }
+</style>
+</head>
+<body>
+<nav class="site-crumb" aria-label="Breadcrumb"><a href="../../../../../">erikson1970</a> / <a href="../../../">Plant models</a> / <a href="../../">Power generation</a> / <a href="../">Fictional plants</a> / <span>The Nixon's Power Plant</span></nav>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Fictional plants · Saturn Run (John Sandford and Ctein, 2015)</p>
+      <h1>The Nixon's Power Plant <span class="ver">v1.0</span></h1>
+      <p class="sub">The American ship in <i>Saturn Run</i> drives VASIMR plasma engines from two huge nuclear reactors. It throws away about 9 GW of waste heat through a sail of molten-metal ribbons at 600 °C. The authors worked the numbers in spreadsheets. This page rebuilds the plant and the burn budget, then checks the one figure the physics pushes back on.</p>
+    </div>
+  </header>
+
+  <div class="grid">
+    <aside class="rail" aria-label="Inputs">
+      <section class="group k">
+        <h2>Scenarios <span>Start here</span></h2>
+        <div class="presets" id="presets"></div>
+        <p class="hint" id="presetNote"></p>
+      </section>
+      <section class="group m">
+        <h2>Conversion <span>Mode</span></h2>
+        <div class="seg2" id="modeSeg"><button type="button" data-v="1">Author's numbers (55%)</button><button type="button" data-v="0">Brayton physics</button></div>
+        <p class="hint" id="modeNote"></p>
+        <div id="cycCtl"></div>
+      </section>
+      <section class="group s">
+        <h2>Reactors <span>Twin cores</span></h2>
+        <div id="reaCtl"></div>
+      </section>
+      <section class="group k">
+        <h2>Ribbon radiator <span>Waste heat</span></h2>
+        <div id="radCtl"></div>
+      </section>
+      <section class="group l">
+        <h2>Engines and voyage <span>Mission budget</span></h2>
+        <div id="misCtl"></div>
+      </section>
+    </aside>
+
+    <main>
+      <section class="kpis" id="kpis" aria-label="Results"></section>
+      <div class="flags" id="flags" aria-live="polite"></div>
+      <section class="card">
+        <div class="card-head"><h3>The ship</h3><span class="hint">Reactor glow follows power; ribbons cool from orange to dark red as they freeze; plume length follows thrust</span></div>
+        <div class="sch-wrap"><canvas id="ship" aria-label="Animated side view of the Nixon: crew section, twin reactors, Brayton turbines, water tanks, ribbon radiator sail with collection beam, and VASIMR engines"></canvas></div>
+      </section>
+      <div class="duo">
+        <section class="card">
+          <div class="card-head"><h3>Brayton cycle, temperature against entropy</h3><div class="legend" id="lgTs"></div></div>
+          <canvas id="cTs" class="chart" data-h="260" aria-label="Temperature–entropy diagram of the closed Brayton cycle with the Carnot limit"></canvas>
+          <p class="hint" id="nTs"></p>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Radiator temperature trade-off</h3><div class="legend" id="lgTr"></div></div>
+          <canvas id="cTr" class="chart" data-h="260" aria-label="Efficiency and radiator area against radiator temperature"></canvas>
+          <p class="hint">A hotter radiator is smaller (∝ T⁴) but leaves less temperature drop for the turbine. This is the central compromise of space power.</p>
+        </section>
+      </div>
+      <div class="duo">
+        <section class="card">
+          <div class="card-head"><h3>Voyage: speed and distance</h3><div class="legend" id="lgV"></div></div>
+          <canvas id="cV" class="chart" data-h="250" aria-label="Ship speed and distance travelled against mission day"></canvas>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Exhaust velocity and ship mass</h3><div class="legend" id="lgM"></div></div>
+          <canvas id="cM" class="chart" data-h="250" aria-label="VASIMR exhaust velocity and ship mass against mission day"></canvas>
+        </section>
+      </div>
+      <section class="card notes">
+        <div>
+          <h3>What the book says, and what the model does</h3>
+          <p><b>From the authors' note.</b></p>
+            <ul>
+              <li><b>Reactors and conversion:</b> two reactor cores, each about four thousand times NASA's 2.5 MW "coffee-can" lithium-cooled reactor of the 1970s, so about 10 GW of heat apiece. A little more than half of the heat becomes electricity for the VASIMR engines. The rest, "nine gigawatts or so," must be radiated away.</li>
+              <li><b>Radiator:</b> at 300 K the job would take about 9 km² of radiator. At 600 °C each square metre sheds about 65 kW. Molten-metal ribbons, extruded with a thin frozen skin, solidify in flight before collection beams catch them.</li>
+              <li><b>Water and exhaust:</b> water is the reaction mass. The oxygen-to-hydrogen mix tunes the exhaust velocity.</li>
+              <li><b>The voyage:</b> by spreadsheet, a mass ratio of about 10 with exhaust velocity varied from 35 to 300 km/s reaches Saturn in four to five months.</li>
+            </ul>
+          <p><b>The plant.</b> Reactor heat goes through a liquid-metal loop to a recuperated closed Brayton cycle (helium–xenon), the usual choice for space power. The pressure ratio is chosen for the best efficiency. Rejected heat goes to the radiator alloy, which freezes on the ribbons just below its melting point. Each square metre of ribbon radiates from both faces at 2εσT⁴. The required alloy flow is the waste heat divided by its latent heat. The freezing time is the ribbon mass per area times latent heat, divided by that flux. Ribbon speed and freezing time then set the sail's length and width. In <b>Author's numbers</b> mode the conversion efficiency is fixed at the book's 55%. In <b>Brayton physics</b> mode it comes from the temperatures.</p>
+          <p><b>The Carnot check.</b> Rejecting heat at about 880 K caps any engine at 1 − 880 / T<sub>hot</sub>. Reaching 55% needs at least about 1,950 K (about 1,700 °C) at the hot end with a perfect engine. A realistic Brayton cycle needs far more, beyond any reactor material known. At the 1,300–1,500 °C a lithium-cooled refractory reactor might reach, the cycle gives 10–20%. The waste heat is then not 9 GW but about 17 GW. In the book's future the authors extrapolated a century of power-plant trends; this page shows how far that extrapolation reaches.</p>
+          <p><b>The voyage.</b> A straight-line accelerate, flip, decelerate budget from Earth to Saturn. The Sun's gravity is ignored, so this is not the authors' Orbiter trajectory. Fixed Δv allowances cover spiralling out of Earth orbit and into Saturn orbit. The VASIMR holds a constant acceleration by trading exhaust velocity for thrust (thrust = 2ηP / v<sub>e</sub>) within its exhaust-velocity range. The page searches for the fastest acceleration that still arrives with the dry ship intact.</p>
+          <h3>Sources</h3>
+          <ul>
+            <li>John Sandford and Ctein, <i>Saturn Run</i> (2015), especially the authors' note "The science behind the story."</li>
+            <li><a href="https://en.wikipedia.org/wiki/Variable_Specific_Impulse_Magnetoplasma_Rocket" target="_blank" rel="noopener">VASIMR (Wikipedia)</a> and <a href="https://en.wikipedia.org/wiki/Tsiolkovsky_rocket_equation" target="_blank" rel="noopener">the rocket equation</a>.</li>
+            <li><a href="https://en.wikipedia.org/wiki/Liquid_droplet_radiator" target="_blank" rel="noopener">Liquid droplet and moving-belt radiators</a>, the real-world relatives of the ribbon sail.</li>
+            <li><a href="https://en.wikipedia.org/wiki/Brayton_cycle" target="_blank" rel="noopener">Closed Brayton cycle</a>; helium–xenon Brayton units were developed for space reactors such as SP-100 and Prometheus.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const fmt = (v, d = 0) => (Math.abs(v) < 0.5 * 10 ** -d ? 0 : v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const K = c => c + 273.15;
+  const fP = kw => Math.abs(kw) >= 1000 ? `${fmt(kw / 1000, 2)} MW` : Math.abs(kw) >= 1 ? `${fmt(kw, kw >= 100 ? 0 : 1)} kW` : `${fmt(kw * 1000, 0)} W`;
+  const usd = v => v >= 100 ? `$${fmt(v, 0)}` : `$${fmt(v, 2)}`;
+
+  let tok = {};
+  function readTokens() { const cs = getComputedStyle(document.documentElement); for (const k of ['bg', 'panel', 'raised', 'ink', 'muted', 'line', 'hot', 'cold', 'copper', 'steel', 'vapour', 'sol', 'ok', 'warn', 'danger', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8']) tok[k] = cs.getPropertyValue('--' + k).trim(); }
+  function fit(cv, W, H) {
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, sc = W ? w / W : 1, h = W ? H * sc : +cv.dataset.h;
+    cv.style.height = h + 'px';
+    if (cv.width !== Math.round(w * dpr)) cv.width = Math.round(w * dpr);
+    if (cv.height !== Math.round(h * dpr)) cv.height = Math.round(h * dpr);
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr * sc, 0, 0, dpr * sc, 0, 0); ctx.clearRect(0, 0, W || w, W ? H : h);
+    return { ctx, w: W || w, h: W ? H : h };
+  }
+  function heat(T) { // −30 … 220 °C → blue … red
+    const f = clamp((T + 30) / 250, 0, 1), st = [[0, [44, 75, 209]], [0.25, [47, 164, 196]], [0.45, [232, 211, 90]], [0.7, [239, 138, 45]], [1, [215, 48, 31]]];
+    for (let j = 1; j < st.length; j++) if (f <= st[j][0]) { const [a, c0] = st[j - 1], [b, c1] = st[j], u = (f - a) / (b - a); return `rgb(${c0.map((c, i) => Math.round(c + (c1[i] - c) * u)).join(',')})`; }
+    return 'rgb(215,48,31)';
+  }
+  const lab = (ctx, t, x, y, al = 'center', size = 14, c = tok.ink, wt = 600) => { ctx.font = `${wt} ${size}px "Barlow Condensed", sans-serif`; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); };
+  const sm = (ctx, t, x, y, al = 'center', c = tok.muted) => { ctx.font = '500 11px "JetBrains Mono", monospace'; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); };
+  function arrowHead(ctx, x, y, dx, dy, c, s = 7) { const L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L; ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - ux * s - uy * s * 0.6, y - uy * s + ux * s * 0.6); ctx.lineTo(x - ux * s + uy * s * 0.6, y - uy * s - ux * s * 0.6); ctx.closePath(); ctx.fill(); }
+  function line(ctx, pts, c, w, dash) { ctx.strokeStyle = c; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); ctx.setLineDash([]); }
+  function flowDots(ctx, pts, c, speed, n = 6, r = 3) {
+    if (speed <= 0) return;
+    let L = 0; const seg = []; for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(l); L += l; }
+    ctx.fillStyle = c;
+    for (let k = 0; k < n; k++) {
+      let d = ((phase * speed * 40 + k * L / n) % L + L) % L, i = 0; while (i < seg.length - 1 && d > seg[i]) { d -= seg[i]; i++; }
+      const u = d / seg[i], x = pts[i][0] + (pts[i + 1][0] - pts[i][0]) * u, y = pts[i][1] + (pts[i + 1][1] - pts[i][1]) * u;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // =====================================================================================
+  // Physics: twin reactors → liquid-metal primary → recuperated closed Brayton → electricity
+  // → VASIMR; waste heat → molten-alloy ribbon radiator. Mission: variable-exhaust burn budget.
+  // =====================================================================================
+  const SIGMA = 5.670e-8, AU = 1.496e11, DAY = 86400;
+  const COOLANTS = {
+    na: { name: 'Sodium', cp: 1270, rho: 780, A: 4.704, B: 5377, tmax: 1250 },     // log10 P[atm] = A − B/T
+    li: { name: 'Lithium', cp: 4170, rho: 470, A: 4.98, B: 8023, tmax: 1600 },
+  };
+  const ALLOYS = {
+    al: { name: 'Aluminium (pure)', Tm: 660, L: 397e3, rho: 2375, cp: 1180 },
+    nx: { name: 'Novel radiator alloy', Tm: 610, L: 420e3, rho: 2400, cp: 1150 },
+    zn: { name: 'Zinc', Tm: 420, L: 112e3, rho: 6570, cp: 480 },
+    lim: { name: 'Lithium metal', Tm: 181, L: 432e3, rho: 512, cp: 4200 },
+  };
+  const satP = (c, Tc) => 10 ** (c.A - c.B / (Tc + 273.15));      // atm
+
+  // recuperated closed Brayton (helium–xenon); returns the best pressure ratio's cycle
+  function brayton(T1, T3, P) {
+    const g = 5 / 3, ex = (g - 1) / g, cp = 520;                       // He–Xe, molar mass about 40
+    const run = r => {
+      const tc = r ** ex, tt = (r * (1 - P.dp)) ** ex;
+      const T2 = T1 * (1 + (tc - 1) / P.etaC), T4 = T3 * (1 - P.etaT * (1 - 1 / tt));
+      const T5 = T2 + P.eps * (T4 - T2), T6 = T4 - P.eps * (T4 - T2);
+      const w = (T3 - T4) - (T2 - T1), qin = T3 - T5;
+      return { r, T1, T2, T3, T4, T5, T6, eta: qin > 0 ? w / qin : 0, w: w * cp, qin: qin * cp };
+    };
+    let best = run(1.2); for (let r = 1.2; r <= 6; r += 0.02) { const c = run(r); if (c.eta > best.eta) best = c; }
+    return best;
+  }
+
+  // ---------- the power plant at one operating point ----------
+  function plant(S) {
+    const cool = COOLANTS[S.coolant], al = ALLOYS[S.alloy];
+    const Pr = [S.r1 * S.Pcore, S.r2 * S.Pcore];                       // W thermal per reactor
+    const Qth = Pr[0] + Pr[1];
+    const Trad = al.Tm - 5, T1 = Trad + S.dThx + 273.15;              // ribbons freeze just below the melting point
+    const Tout = Math.min(S.Tout, cool.tmax), T3 = Tout - S.dThx + 273.15;
+    const cyc = brayton(T1, T3, S);
+    const etaCyc = S.author ? 0.55 / S.etaAlt : cyc.eta;
+    const Pe = Qth * etaCyc * S.etaAlt;                                // electric to the bus
+    const Pjet = Pe * S.etaThr;
+    const Qcycle = Qth - Pe, Qthr = Pe - Pjet;
+    const Qrej = Qcycle + (S.thrOnSail ? Qthr : 0);
+    // ribbon radiator: each square metre of ribbon footprint radiates from both faces
+    const TradK = Trad + 273.15, flux = 2 * S.emis * SIGMA * TradK ** 4;
+    const capFull = flux * S.Aribbon * 1e6 * (1 - S.damage);           // W the intact sail can reject
+    const mdot = Qrej / (al.L + al.cp * S.sub);                        // kg/s of alloy that must freeze
+    const tFreeze = al.rho * S.h * (al.L + al.cp * S.sub) / flux;      // s for a ribbon to freeze solid
+    const Areq = Qrej / flux, W = mdot / (al.rho * S.h * S.v), len = Areq / Math.max(1, W);
+    const overload = Qrej > capFull;
+    // coolant flow per reactor, carnot check, and the TIT needed for the author's 55 %
+    const mCool = Pr.map(p => p / (cool.cp * S.dTcore));
+    const carnot = 1 - T1 / T3;
+    let needTIT = null; for (let T = T1 + 50; T < 4500; T += 10) { if (brayton(T1, T, S).eta * S.etaAlt >= 0.55) { needTIT = T - 273.15 + S.dThx; break; } }
+    return { Pr, Qth, Pe, Pjet, Qcycle, Qthr, Qrej, cyc, etaCyc, eta: Pe / Math.max(1, Qth), Trad, TradK, flux, capFull, mdot, tFreeze, Areq, W, len, overload,
+      mCool, carnot, needTIT, Tout, pSat: satP(cool, Tout), cool, al, alloyInFlight: al.rho * S.h * Areq, ribbonMass: al.rho * S.h * S.Aribbon * 1e6 };
+  }
+
+  // ---------- radiator temperature trade-off at fixed reactor heat ----------
+  function tradeoff(S, TradC) {
+    const T1 = TradC + S.dThx + 273.15, T3 = Math.min(S.Tout, COOLANTS[S.coolant].tmax) - S.dThx + 273.15;
+    const eta = S.author ? 0.55 : brayton(T1, T3, S).eta * S.etaAlt, Qth = 2 * S.Pcore, Pe = Qth * eta;
+    const Q = Qth - Pe + (S.thrOnSail ? Pe * (1 - S.etaThr) : 0), flux = 2 * S.emis * SIGMA * (TradC + 273.15) ** 4;
+    return { eta, Pe, area: Q / flux };
+  }
+
+  // fastest constant-acceleration programme that still arrives with the dry mass intact
+  function bestMission(S, P) {
+    let lo = 0.001, hi = 0.2, best = null;
+    for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2, o = mission({ ...S, aT: m }, P); if (o.arrived) { best = { ...o, aT: m }; lo = m; } else hi = m; }
+    return best || { ...mission({ ...S, aT: lo }, P), aT: lo };
+  }
+  // ---------- mission: variable exhaust velocity, as in the authors' spreadsheet ----------
+  // Straight-line accelerate/flip/decelerate budget between Earth and Saturn (the Sun's gravity
+  // is ignored), plus fixed Δv allowances to spiral out of Earth orbit and into Saturn orbit.
+  // The VASIMR holds a target acceleration by trading exhaust velocity for thrust, clamped to
+  // its exhaust-velocity range; thrust = 2 η P / ve.
+  function mission(S, P) {
+    const dry = S.dry * 1000, wet = dry * S.MR, dist = S.dist * AU, veMin = S.veMin * 1000, veMax = S.veMax * 1000;
+    let m = wet, x = 0, v = 0, t = 0, phase = 0, dvUsed = 0, out = { t: [], x: [], v: [], m: [], ve: [], F: [], a: [], pw: [] };
+    const dt = 1800, escDv = S.dvEsc * 1000, capDv = S.dvCap * 1000;
+    let escLeft = escDv, flipped = false, done = false, tFlip = 0;
+    for (let k = 0; k < 400 * 48 && !done; k++) {
+      // power: both reactors, or one after the shutdown day
+      let Pe = P.Pe; if (S.shutdownDay >= 0 && t >= S.shutdownDay * DAY) Pe = P.Pe * S.shutdownFrac;
+      const Pj = Pe * S.etaThr;
+      let ve = clamp(2 * Pj / Math.max(1e-6, S.aT * m), veMin, veMax), F = 2 * Pj / ve, mdot = F / ve, a = F / m;
+      if (m - mdot * dt < dry) { done = true; out.fuelOut = true; break; }
+      if (escLeft > 0) { escLeft -= a * dt; }
+      else {
+        // decide when to flip: when the distance needed to stop (at the present deceleration) reaches what is left
+        if (!flipped && v * v / (2 * a) >= dist - x) { flipped = true; tFlip = t; }
+        const dir = flipped ? -1 : 1; v += dir * a * dt; x += Math.max(0, v) * dt;
+        if (flipped && v <= 0) { phase = 2; done = true; }
+      }
+      m -= mdot * dt; t += dt; dvUsed += a * dt;
+      if (k % 12 === 0) { out.t.push(t / DAY); out.x.push(x / AU); out.v.push(v / 1000); out.m.push(m / 1000); out.ve.push(ve / 1000); out.F.push(F / 1000); out.a.push(a * 1000); out.pw.push(Pe / 1e9); }
+    }
+    // Saturn orbit insertion from what is left
+    const veEnd = out.ve.length ? out.ve[out.ve.length - 1] * 1000 : veMax, mCap = m * Math.exp(-capDv / veEnd);
+    out.tTransit = t / DAY; out.mEnd = m / 1000; out.mAfterCap = mCap / 1000; out.dv = (dvUsed + capDv) / 1000; out.arrived = phase === 2 && mCap >= dry; out.tFlip = tFlip / DAY;
+    out.vPeak = Math.max(...out.v); out.MRused = wet / Math.max(1, mCap); out.capOK = mCap >= dry;
+    return out;
+  }
+  // =====================================================================================
+  // State, controls, results and charts
+  // =====================================================================================
+  const BASE = { author: true, coolant: 'li', alloy: 'nx', Pcore: 10e9, r1: 1, r2: 1, Tout: 1500, dThx: 30, etaC: 0.88, etaT: 0.92, eps: 0.95, dp: 0.05, etaAlt: 0.95,
+    etaThr: 0.8, thrOnSail: false, emis: 0.9, Aribbon: 0.25, damage: 0, h: 0.001, v: 20, sub: 0, dTcore: 150,
+    dry: 1500, MR: 10, dist: 8.5, veMin: 35, veMax: 300, dvEsc: 7, dvCap: 5, shutdownDay: -1, shutdownFrac: 0.5 };
+  const S = { ...BASE };
+  const PRESETS = [
+    ['As written', {}, "The book's figures: two 10 GW cores, 55% conversion, about 11 GW to the VASIMRs and 9 GW of waste heat into a 600 °C ribbon sail. With a 1,500-tonne dry ship and a mass ratio of 10 it reaches Saturn in about five months."],
+    ['Reactor 2 shutdown', { r2: 0, shutdownDay: 30 }, 'Something is wrong with Reactor 2 and it stays down. From day 30 the ship runs on half power: thrust halves at the same exhaust velocity, the radiator has capacity to spare, and the voyage stretches.'],
+    ['Ribbon sail damaged', { damage: 0.45 }, 'Lose 45% of the ribbon sail (a collection beam or extruder bank). The waste heat no longer fits, so reactor power must come down until it does.'],
+    ['Brayton physics at 600 °C', { author: false }, 'The same plant, but the efficiency comes from the temperatures: a lithium loop at 1,500 °C feeding a Brayton cycle that rejects heat at about 605 °C. Conversion falls to about 12%, and the waste heat nearly doubles.'],
+    ['Physics, zinc ribbons at 420 °C', { author: false, alloy: 'zn', Aribbon: 0.8 }, 'Reject heat lower and the turbines recover some ground, but the sail must roughly triple, and dense zinc carries little latent heat, so the ribbon flow is huge.'],
+    ['Physics, lithium ribbons at 180 °C', { author: false, alloy: 'lim', Aribbon: 3 }, 'Lithium freezes at 181 °C and carries lots of latent heat per kilogram. The cycle reaches about 45%, close to the book, but the sail grows to almost 3 km²: back toward the 9 km² problem the authors set out to avoid.'],
+  ];
+  let presetIdx = 0, R = null, MIS = null;
+  const C = (id, lab0, mn, mx, st, f, scale = 1) => ({ id, lab0, mn, mx, st, f, scale });
+  const GROUPS = {
+    cycCtl: [C('Tout', 'Reactor coolant outlet', 700, 1600, 10, v => `${fmt(v, 0)} °C`), C('etaT', 'Turbine efficiency', 0.8, 0.97, 0.01, v => `${fmt(v * 100, 0)}%`), C('etaC', 'Compressor efficiency', 0.75, 0.95, 0.01, v => `${fmt(v * 100, 0)}%`), C('eps', 'Recuperator effectiveness', 0.8, 0.99, 0.01, v => `${fmt(v * 100, 0)}%`), C('etaAlt', 'Alternator and power conditioning', 0.85, 0.99, 0.01, v => `${fmt(v * 100, 0)}%`)],
+    reaCtl: [C('r1', 'Reactor 1 power', 0, 1.1, 0.01, v => `${fmt(v * 100, 0)}%`), C('r2', 'Reactor 2 power', 0, 1.1, 0.01, v => `${fmt(v * 100, 0)}%`), C('Pcore', 'Rating per core', 2.5e9, 15e9, 0.5e9, v => `${fmt(v / 1e9, 1)} GW thermal`), C('dTcore', 'Coolant temperature rise across a core', 50, 300, 10, v => `${fmt(v, 0)} K`)],
+    radCtl: [C('Aribbon', 'Ribbon sail area (one face)', 0.05, 2, 0.01, v => `${fmt(v, 2)} km²`), C('damage', 'Sail damaged or lost', 0, 0.9, 0.01, v => `${fmt(v * 100, 0)}%`), C('h', 'Ribbon thickness', 0.0002, 0.004, 0.0001, v => `${fmt(v * 1000, 1)} mm`), C('v', 'Ribbon speed', 1, 60, 1, v => `${fmt(v, 0)} m/s`), C('emis', 'Emissivity (frozen, roughened skin)', 0.5, 0.98, 0.01, v => fmt(v, 2))],
+    misCtl: [C('etaThr', 'VASIMR efficiency (jet power / electric)', 0.4, 0.95, 0.01, v => `${fmt(v * 100, 0)}%`), C('dry', 'Dry mass (ship without water)', 300, 6000, 50, v => `${fmt(v, 0)} t`), C('MR', 'Mass ratio (full / dry)', 2, 20, 0.5, v => fmt(v, 1)), C('veMin', 'Lowest exhaust velocity', 10, 100, 1, v => `${fmt(v, 0)} km/s`), C('veMax', 'Highest exhaust velocity', 100, 500, 5, v => `${fmt(v, 0)} km/s`), C('dist', 'Earth–Saturn distance', 8, 10.5, 0.1, v => `${fmt(v, 1)} AU`), C('dvEsc', 'Spiral out of Earth orbit', 0, 15, 0.5, v => `${fmt(v, 1)} km/s`), C('dvCap', 'Capture into Saturn orbit', 0, 15, 0.5, v => `${fmt(v, 1)} km/s`), C('shutdownDay', 'Reactor 2 trips on day (−1 = never)', -1, 150, 1, v => v < 0 ? 'never' : `day ${fmt(v, 0)}`)],
+  };
+  const SELS = { cycCtl: [['coolant', 'Primary coolant', COOLANTS]], radCtl: [['alloy', 'Radiator metal', ALLOYS]] };
+  const CHKS = { misCtl: [['thrOnSail', 'VASIMR losses also go to the ribbon sail']] };
+  for (const [gid, list] of Object.entries(GROUPS)) {
+    let h = (SELS[gid] || []).map(([id, l, o]) => `<div class="f"><label for="s_${id}">${l}</label><select id="s_${id}">${Object.entries(o).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('')}</select></div>`).join('');
+    h += list.map(c => `<label class="ctl"><span class="lab">${c.lab0}</span><output id="o_${c.id}"></output><input type="range" id="r_${c.id}" min="${c.mn}" max="${c.mx}" step="${c.st}"></label>`).join('');
+    h += (CHKS[gid] || []).map(([id, l]) => `<label class="chk"><input type="checkbox" id="c_${id}"> ${l}</label>`).join('');
+    $(gid).innerHTML = h;
+    for (const c of list) $('r_' + c.id).addEventListener('input', e => { S[c.id] = +e.target.value; presetIdx = -1; recalc(); });
+    for (const [id] of SELS[gid] || []) $('s_' + id).addEventListener('change', e => { S[id] = e.target.value; presetIdx = -1; recalc(); });
+    for (const [id] of CHKS[gid] || []) $('c_' + id).addEventListener('change', e => { S[id] = e.target.checked; presetIdx = -1; recalc(); });
+  }
+  for (const b of $('modeSeg').children) b.addEventListener('click', () => { S.author = b.dataset.v === '1'; presetIdx = -1; recalc(); });
+  PRESETS.forEach(([lab0, set], i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = lab0; b.addEventListener('click', () => { Object.assign(S, BASE, set); presetIdx = i; recalc(); }); $('presets').append(b); });
+  function sync() {
+    for (const list of Object.values(GROUPS)) for (const c of list) { if (document.activeElement !== $('r_' + c.id)) $('r_' + c.id).value = S[c.id]; $('o_' + c.id).textContent = c.f(S[c.id]); }
+    for (const l of Object.values(SELS)) for (const [id] of l) $('s_' + id).value = S[id];
+    for (const l of Object.values(CHKS)) for (const [id] of l) $('c_' + id).checked = S[id];
+    for (const b of $('modeSeg').children) b.setAttribute('aria-pressed', (b.dataset.v === '1') === S.author);
+    for (const [i, b] of [...$('presets').children].entries()) b.setAttribute('aria-pressed', i === presetIdx);
+    $('presetNote').textContent = presetIdx >= 0 ? PRESETS[presetIdx][2] : 'Custom: the scenarios reset everything.';
+    $('modeNote').textContent = S.author ? 'Efficiency fixed at the book\'s 55%. The cycle settings below only show what the temperatures would really give.' : 'Efficiency computed from the temperatures with a recuperated helium–xenon Brayton cycle.';
+  }
+  // the reactors throttle back if the sail cannot reject the heat
+  function solve() {
+    let r = plant(S);
+    if (r.overload) {
+      let lo = 0, hi = 1; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2, o = plant({ ...S, r1: S.r1 * m, r2: S.r2 * m }); o.overload ? hi = m : lo = m; }
+      const lim = plant({ ...S, r1: S.r1 * lo, r2: S.r2 * lo }); lim.limited = lo; lim.asked = r; r = lim;
+    }
+    return r;
+  }
+  function recalc() {
+    R = solve();
+    const both = plant({ ...S, r1: S.r1, r2: S.shutdownDay >= 0 ? Math.max(S.r2, 1) : S.r2 });
+    const Pm = S.shutdownDay >= 0 ? { Pe: R.limited ? R.Pe : both.Pe } : R;
+    MIS = bestMission({ ...S, shutdownFrac: S.shutdownDay >= 0 ? (S.r1 * S.Pcore) / Math.max(1, (S.r1 + Math.max(S.r2, 1)) * S.Pcore) : 1 }, Pm);
+    sync(); render(); drawCharts();
+  }
+  const GW = w => `${fmt(w / 1e9, 2)} <small>GW</small>`;
+  function render() {
+    const r = R, m = MIS, fl = [];
+    const k = [
+      ['Electric power', GW(r.Pe), `${fmt(r.Pjet / 1e9, 2)} GW into the exhaust jets`, r.limited !== undefined ? 'alm' : 'good'],
+      ['Conversion efficiency', `${fmt(r.eta * 100, 1)}%`, `Carnot limit ${fmt(r.carnot * 100, 0)}% between ${fmt(r.Tout - S.dThx, 0)} and ${fmt(r.Trad + S.dThx, 0)} °C`, S.author && r.carnot < 0.55 ? 'bad' : ''],
+      ['Waste heat to the sail', GW(r.Qrej), `${fmt(r.Qrej / Math.max(1, r.capFull) * 100, 0)}% of what the sail can reject`, r.Qrej > 0.95 * r.capFull ? 'alm' : ''],
+      ['Reactor heat', GW(r.Qth), `${fmt(r.Pr[0] / 1e9, 1)} + ${fmt(r.Pr[1] / 1e9, 1)} GW; ${fmt(r.mCool[0] / 1000, 0)} t/s of ${r.cool.name.toLowerCase()} per core`],
+      ['Ribbon sail', `${fmt(r.Areq / 1e6, 3)} <small>km² in use</small>`, `${fmt(r.flux / 1000, 0)} kW/m² (both faces) at ${fmt(r.Trad, 0)} °C; the sail has ${fmt(S.Aribbon * (1 - S.damage), 2)} km² intact`],
+      ['Ribbon flow', `${fmt(r.mdot / 1000, 1)} <small>t/s</small>`, `${fmt(r.W, 0)} m of ribbon, each ${fmt(r.len, 0)} m long, frozen in ${fmt(r.tFreeze, 1)} s`],
+      ['Voyage to Saturn', m.arrived ? `${fmt(m.tTransit, 0)} <small>days</small>` : 'fails', m.arrived ? `${fmt(m.tTransit / 30.4, 1)} months · peak ${fmt(m.vPeak, 0)} km/s · Δv ${fmt(m.dv, 0)} km/s` : 'runs out of water', m.arrived ? (m.tTransit < 160 ? 'good' : '') : 'bad'],
+      ['Exhaust velocity', `${fmt(Math.min(...m.ve), 0)}–${fmt(Math.max(...m.ve), 0)} <small>km/s</small>`, `thrust ${fmt(Math.max(...m.F), 0)} kN falling to ${fmt(Math.min(...m.F), 0)} kN · ${fmt(S.dry * S.MR, 0)} t at launch`],
+    ];
+    $('kpis').innerHTML = k.map(([a, v, s, c]) => `<div class="kpi${c ? ' ' + c : ''}"><div class="k">${a}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+    if (r.limited !== undefined) fl.push(['bad', `The sail cannot reject ${fmt(r.asked.Qrej / 1e9, 1)} GW: reactors throttled to ${fmt(r.limited * 100, 0)}% of demand so the ribbons still freeze before the collection beams`]);
+    if (S.author && r.carnot < 0.55) fl.push(['alm', `55% is more than Carnot allows between these temperatures (${fmt(r.carnot * 100, 0)}%). With a 600 °C radiator, a perfect engine needs ${fmt((r.Trad + S.dThx + 273.15) / 0.45 - 273.15, 0)} °C at the hot end; a Brayton cycle like this one needs about ${r.needTIT ? fmt(r.needTIT, 0) : '>4000'} °C.`]);
+    if (!S.author) fl.push(['alm', `Brayton physics: ${fmt(r.eta * 100, 1)}% conversion at a ${fmt(r.cyc.r, 2)} pressure ratio. Waste heat ${fmt(r.Qrej / 1e9, 1)} GW, not 9.`]);
+    if (r.pSat > 1) fl.push(['alm', `${r.cool.name} at ${fmt(r.Tout, 0)} °C must be held above ${fmt(r.pSat, 1)} atm to stay liquid`]);
+    if (S.Tout > r.cool.tmax) fl.push(['alm', `${r.cool.name} loop limited to ${r.cool.tmax} °C`]);
+    if (S.shutdownDay >= 0) fl.push(['alm', `Reactor 2 down from day ${S.shutdownDay}: half power for the rest of the run`]);
+    if (m.arrived) fl.push(['ok', `Arrives in ${fmt(m.tTransit, 0)} days at a mass ratio of ${fmt(m.MRused, 1)}, accelerating at ${fmt(m.aT * 1000, 1)} mm/s² (${fmt(m.aT / 9.81 * 1000, 1)} milli-g)`]);
+    $('flags').innerHTML = fl.map(([c, t]) => `<span class="chip ${c}">${t}</span>`).join('');
+  }
+  // ---------- charts ----------
+  function axes(ctx, w, h, m, xlo, xhi, ylo, yhi, xt, yt, xf, yf) {
+    const X = x => m.l + (x - xlo) / (xhi - xlo) * (w - m.l - m.r), Y = y => h - m.b - (y - ylo) / (yhi - ylo) * (h - m.t - m.b);
+    ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.muted; ctx.strokeStyle = tok.line; ctx.lineWidth = 1;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (const y of yt) { ctx.beginPath(); ctx.moveTo(m.l, Y(y)); ctx.lineTo(w - m.r, Y(y)); ctx.stroke(); ctx.fillText(yf(y), m.l - 5, Y(y)); }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (const x of xt) { ctx.beginPath(); ctx.moveTo(X(x), m.t); ctx.lineTo(X(x), h - m.b); ctx.stroke(); ctx.fillText(xf(x), X(x), h - m.b + 5); }
+    return { X, Y };
+  }
+  const niceStep = span => { const r = span / 6, p = 10 ** Math.floor(Math.log10(r || 1)), f = r / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; };
+  const ticks = (lo, hi) => { const s = niceStep(hi - lo), out = []; for (let v = Math.ceil(lo / s) * s; v <= hi + 1e-9; v += s) out.push(+v.toFixed(6)); return out; };
+  function curve(ctx, X, Y, xs, ys, col, w = 2, dash) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); xs.forEach((x, i) => i ? ctx.lineTo(X(x), Y(ys[i])) : ctx.moveTo(X(x), Y(ys[i]))); ctx.stroke(); ctx.setLineDash([]); }
+  const leg = items => items.map(([c, n]) => `<span><i style="background:${c}"></i>${n}</span>`).join('');
+  function drawCharts() {
+    const r = R, c = r.cyc, m = { l: 48, r: 48, t: 12, b: 26 };
+    { // T–s diagram (entropy per cp, relative to state 1)
+      const { ctx, w, h } = fit($('cTs')), ex = 0.4, sOf = (T, pr) => Math.log(T / c.T1) - ex * Math.log(pr);
+      const pr2 = c.r, prL = 1, pts = [[c.T1, prL], [c.T2, pr2], [c.T5, pr2], [c.T3, pr2], [c.T4, prL], [c.T6, prL]].map(([T, p]) => [sOf(T, p), T - 273.15]);
+      const xs = pts.map(p => p[0]), lo = Math.min(...xs) - 0.05, hi = Math.max(...xs) + 0.05, Tmax = Math.max(2000, r.needTIT ? Math.min(4500, r.needTIT + 200) : 2000);
+      const { X, Y } = axes(ctx, w, h, m, lo, hi, 0, Tmax, [], ticks(0, Tmax), x => '', y => `${y}°`);
+      // Carnot box between the same extremes
+      ctx.fillStyle = tok.c5; ctx.globalAlpha = 0.12; ctx.fillRect(X(lo + 0.02), Y(c.T3 - 273.15), X(hi - 0.02) - X(lo + 0.02), Y(c.T1 - 273.15) - Y(c.T3 - 273.15)); ctx.globalAlpha = 1;
+      // radiator line and the hot end the author's 55 % needs
+      curve(ctx, X, Y, [lo, hi], [r.Trad, r.Trad], tok.steel, 1.5, [5, 3]); sm(ctx, `radiator ${fmt(r.Trad, 0)} °C`, X(hi) - 4, Y(r.Trad) - 9, 'right', tok.steel);
+      if (r.needTIT) { curve(ctx, X, Y, [lo, hi], [r.needTIT, r.needTIT], tok.danger, 1.5, [5, 3]); sm(ctx, `turbine inlet for 55%: ${fmt(r.needTIT, 0)} °C`, X(hi) - 4, Y(r.needTIT) - 9, 'right', tok.danger); }
+      const loop = [...pts, pts[0]]; ctx.strokeStyle = tok.copper; ctx.lineWidth = 2.6; ctx.beginPath(); loop.forEach(([s, T], i) => i ? ctx.lineTo(X(s), Y(T)) : ctx.moveTo(X(s), Y(T))); ctx.stroke();
+      ['1', '2', '5', '3', '4', '6'].forEach((n, i) => { const [s, T] = pts[i]; ctx.fillStyle = tok.ink; ctx.beginPath(); ctx.arc(X(s), Y(T), 3.5, 0, Math.PI * 2); ctx.fill(); sm(ctx, n, X(s) + 8, Y(T) - 8, 'left', tok.ink); });
+      sm(ctx, 'entropy →', w - m.r, h - 8, 'right', tok.muted);
+      $('lgTs').innerHTML = leg([[tok.copper, 'Brayton cycle'], [tok.c5, 'Carnot between the same temperatures'], [tok.steel, 'radiator'], [tok.danger, '55% needs']]);
+      $('nTs').textContent = `1 compressor inlet, 2 compressor outlet, 5 after the recuperator, 3 turbine inlet, 4 turbine outlet, 6 to the radiator exchanger. Cycle ${fmt(c.eta * 100, 1)}% at pressure ratio ${fmt(c.r, 2)}; Carnot ${fmt(r.carnot * 100, 1)}%.`;
+    }
+    { // radiator trade-off
+      const { ctx, w, h } = fit($('cTr')), Ts = Array.from({ length: 61 }, (_, i) => 200 + i * 10), o = Ts.map(T => tradeoff(S, T));
+      const A = o.map(x => x.area / 1e6), E = o.map(x => Math.max(0, x.eta * 100)), ahi = Math.min(10, Math.max(...A)) * 1.05;
+      const { X, Y } = axes(ctx, w, h, m, 200, 800, 0, ahi, [200, 300, 400, 500, 600, 700, 800], ticks(0, ahi), x => `${x}°`, y => fmt(y, 1));
+      curve(ctx, X, Y, Ts, A.map(a => Math.min(a, ahi)), tok.steel, 2.5);
+      const Ye = y => Y(y / 60 * ahi); curve(ctx, X, Ye, Ts, E, tok.copper, 2.5, [5, 3]);
+      ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.copper; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      for (const e of [0, 20, 40, 60]) ctx.fillText(`${e}%`, w - m.r + 4, Ye(e));
+      const cur = tradeoff(S, r.Trad); ctx.fillStyle = tok.ink; ctx.beginPath(); ctx.arc(X(r.Trad), Y(Math.min(ahi, cur.area / 1e6)), 5, 0, Math.PI * 2); ctx.fill();
+      sm(ctx, 'km²', m.l - 4, 4, 'right', tok.muted);
+      $('lgTr').innerHTML = leg([[tok.steel, 'sail area needed (km², left)'], [tok.copper, `efficiency (right)${S.author ? ', fixed in author mode' : ''}`]]);
+    }
+    { // voyage
+      const mm = MIS, { ctx, w, h } = fit($('cV')), dmax = Math.max(...mm.t), vmax = Math.max(10, ...mm.v) * 1.1;
+      const { X, Y } = axes(ctx, w, h, m, 0, dmax, 0, vmax, ticks(0, dmax), ticks(0, vmax), x => `${x}`, y => `${y}`);
+      curve(ctx, X, Y, mm.t, mm.v, tok.c1, 2.5);
+      const Yd = y => Y(y / (S.dist * 1.05) * vmax); curve(ctx, X, Yd, mm.t, mm.x, tok.c4, 2, [5, 3]);
+      ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.c4; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; for (const d of ticks(0, S.dist)) ctx.fillText(`${d} AU`, w - m.r + 4, Yd(d));
+      if (S.shutdownDay >= 0) curve(ctx, X, Y, [S.shutdownDay, S.shutdownDay], [0, vmax], tok.danger, 1, [3, 3]);
+      sm(ctx, 'km/s', m.l - 4, 4, 'right', tok.muted); sm(ctx, 'day', w - m.r, h - 8, 'right', tok.muted);
+      $('lgV').innerHTML = leg([[tok.c1, 'speed (km/s)'], [tok.c4, 'distance (AU, right)']].concat(S.shutdownDay >= 0 ? [[tok.danger, 'Reactor 2 trips']] : []));
+    }
+    { // exhaust velocity and mass
+      const mm = MIS, { ctx, w, h } = fit($('cM')), dmax = Math.max(...mm.t), vhi = S.veMax * 1.05, mhi = S.dry * S.MR * 1.05;
+      const { X, Y } = axes(ctx, w, h, m, 0, dmax, 0, vhi, ticks(0, dmax), ticks(0, vhi), x => `${x}`, y => `${y}`);
+      curve(ctx, X, Y, mm.t, mm.ve, tok.c2, 2.5);
+      const Ym = y => Y(y / mhi * vhi); curve(ctx, X, Ym, mm.t, mm.m, tok.c3, 2, [5, 3]); curve(ctx, X, Ym, [0, dmax], [S.dry, S.dry], tok.muted, 1, [2, 3]);
+      ctx.font = '400 11px "JetBrains Mono", monospace'; ctx.fillStyle = tok.c3; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; for (const d of ticks(0, mhi)) ctx.fillText(`${fmt(d / 1000, 0)}k`, w - m.r + 4, Ym(d));
+      sm(ctx, 'km/s', m.l - 4, 4, 'right', tok.muted); sm(ctx, 'day', w - m.r, h - 8, 'right', tok.muted);
+      $('lgM').innerHTML = leg([[tok.c2, 'exhaust velocity (km/s)'], [tok.c3, 'ship mass (t, right)'], [tok.muted, 'dry mass']]);
+    }
+  }
+  // =====================================================================================
+  // Animated side view of the ship
+  // =====================================================================================
+  const SW = 1060, SH = 370;
+  let phase = 0;
+  function txt(ctx, t, x, y, al = 'center', c = tok.ink, size = 11, wt = 500) { ctx.font = `${wt} ${size}px "JetBrains Mono", monospace`; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); }
+  const ribbonCol = u => { const a = [[255, 170, 60], [215, 70, 30], [110, 30, 25]], k = Math.min(1.999, u * 2), i = Math.floor(k), f = k - i, c0 = a[i], c1 = a[i + 1]; return `rgb(${c0.map((c, j) => Math.round(c + (c1[j] - c) * f)).join(',')})`; };
+  function drawShip() {
+    const { ctx } = fit($('ship'), SW, SH), r = R, cy = 185;
+    ctx.fillStyle = '#0b1020'; ctx.fillRect(0, 0, SW, SH);
+    for (let k = 0; k < 60; k++) { const x = (k * 173.7) % SW, y = (k * 97.3) % SH; ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(x, y, 1.5, 1.5); }
+    // spine
+    ctx.strokeStyle = '#8b97a8'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(130, cy); ctx.lineTo(990, cy); ctx.stroke();
+    // crew section (rotating ring seen edge-on)
+    ctx.fillStyle = '#c9d2de'; ctx.fillRect(950, cy - 70, 26, 140); ctx.fillStyle = '#9aa6b6'; ctx.fillRect(976, cy - 18, 50, 36);
+    const ringY = Math.sin(phase * 0.8) * 60; ctx.fillStyle = '#e8eef5'; ctx.fillRect(955, cy + ringY - 4, 16, 8);
+    txt(ctx, 'crew', 1000, cy + 34, 'center', '#c9d2de');
+    // twin reactors with shadow shields
+    const glow = f => `rgba(255,${Math.round(120 + 80 * f)},${Math.round(40 + 40 * f)},${0.25 + 0.65 * f})`;
+    for (const [k, y] of [[0, cy - 48], [1, cy + 48]]) {
+      const f = r.Pr[k] / S.Pcore, on = f > 0.01;
+      ctx.fillStyle = '#5f6b7c'; ctx.beginPath(); ctx.moveTo(862, y - 22); ctx.lineTo(890, y - 30); ctx.lineTo(890, y + 30); ctx.lineTo(862, y + 22); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = on ? glow(Math.min(1, f)) : '#333b47'; ctx.fillRect(800, y - 20, 60, 40);
+      if (on) { ctx.shadowColor = 'rgba(255,140,60,.8)'; ctx.shadowBlur = 18 * f; ctx.strokeStyle = 'rgba(255,170,90,.9)'; ctx.lineWidth = 2; ctx.strokeRect(800, y - 20, 60, 40); ctx.shadowBlur = 0; }
+      else { ctx.strokeStyle = '#6b7686'; ctx.lineWidth = 1.5; ctx.strokeRect(800, y - 20, 60, 40); }
+      txt(ctx, `R${k + 1} ${on ? fmt(r.Pr[k] / 1e9, 1) + ' GW' : 'OFF'}`, 830, y + (k ? 32 : -32), 'center', on ? '#ffcf9a' : '#8b97a8');
+    }
+    txt(ctx, 'shadow shields', 876, cy, 'center', '#8b97a8', 10);
+    // Brayton turbomachinery
+    ctx.fillStyle = '#7d8aa0'; for (const y of [cy - 42, cy + 42]) { ctx.beginPath(); ctx.moveTo(735, y - 14); ctx.lineTo(780, y - 8); ctx.lineTo(780, y + 8); ctx.lineTo(735, y + 14); ctx.closePath(); ctx.fill(); }
+    txt(ctx, 'Brayton', 757, cy - 70, 'center', '#c9d2de', 10); txt(ctx, `${fmt(r.Pe / 1e9, 1)} GWe`, 757, cy + 70, 'center', '#ffe27a', 11, 700);
+    // water tanks (reaction mass)
+    for (const [x, y, rr] of [[650, cy - 40, 30], [650, cy + 40, 30], [600, cy, 34], [700, cy, 24]]) { ctx.fillStyle = '#4f7bb0'; ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#9cc0e8'; ctx.lineWidth = 1.5; ctx.stroke(); }
+    txt(ctx, 'water', 650, cy + 86, 'center', '#9cc0e8');
+    // ribbon sail: extruder beam (right) → ribbons → collection beam (left)
+    const xE = 545, xC = 260, top = 22, bot = SH - 22, n = 34, frac = r.Qrej / Math.max(1, S.Aribbon * 1e6 * r.flux);
+    ctx.fillStyle = '#b5bfcc'; ctx.fillRect(xE, top, 8, bot - top); ctx.fillRect(xC - 8, top, 8, bot - top);
+    const lost = Math.round(n * S.damage), used = Math.min(1, frac);
+    for (let i = 0; i < n; i++) {
+      const y = top + 6 + i * (bot - top - 12) / (n - 1);
+      if (i < lost) { if (i % 3 === 0) { ctx.strokeStyle = 'rgba(160,160,170,.35)'; ctx.lineWidth = 1; ctx.setLineDash([3, 6]); ctx.beginPath(); ctx.moveTo(xE, y); ctx.lineTo(xE - 60, y + 8); ctx.stroke(); ctx.setLineDash([]); } continue; }
+      const active = (i - lost) / Math.max(1, n - lost) < used / Math.max(0.0001, 1 - S.damage) || r.limited !== undefined;
+      if (!active) { ctx.strokeStyle = 'rgba(120,120,130,.25)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(xE, y); ctx.lineTo(xC, y); ctx.stroke(); continue; }
+      const segs = 24, L = xE - xC;
+      for (let s = 0; s < segs; s++) { const u = s / segs; ctx.strokeStyle = ribbonCol(u); ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(xE - u * L, y); ctx.lineTo(xE - (u + 1 / segs) * L, y); ctx.stroke(); }
+      const off = ((phase * S.v * 4) % 40); ctx.fillStyle = 'rgba(255,230,180,.8)'; for (let x = xE - off; x > xC; x -= 40) ctx.fillRect(x, y - 1.5, 3, 3);
+    }
+    txt(ctx, 'extruders', xE + 4, top - 10, 'center', '#c9d2de', 10); txt(ctx, 'collection beam', xC - 4, top - 10, 'center', '#c9d2de', 10);
+    txt(ctx, `molten ${fmt(r.al.Tm, 0)} °C → frozen in ${fmt(r.tFreeze, 1)} s`, (xE + xC) / 2, bot + 10, 'center', '#ffcf9a', 10);
+    // alloy return loop
+    ctx.strokeStyle = 'rgba(200,120,80,.6)'; ctx.lineWidth = 3; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(xC - 4, bot - 4); ctx.lineTo(xC - 4, bot + 2); ctx.lineTo(735, bot + 2); ctx.lineTo(735, cy + 50); ctx.stroke(); ctx.setLineDash([]);
+    // electric bus to the engines
+    ctx.strokeStyle = '#ffe27a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(735, cy + 10); ctx.lineTo(160, cy + 10); ctx.stroke();
+    // VASIMR engines and plume
+    const day = R && MIS ? Math.min(MIS.t.length - 1, Math.floor(((phase * 6) % Math.max(1, MIS.tTransit)) / MIS.tTransit * (MIS.t.length - 1))) : 0;
+    const ve = MIS.ve[day] || 35, F = MIS.F[day] || 0, Fmax = Math.max(...MIS.F, 1), pl = 30 + 110 * F / Fmax;
+    ctx.fillStyle = '#9aa6b6'; for (const y of [cy - 30, cy, cy + 30]) { ctx.fillRect(132, y - 9, 30, 18); }
+    const hue = 210 + 80 * (ve - S.veMin) / Math.max(1, S.veMax - S.veMin);
+    for (const y of [cy - 30, cy, cy + 30]) { const g = ctx.createLinearGradient(132, 0, 132 - pl, 0); g.addColorStop(0, `hsla(${hue},90%,75%,.95)`); g.addColorStop(1, `hsla(${hue},90%,60%,0)`); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(132, y - 7); ctx.lineTo(132 - pl, y - 2 - 6 * Math.sin(phase * 9 + y)); ctx.lineTo(132 - pl, y + 2); ctx.lineTo(132, y + 7); ctx.closePath(); ctx.fill(); }
+    txt(ctx, `VASIMR · day ${fmt(MIS.t[day] || 0, 0)}`, 145, cy - 56, 'center', '#c9d2de', 10);
+    txt(ctx, `ve ${fmt(ve, 0)} km/s · ${fmt(F, 0)} kN`, 145, cy + 56, 'center', `hsl(${hue},90%,75%)`, 11, 700);
+    if (r.limited !== undefined) txt(ctx, 'SAIL OVERLOADED: REACTORS THROTTLED', (xE + xC) / 2, top + 8, 'center', '#ff8a7a', 12, 700);
+  }
+
+  let last = performance.now();
+  function tick(now) { const dt = Math.min(0.1, (now - last) / 1000); last = now; phase += dt; if (R) drawShip(); requestAnimationFrame(tick); }
+  window.addEventListener('resize', () => { if (R) drawCharts(); });
+  new MutationObserver(() => { readTokens(); drawCharts(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { readTokens(); drawCharts(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => R && drawCharts());
+  readTokens(); recalc();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

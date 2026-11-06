@@ -153,7 +153,7 @@ over the new project is still owed.
 - **Status:** Tabled
 - **Filed:** Milestone 9 (2026-10-12)
 
-The model pages under `projects/plant_models/` (ten as of Milestone 17, five of them nested under
+The model pages under `projects/plant_models/` (eleven as of Milestone 18, six of them nested under
 `power-generation/`, the RBMK one level deeper in `famous-failures/`; the old reactor addresses are redirect stubs) and
 `projects/HVAC-stuff/ground-source-heat-pump/` and
 `projects/exotic-heat-engines/thermoacoustics/` (from Milestone 16) were developed as single

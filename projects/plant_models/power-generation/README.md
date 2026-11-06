@@ -14,8 +14,9 @@ pwr-plant-v6/       v6.0       low-subcooling PWR: jet pumps, natural circulatio
 famous-failures/               sub-section: plants that failed
   index.html                   section page with the model and a to-do list
   rbmk-1986/        v1.0       RBMK-1000 model of the 1986 Chernobyl excursion
-fictional-plants/              sub-section: plants from fiction (empty for now)
+fictional-plants/              sub-section: plants from fiction
   index.html
+  saturn-run-nixon/  v1.0      the Nixon's power plant, ribbon radiator and burn budget (Saturn Run, 2015)
 ```
 
 The reactor pages were moved here from `projects/plant_models/` in Milestone 17.
