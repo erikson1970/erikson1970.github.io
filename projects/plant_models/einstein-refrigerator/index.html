@@ -300,7 +300,7 @@ table.tubes td.l { min-width: 220px; }
             <li>Air leaking into vacuum machines blankets the absorber.</li>
             <li>An under-cooled rectifier lets water into an ammonia evaporator.</li>
           </ul>
-          <p><b>Layout and natural forces.</b> The heat source sits at the bottom, under the vessel it heats. Vessels are placed roughly by height, so gravity-driven flows run downhill on screen. Tags mark flows that need no pump: condensate and weak solution draining by <b>gravity</b>, the light hydrogen of a diffusion fridge rising by <b>buoyancy</b> while the heavier ammonia-laden gas sinks, and the <b>bubble lift</b> that carries rich solution up the bubble pump. The bubble pump lifts rich solution from the absorber up into the generator; the weak solution then drains back to the absorber. Natural-convection fins and burners without fans run on <b>natural draft</b>. Where fuel burns, the diagram shows the combustion air and the flue. The air can be drawn in on its own, through the same vent as the cooling air (as in an RV or vaccine fridge, where the flue leaves with the warm air at the upper vent), or through a preheater that recovers flue heat. The preheater adds about 6 points of efficiency. In the Einstein–Szilard machine the vessel heights are inferred from its gravity returns; published descriptions differ in detail.</p>
+          <p><b>Layout and natural forces.</b> The heat source sits at the bottom, under the vessel it heats. Vessels are placed roughly by height, so gravity-driven flows run downhill, or across between vessels at about the same height. Tags mark flows that need no pump: condensate and weak solution draining by <b>gravity</b>, the light hydrogen of a diffusion fridge rising by <b>buoyancy</b> while the heavier ammonia-laden gas sinks, and the <b>bubble lift</b> that carries rich solution up the bubble pump. The bubble pump lifts rich solution from the absorber up into the generator; the weak solution then drains back to the absorber. Natural-convection fins and burners without fans run on <b>natural draft</b>. Where fuel burns, the diagram shows the combustion air and the flue. The air can be drawn in on its own, through the same vent as the cooling air (as in an RV or vaccine fridge, where the flue leaves with the warm air at the upper vent), or through a preheater that recovers flue heat. The preheater adds about 6 points of efficiency. In the Einstein–Szilard machine the vessel heights are inferred from its gravity returns; published descriptions differ in detail.</p>
           <p><b>Tubes and mixtures.</b> The numbered tubes carry refrigerant vapour, condensate, rich solution and poor solution (plus the gas mixtures of the diffusion machines). Solution compositions for LiBr come from the Dühring equation. The ammonia–water figures and the gas-mixture fractions (from the partial pressures) are indicative.</p>
           <p><b>LiBr–water details.</b> Solution concentrations come from the ASHRAE Dühring equation for LiBr–water. The crystallization line is an approximate solubility curve (62.5% at 20 °C, about 72% at 100 °C). If the strong solution would cross it at the cold end of the solution heat exchanger, the model lowers the generator temperature, as the chiller's anti-crystallization control does. Water is the refrigerant, so LiBr chillers cannot go below about 5 °C.</p>
           <p><b>Diffusion machines.</b> In the Platen–Munters and Einstein–Szilard designs the total pressure is fixed by the charge. When the sink gets too hot, the condenser can no longer condense the refrigerant at that pressure and cooling collapses, which is why RV fridges struggle on very hot days. The model derates these machines over 5 °C below a maximum ambient.</p>
@@ -749,7 +749,7 @@ table.tubes td.l { min-width: 220px; }
   }
   // ---------- cycle topology: vessels, tubes and what is in each tube ----------
   // Layout follows elevation where it can: heat source at the bottom under the generator (or bubble pump),
-  // condenser and evaporator on the top row, so gravity-driven flows run downhill on screen.
+  // condenser and evaporator on the top row, so gravity-driven flows run downhill, or across between vessels at about the same height.
   const SPC = { water: ['water', 'c1'], LiBr: ['LiBr', 'c5'], NH3: ['ammonia', 'c4'], H2: ['hydrogen', 'c6'], C4: ['butane', 'c2'], MeOH: ['methanol', 'c7'] };
   const COMB = { gas: 180, propane: 220, kero: 330, pellet: 190, steam: 200 };   // flue temperature without air preheat, °C
   function machineType(p) { return p.abs.includes('solid') ? 'ads' : p.id === 'ein' ? 'ein' : p.aux ? 'dar' : 'abs'; }
@@ -831,7 +831,7 @@ table.tubes td.l { min-width: 220px; }
       V.G.bed = V.A.bed = true;
       T = [
         { n: 1, from: 'G', to: 'C', path: [[810, 300], [810, 170]], b: [810, 235], kind: 'vap', phase: 'vapour', mix: [[1, refK]], rich: '', T: Tg - 10, P: pc, what: `${p.ref} vapour driven out of the hot bed` },
-        { n: 2, from: 'C', to: 'E', path: [[650, 100], [470, 100]], b: [585, 100], kind: 'liq', phase: 'liquid', mix: [[1, refK]], rich: '', T: Tc, P: pc, valve: [510, 100], drive: 'gravity', what: `Condensed ${p.ref} drains through a U-trap to low pressure` },
+        { n: 2, from: 'C', to: 'E', path: [[650, 100], [470, 100]], b: [585, 100], kind: 'liq', phase: 'liquid', mix: [[1, refK]], rich: '', T: Tc, P: pc, trap: [520, 100], drive: 'gravity', what: `Condensed ${p.ref} drains through a U-trap to low pressure` },
         { n: 3, from: 'E', to: 'A', path: [[370, 170], [370, 300]], b: [370, 235], kind: 'vap', phase: 'vapour', mix: [[1, refK]], rich: '', T: Tei, P: pe, what: `Low-pressure ${p.ref} vapour taken up by the cool bed` },
       ];
     }
@@ -908,12 +908,12 @@ table.tubes td.l { min-width: 220px; }
         ctx.fillStyle = tok.raised; ctx.strokeStyle = tok.ink; ctx.lineWidth = 1.5; ctx.fillRect(px, py, 60, 50); ctx.strokeRect(px, py, 60, 50);
         sm(ctx, 'air', px + 30, py + 18, 'center', tok.ink); sm(ctx, 'preheater', px + 30, py + 32, 'center', tok.ink);
         const fl = [[sx + sw, 500], [px, 500]], fo = [[px + 30, py], [px + 30, 440]], ai = [[px + 45, 578], [px + 45, py + 50]], ao = [[px, 525], [sx + sw, 525]];
-        line(ctx, fl, airCol, 6); line(ctx, fo, airCol, 6); arrowHead(ctx, px + 30, 446, 0, -1, airCol); flowDots(ctx, [...fl, ...fo], '#fff', run, 4, 2);
-        line(ctx, ai, tok.cold, 4); line(ctx, ao, hotCol, 4); arrowHead(ctx, sx + sw + 6, 525, -1, 0, hotCol); flowDots(ctx, [...ai, [px + 10, 525], ...ao], tok.ink, run, 4, 2);
+        line(ctx, fl, airCol, 6); line(ctx, fo, airCol, 6); arrowHead(ctx, px + 30, 446, 0, -1, airCol); flowDots(ctx, [...fl, [px + 30, 500], ...fo], '#fff', run, 4, 2);
+        line(ctx, ai, tok.cold, 4); line(ctx, ao, hotCol, 4); arrowHead(ctx, sx + sw + 6, 525, -1, 0, hotCol); flowDots(ctx, [...ai, [px + 45, 525], ...ao], tok.ink, run, 4, 2);
         sm(ctx, `flue ${flueT} °C`, px + 22, 450, 'right', tok.muted); sm(ctx, 'combustion air', px + 38, 575, 'right', tok.muted);
       } else {
         line(ctx, aIn, tok.cold, 4); arrowHead(ctx, sx - 6, 540, 1, 0, tok.cold); flowDots(ctx, aIn, tok.ink, run, 4, 2);
-        sm(ctx, am === 'shared' ? 'shared lower vent: combustion + cooling air' : 'combustion air', am === 'shared' ? 260 : sx - 88, 528, 'left', tok.muted);
+        sm(ctx, am === 'shared' ? (sink.kind === 'air' ? 'shared lower vent: combustion + cooling air' : 'combustion air from the shared machine-room vent') : 'combustion air', am === 'shared' ? 260 : sx - 88, 528, 'left', tok.muted);
         const fl = [[sx + sw, 505], [910, 505], [910, 440]];
         line(ctx, fl, airCol, 6); arrowHead(ctx, 910, 446, 0, -1, airCol); flowDots(ctx, fl, '#fff', run, 4, 2);
         sm(ctx, `flue ${flueT} °C`, 902, 430, 'right', tok.muted);
