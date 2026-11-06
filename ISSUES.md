@@ -153,8 +153,8 @@ over the new project is still owed.
 - **Status:** Tabled
 - **Filed:** Milestone 9 (2026-10-12)
 
-The model pages under `projects/plant_models/` (ten as of Milestone 17, four of them nested under
-`power-generation/`; the old reactor addresses are redirect stubs) and
+The model pages under `projects/plant_models/` (ten as of Milestone 17, five of them nested under
+`power-generation/`, the RBMK one level deeper in `famous-failures/`; the old reactor addresses are redirect stubs) and
 `projects/HVAC-stuff/ground-source-heat-pump/` and
 `projects/exotic-heat-engines/thermoacoustics/` (from Milestone 16) were developed as single
 self-contained HTML files in a separate working folder
@@ -523,3 +523,16 @@ independent council reviewer covering all three lenses.
 Gatekeeper (fixed before merge): streaming heat-leak unit error. Minor fixed
 inline: cap message, LNG preset sizing, 1999 figures, Ben & Jerry's wording,
 heat-rejected sum, AGENTS.md and traceability wording.
+
+### Milestone 17 — Power generation section, PWR v6 published
+Reviewed 2026-11-06 on branch `feature/power-generation` vs. `main` by one
+independent council reviewer covering all three lenses.
+
+| Lens | Verdict |
+|---|---|
+| Content integrity & plausibility | PASS_WITH_MINOR_ISSUES |
+| Static-site architecture / constraints | PASS |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No gatekeepers. Minor fixed inline: to-do card wording (SL-1, Windscale,
+TMI-2), ISSUE-018 count.

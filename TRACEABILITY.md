@@ -665,7 +665,12 @@ placeholders for well-known failures, including SL-1, EBR-I and Three Mile Islan
 
 ### Milestone 17 council review
 
-_Recorded on merge._
+Reviewed 2026-11-06 by an independent council reviewer covering all three
+lenses: content integrity PASS_WITH_MINOR_ISSUES, static-site constraints PASS
+(every relative link, breadcrumb and redirect target resolves), process &
+documentation PASS_WITH_MINOR_ISSUES. No gatekeepers. Fixed inline: SL-1,
+Windscale and TMI-2 wording on the to-do cards, ISSUE-018 nesting count.
+See `ISSUES.md` § Milestone council reviews. Merged to `main`.
 
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
