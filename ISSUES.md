@@ -153,7 +153,8 @@ over the new project is still owed.
 - **Status:** Tabled
 - **Filed:** Milestone 9 (2026-10-12)
 
-The pages under `projects/plant_models/*/` (ten as of Milestone 15, one of them a redirect stub) and
+The model pages under `projects/plant_models/` (ten as of Milestone 17, four of them nested under
+`power-generation/`; the old reactor addresses are redirect stubs) and
 `projects/HVAC-stuff/ground-source-heat-pump/` and
 `projects/exotic-heat-engines/thermoacoustics/` (from Milestone 16) were developed as single
 self-contained HTML files in a separate working folder

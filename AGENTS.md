@@ -19,7 +19,10 @@ This repo serves `erikson1970.github.io` as a whole:
   page: `projects/plant_models/` (thermal plant models),
   `projects/HVAC-stuff/` (home heating and cooling analyses) and
   `projects/exotic-heat-engines/` (thermoacoustic and other unusual
-  engines), each with a section `index.html` and `README.md`.
+  engines), each with a section `index.html` and `README.md`. A section may
+  nest sub-sections the same way: `projects/plant_models/power-generation/`
+  holds the reactor plants and its own `famous-failures/` and
+  `fictional-plants/` shelves, each with an `index.html`.
 - `ISSUES.md` and `TRACEABILITY.md` at the root are shared across the whole
   repo (one continuous history, not split per project) — see "Issue and
   requirement tracking" below.

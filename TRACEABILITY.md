@@ -646,6 +646,27 @@ tempered, heat-rejected accounting, AGENTS.md wording, and this milestone's goal
 wording. Static-site PASS; process & docs PASS_WITH_MINOR_ISSUES. See
 `ISSUES.md` § Milestone council reviews. Merged to `main`.
 
+## Milestone 17 — Power generation section, PWR v6 published
+
+Goal (user request, 2026-11-06): publish the v6 natural-circulation PWR; put all reactor
+plants and the RBMK under a new "Power generation" page, with sub-sections for famous
+failures and fictional plants (Root › Plant models › Power generation › nuclear plants +
+Famous failures + Fictional plants); give Famous failures the RBMK plus to-do
+placeholders for well-known failures, including SL-1, EBR-I and Three Mile Island.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M17-1 | Publish PWR v6 | User request | Met | `projects/plant_models/power-generation/pwr-plant-v6/` wrapped from `Energy-Flow/visualization/pwr_plant_v6.html`; 300 s headless run holds 101 % power, DNBR 1.93, no trip (ad hoc, ISSUE-018) |
+| M17-2 | Power generation page with nuclear plants | User request | Met | `power-generation/index.html` lists PWR v4, v5, v5.2, v6 and links the two sub-sections; Plant models index shows one Power generation card |
+| M17-3 | Famous failures sub-section with RBMK and to-dos | User request | Met | `power-generation/famous-failures/index.html`: RBMK model + TODO cards for SL-1, EBR-I, BORAX-I, Three Mile Island, Windscale, NRX, Fermi 1, Lucens, Fukushima Daiichi, Sayano–Shushenskaya |
+| M17-4 | Fictional plants sub-section | User request | Met | `power-generation/fictional-plants/index.html` placeholder |
+| M17-5 | Old addresses keep working | Project practice | Met | Redirect stubs at `plant_models/pwr-plant-v4/`, `-v5/`, `-v5-2/`, `rbmk-1986/`; `pwr-plant-v5-1/` retargeted; moved pages' breadcrumbs updated to the new depth |
+| M17-6 | Static-only pages | AGENTS.md § Project intent | Met | No new external loads |
+
+### Milestone 17 council review
+
+_Recorded on merge._
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
