@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Power generation</title>
+<meta name="description" content="Power plant models: a pressurized-water reactor plant in four versions, famous plant failures starting with the RBMK at Chernobyl, and fictional plants.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+/* Section index: same palette and type as the root landing page, self-contained. */
+:root {
+  --ink: #1b2430; --paper: #f4f1e8; --panel: #ffffff; --rule: #c9c0a8; --navy: #1f3350;
+  --forest: #2f4a3c; --gold: #a97c34; --bronze: #8a5a2b; --muted: #5b6472;
+  --link: var(--navy); --link-visited: var(--forest);
+  --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
+  --font-body: "EB Garamond", Garamond, Georgia, serif;
+  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e8e4d8; --paper: #14181f; --panel: #1b212b; --rule: #3a4250; --navy: #7fa0c9;
+    --forest: #7fb89a; --gold: #d4a24e; --bronze: #c98a52; --muted: #9aa3b0;
+    --link: var(--gold); --link-visited: var(--forest);
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 1.125rem; line-height: 1.6; }
+.hall { max-width: 46rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+.crumb { font-size: 0.95rem; color: var(--muted); margin: 0 0 1.5rem; }
+.crumb a { color: var(--link); }
+.kicker { margin: 0; font-family: var(--font-display); font-size: 0.85rem; letter-spacing: 0.35em; text-transform: uppercase; color: var(--bronze); }
+h1 { margin: 0.4rem 0 0.25rem; font-family: var(--font-display); font-weight: 700; font-size: clamp(1.75rem, 5vw, 2.6rem); color: var(--navy); line-height: 1.2; text-wrap: balance; }
+.tagline { margin: 0 0 1.5rem; color: var(--muted); font-style: italic; }
+h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.05rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bronze); margin: 2rem 0 0.75rem; }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1rem; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 1rem 1.25rem; }
+.card h3 { margin: 0 0 0.25rem; font-family: var(--font-display); font-weight: 500; font-size: 1.1rem; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; }
+.card h3 a { color: var(--link); text-decoration: none; }
+.card h3 a:hover, .card h3 a:focus-visible { text-decoration: underline; }
+.card h3 a:visited { color: var(--link-visited); }
+.ver { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); letter-spacing: 0; }
+.card p { margin: 0; }
+.aside { margin-top: 1.5rem; color: var(--muted); font-size: 1rem; }
+footer { margin-top: 3rem; font-size: 0.95rem; color: var(--muted); }
+footer a { color: var(--link); }
+a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.todo { opacity: .85; border-style: dashed; }
+.todo h3 { color: var(--muted); }
+.tag { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.05em; padding: 0.1rem 0.45rem; border-radius: 4px; border: 1px solid var(--rule); color: var(--bronze); white-space: nowrap; }
+.card .meta { font-size: 0.95rem; color: var(--muted); margin: 0.1rem 0 0.35rem; }
+</style>
+</head>
+<body>
+  <div class="hall">
+    <p class="crumb"><a href="../../../">erikson1970</a> / <a href="../">Plant models</a> / Power generation</p>
+    <p class="kicker">Plant models</p>
+    <h1>Power generation</h1>
+    <p class="tagline">Reactor plants you can run, the famous ones that failed, and a few that only exist in stories.</p>
+    <main>
+      <h2>Nuclear power plants</h2>
+      <ul class="list">
+      <li class="card">
+        <h3><a href="pwr-plant-v4/">PWR plant lab</a><span class="ver">v4.0</span></h3>
+        <p>A single-loop PWR: point kinetics with moderator feedback, two-speed coolant pumps with check valves, pressurizer heaters and spray, steam generator, propulsion turbine, two turbine generators and a seawater-cooled condenser.</p>
+      </li>
+      <li class="card">
+        <h3><a href="pwr-plant-v5/">PWR plant lab</a><span class="ver">v5.0</span></h3>
+        <p>Six-group kinetics with Doppler, moderator and xenon feedback, decay heat, rod control, steam-generator level, a sampling loop with charging and discharge, shore power, metric/imperial units and four operator panels.</p>
+      </li>
+      <li class="card">
+        <h3><a href="pwr-plant-v5-2/">PWR plant lab</a><span class="ver">v5.2</span></h3>
+        <p>The v5.1 plant with its loop electric plant, plus a limit board: every trip, fast rod insertion, rod stop and automatic action with live values and overrides; smarter arming during scram recovery; maximum power by pump line-up; a larger pressurizer and charging system; regular and fast rod speeds. Replaces v5.1.</p>
+      </li>
+      <li class="card">
+        <h3><a href="pwr-plant-v6/">PWR plant lab</a><span class="ver">v6.0</span></h3>
+        <p>A low-subcooling PWR at the same 150 MW thermal: jet pumps driven by smaller drive pumps instead of canned coolant pumps, a raised steam generator for natural circulation, subcooled boiling with a hot-channel DNBR, spring-assisted check valves, ejector cavitation and NPSH limits, and a power–flow map with a stability limit. Lose the drive pumps and watch it ride down onto natural circulation.</p>
+      </li>
+      </ul>
+      <h2>Famous failures</h2>
+      <ul class="list">
+      <li class="card">
+        <h3><a href="famous-failures/">Famous failures</a><span class="ver">1 model · more to come</span></h3>
+        <p>Plants that went wrong, rebuilt so you can step through how. The RBMK-1000 at Chernobyl in 1986 is first; SL-1, EBR-I, Three Mile Island and others are on the list.</p>
+      </li>
+      </ul>
+      <h2>Fictional plants</h2>
+      <ul class="list">
+      <li class="card">
+        <h3><a href="fictional-plants/">Fictional plants</a><span class="ver">coming</span></h3>
+        <p>Power plants from fiction, run with real engineering.</p>
+      </li>
+      </ul>
+    </main>
+    <footer><p>Each model is a single self-contained file that runs in the browser: no server, no install. All plant values are generic, textbook-scale figures chosen for teaching, derived from published, publicly available sources.</p>
+    <p><a href="https://github.com/erikson1970">github.com/erikson1970</a></p></footer>
+  </div>
+</body>
+</html>
