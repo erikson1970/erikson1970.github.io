@@ -616,6 +616,36 @@ the condenser fan, the playback scrubber resets after a preset, dead code
 removed, M15-3 reworded to an order-of-magnitude match, ISSUE-018 count
 corrected to ten. See `ISSUES.md` § Milestone council reviews. Merged to `main`.
 
+## Milestone 16 — Exotic heat engines section: Thermoacoustics Lab
+
+Goal (user request, 2026-11-06): start a new section for exotic heat engines,
+beginning with thermoacoustic heat engines and heat pumps. Cover the basic devices
+through advanced layouts (gas diodes), the LANL gas-fired thermoacoustic natural-gas
+liquefier, the Space Shuttle thermoacoustic refrigerator (NPS STAR, 1992) and the
+later Penn State / Ben & Jerry's chiller (2004). The root README and landing-page
+plant-models blurbs also gain the Milestone 15 car air conditioner.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M16-1 | New section for exotic heat engines | User request | Met | `projects/exotic-heat-engines/` with section `index.html` and `README.md`; linked from the root landing page, root `README.md` and `AGENTS.md` § Repository structure |
+| M16-2 | Thermoacoustic engines from basic to advanced | User request | Met | Rijke tube; standing-wave refrigerator and prime mover (Swift 1988 short-stack theory, Tijani 2002 normalization); traveling-wave Stirling engine with jet pump ("gas diode") and tapered buffer tube |
+| M16-3 | LANL gas-fired LNG liquefier | User request | Met | Engine + orifice pulse-tube refrigerator; burned/liquefied split; 1989 electric demo (≈9 %, its standing-wave engine stood in for by the traveling-wave model with fixes off, as the page says), 2002 Praxair prototype (≈500 gal/day of LNG), 10,000 gal/day target |
+| M16-4 | Ben & Jerry's / Penn State and the Space Shuttle refrigerator | User request | Met | Examples "inspired by" STAR (STS-42, January 1992) and the 2004 Ben & Jerry's chiller; page states the real units' differences |
+| M16-5 | Model checked against a published machine | Project practice | Met (ad hoc) | Tijani refrigerator: model no-load limit ≈ −62 °C vs −65 °C measured; Backhaus & Swift: 29 % / 42 % of Carnot / 880 W vs 30 % / 41 % / ≈890 W; checks not committed (ISSUE-018) |
+| M16-6 | Static-only, self-contained page | AGENTS.md § Project intent | Met | One HTML file, Google Fonts only |
+
+### Milestone 16 council review
+
+Reviewed 2026-11-06 by an independent council reviewer covering all three
+lenses. Content integrity first returned FAIL: the Gedeon-streaming heat leak
+was displayed 1000× too large (more than the heater power). Fixed by defining
+the leak in watts as a share of the heater power. Also fixed inline: the
+amplitude-cap message, LNG examples sized to their quoted output, the 1999
+efficiency and power figures separated, the Ben & Jerry's stand-in claim
+tempered, heat-rejected accounting, AGENTS.md wording, and this milestone's goal
+wording. Static-site PASS; process & docs PASS_WITH_MINOR_ISSUES. See
+`ISSUES.md` § Milestone council reviews. Merged to `main`.
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s

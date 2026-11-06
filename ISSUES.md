@@ -154,7 +154,8 @@ over the new project is still owed.
 - **Filed:** Milestone 9 (2026-10-12)
 
 The pages under `projects/plant_models/*/` (ten as of Milestone 15, one of them a redirect stub) and
-`projects/HVAC-stuff/ground-source-heat-pump/` were developed as single
+`projects/HVAC-stuff/ground-source-heat-pump/` and
+`projects/exotic-heat-engines/thermoacoustics/` (from Milestone 16) were developed as single
 self-contained HTML files in a separate working folder
 (`Energy-Flow/visualization/`, not in this repo) and copied in, wrapped in a
 full HTML document with a breadcrumb. There is no build step, so the copy in
@@ -507,3 +508,17 @@ independent council reviewer covering all three lenses.
 No gatekeepers. Minor fixed inline: reference-car coil coupling, crystallization
 latch, fan accounting, scrubber sync, dead code, traceability wording, page count.
 Open: idle cooling is below the cited prototype figure in hot climates.
+
+### Milestone 16 — Exotic heat engines section: Thermoacoustics Lab
+Reviewed 2026-11-06 on branch `feature/exotic-heat-engines` vs. `main` by one
+independent council reviewer covering all three lenses.
+
+| Lens | Verdict |
+|---|---|
+| Content integrity & plausibility | FAIL → fixed on the branch |
+| Static-site architecture / constraints | PASS |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+Gatekeeper (fixed before merge): streaming heat-leak unit error. Minor fixed
+inline: cap message, LNG preset sizing, 1999 figures, Ben & Jerry's wording,
+heat-rejected sum, AGENTS.md and traceability wording.
