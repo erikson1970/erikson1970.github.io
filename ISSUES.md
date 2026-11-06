@@ -536,3 +536,16 @@ independent council reviewer covering all three lenses.
 
 No gatekeepers. Minor fixed inline: to-do card wording (SL-1, Windscale,
 TMI-2), ISSUE-018 count.
+
+### Milestone 18 — Fictional plants: the Nixon from Saturn Run
+Reviewed 2026-11-06 on branch `feature/saturn-run-nixon` vs. `main` by one
+independent council reviewer covering all three lenses.
+
+| Lens | Verdict |
+|---|---|
+| Content integrity & plausibility | PASS_WITH_MINOR_ISSUES |
+| Static-site architecture / constraints | PASS |
+| Process & documentation consistency | PASS_WITH_MINOR_ISSUES |
+
+No gatekeepers. Minor fixed inline: arrival short of Saturn, shutdown phase
+handling, prose figures, preset wording, assumed alloy label.

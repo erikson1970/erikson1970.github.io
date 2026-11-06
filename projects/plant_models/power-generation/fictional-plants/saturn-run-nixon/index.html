@@ -249,8 +249,8 @@ table.tubes td.l { min-width: 220px; }
               <li><b>The voyage:</b> by spreadsheet, a mass ratio of about 10 with exhaust velocity varied from 35 to 300 km/s reaches Saturn in four to five months.</li>
             </ul>
           <p><b>The plant.</b> Reactor heat goes through a liquid-metal loop to a recuperated closed Brayton cycle (helium–xenon), the usual choice for space power. The pressure ratio is chosen for the best efficiency. Rejected heat goes to the radiator alloy, which freezes on the ribbons just below its melting point. Each square metre of ribbon radiates from both faces at 2εσT⁴. The required alloy flow is the waste heat divided by its latent heat. The freezing time is the ribbon mass per area times latent heat, divided by that flux. Ribbon speed and freezing time then set the sail's length and width. In <b>Author's numbers</b> mode the conversion efficiency is fixed at the book's 55%. In <b>Brayton physics</b> mode it comes from the temperatures.</p>
-          <p><b>The Carnot check.</b> Rejecting heat at about 880 K caps any engine at 1 − 880 / T<sub>hot</sub>. Reaching 55% needs at least about 1,950 K (about 1,700 °C) at the hot end with a perfect engine. A realistic Brayton cycle needs far more, beyond any reactor material known. At the 1,300–1,500 °C a lithium-cooled refractory reactor might reach, the cycle gives 10–20%. The waste heat is then not 9 GW but about 17 GW. In the book's future the authors extrapolated a century of power-plant trends; this page shows how far that extrapolation reaches.</p>
-          <p><b>The voyage.</b> A straight-line accelerate, flip, decelerate budget from Earth to Saturn. The Sun's gravity is ignored, so this is not the authors' Orbiter trajectory. Fixed Δv allowances cover spiralling out of Earth orbit and into Saturn orbit. The VASIMR holds a constant acceleration by trading exhaust velocity for thrust (thrust = 2ηP / v<sub>e</sub>) within its exhaust-velocity range. The page searches for the fastest acceleration that still arrives with the dry ship intact.</p>
+          <p><b>The Carnot check.</b> Rejecting heat at about 910 K (the 605 °C ribbons plus a heat-exchanger approach) caps any engine at 1 − 910 / T<sub>hot</sub>. Reaching 55% needs at least about 2,020 K (about 1,750 °C) at the hot end with a perfect engine. A realistic Brayton cycle needs far more, beyond any reactor material known. At the 1,300–1,500 °C a lithium-cooled refractory reactor might reach, the cycle gives only about 3–12%. The waste heat is then not 9 GW but about 17 GW, more than the sail can take. In the book's future the authors extrapolated a century of power-plant trends; this page shows how far that extrapolation reaches.</p>
+          <p><b>The voyage.</b> A straight-line accelerate, flip, decelerate budget from Earth to Saturn. The Sun's gravity is ignored, so this is not the authors' Orbiter trajectory. Fixed Δv allowances cover spiralling out of Earth orbit and into Saturn orbit. The VASIMR holds a constant acceleration by trading exhaust velocity for thrust (thrust = 2ηP / v<sub>e</sub>) within its exhaust-velocity range. After the flip it brakes only as hard as needed to stop at Saturn. The page searches for the fastest acceleration that still arrives with the dry ship intact.</p>
           <h3>Sources</h3>
           <ul>
             <li>John Sandford and Ctein, <i>Saturn Run</i> (2015), especially the authors' note "The science behind the story."</li>
@@ -314,7 +314,7 @@ table.tubes td.l { min-width: 220px; }
   };
   const ALLOYS = {
     al: { name: 'Aluminium (pure)', Tm: 660, L: 397e3, rho: 2375, cp: 1180 },
-    nx: { name: 'Novel radiator alloy', Tm: 610, L: 420e3, rho: 2400, cp: 1150 },
+    nx: { name: 'Book alloy (assumed: 610 °C, 420 kJ/kg)', Tm: 610, L: 420e3, rho: 2400, cp: 1150 },
     zn: { name: 'Zinc', Tm: 420, L: 112e3, rho: 6570, cp: 480 },
     lim: { name: 'Lithium metal', Tm: 181, L: 432e3, rho: 512, cp: 4200 },
   };
@@ -372,9 +372,17 @@ table.tubes td.l { min-width: 220px; }
 
   // fastest constant-acceleration programme that still arrives with the dry mass intact
   function bestMission(S, P) {
-    let lo = 0.001, hi = 0.2, best = null;
-    for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2, o = mission({ ...S, aT: m }, P); if (o.arrived) { best = { ...o, aT: m }; lo = m; } else hi = m; }
-    return best || { ...mission({ ...S, aT: lo }, P), aT: lo };
+    // arrival is not monotonic in the acceleration target, so scan it (log-spaced) and keep the quickest arrival
+    let best = null;
+    for (let k = 0; k <= 80; k++) {
+      const aT = 0.001 * 200 ** (k / 80), o = mission({ ...S, aT }, P);
+      if (o.arrived && (!best || o.tTransit < best.tTransit)) best = { ...o, aT };
+    }
+    if (best) { // refine around the best
+      for (let k = -10; k <= 10; k++) { const aT = best.aT * (1 + k * 0.006), o = mission({ ...S, aT }, P); if (o.arrived && o.tTransit < best.tTransit) best = { ...o, aT }; }
+      return best;
+    }
+    return { ...mission({ ...S, aT: 0.001 }, P), aT: 0.001 };
   }
   // ---------- mission: variable exhaust velocity, as in the authors' spreadsheet ----------
   // Straight-line accelerate/flip/decelerate budget between Earth and Saturn (the Sun's gravity
@@ -388,23 +396,30 @@ table.tubes td.l { min-width: 220px; }
     let escLeft = escDv, flipped = false, done = false, tFlip = 0;
     for (let k = 0; k < 400 * 48 && !done; k++) {
       // power: both reactors, or one after the shutdown day
-      let Pe = P.Pe; if (S.shutdownDay >= 0 && t >= S.shutdownDay * DAY) Pe = P.Pe * S.shutdownFrac;
+      const Pe = S.shutdownDay >= 0 && t >= S.shutdownDay * DAY && P.Pe2 !== undefined ? P.Pe2 : P.Pe;
       const Pj = Pe * S.etaThr;
-      let ve = clamp(2 * Pj / Math.max(1e-6, S.aT * m), veMin, veMax), F = 2 * Pj / ve, mdot = F / ve, a = F / m;
+      let ve = clamp(2 * Pj / Math.max(1e-6, S.aT * m), veMin, veMax), F = 2 * Pj / ve, a = F / m;
+      // after the flip, brake only as hard as needed to stop at Saturn (raising exhaust velocity saves water)
+      if (flipped) {
+        const aReq = v * v / (2 * Math.max(1, dist - x)), aMin = 2 * Pj / (veMax * m);
+        if (aReq < aMin) { F = 0; a = 0; }                                   // less braking needed than the weakest thrust: coast
+        else if (aReq < a) { ve = clamp(2 * Pj / Math.max(1e-6, aReq * m), veMin, veMax); F = 2 * Pj / ve; a = F / m; }
+      }
+      const mdot = F > 0 ? F / ve : 0;
       if (m - mdot * dt < dry) { done = true; out.fuelOut = true; break; }
       if (escLeft > 0) { escLeft -= a * dt; }
       else {
         // decide when to flip: when the distance needed to stop (at the present deceleration) reaches what is left
         if (!flipped && v * v / (2 * a) >= dist - x) { flipped = true; tFlip = t; }
-        const dir = flipped ? -1 : 1; v += dir * a * dt; x += Math.max(0, v) * dt;
-        if (flipped && v <= 0) { phase = 2; done = true; }
+        const dir = flipped ? -1 : 1; v = Math.max(0, v + dir * a * dt); x += v * dt;
+        if (flipped && (x >= dist * 0.999 || v <= 0)) { phase = x >= dist * 0.99 ? 2 : 1; done = true; }
       }
       m -= mdot * dt; t += dt; dvUsed += a * dt;
       if (k % 12 === 0) { out.t.push(t / DAY); out.x.push(x / AU); out.v.push(v / 1000); out.m.push(m / 1000); out.ve.push(ve / 1000); out.F.push(F / 1000); out.a.push(a * 1000); out.pw.push(Pe / 1e9); }
     }
     // Saturn orbit insertion from what is left
-    const veEnd = out.ve.length ? out.ve[out.ve.length - 1] * 1000 : veMax, mCap = m * Math.exp(-capDv / veEnd);
-    out.tTransit = t / DAY; out.mEnd = m / 1000; out.mAfterCap = mCap / 1000; out.dv = (dvUsed + capDv) / 1000; out.arrived = phase === 2 && mCap >= dry; out.tFlip = tFlip / DAY;
+    const veEnd = out.ve.length ? out.ve[out.ve.length - 1] * 1000 : veMax, capTot = capDv + v, mCap = m * Math.exp(-capTot / veEnd);   // capture also removes the arrival speed
+    out.tTransit = t / DAY; out.mEnd = m / 1000; out.mAfterCap = mCap / 1000; out.dv = (dvUsed + capTot) / 1000; out.vArr = v / 1000; out.arrived = phase === 2 && mCap >= dry; out.tFlip = tFlip / DAY;
     out.vPeak = Math.max(...out.v); out.MRused = wet / Math.max(1, mCap); out.capOK = mCap >= dry;
     return out;
   }
@@ -417,13 +432,13 @@ table.tubes td.l { min-width: 220px; }
   const S = { ...BASE };
   const PRESETS = [
     ['As written', {}, "The book's figures: two 10 GW cores, 55% conversion, about 11 GW to the VASIMRs and 9 GW of waste heat into a 600 °C ribbon sail. With a 1,500-tonne dry ship and a mass ratio of 10 it reaches Saturn in about five months."],
-    ['Reactor 2 shutdown', { r2: 0, shutdownDay: 30 }, 'Something is wrong with Reactor 2 and it stays down. From day 30 the ship runs on half power: thrust halves at the same exhaust velocity, the radiator has capacity to spare, and the voyage stretches.'],
+    ['Reactor 2 shutdown', { shutdownDay: 30 }, 'Something is wrong with Reactor 2 and it stays down. From day 30 the ship runs on half power: thrust halves at the same exhaust velocity, the radiator has capacity to spare, and the voyage stretches. Watch R2 go dark in the animation.'],
     ['Ribbon sail damaged', { damage: 0.45 }, 'Lose 45% of the ribbon sail (a collection beam or extruder bank). The waste heat no longer fits, so reactor power must come down until it does.'],
-    ['Brayton physics at 600 °C', { author: false }, 'The same plant, but the efficiency comes from the temperatures: a lithium loop at 1,500 °C feeding a Brayton cycle that rejects heat at about 605 °C. Conversion falls to about 12%, and the waste heat nearly doubles.'],
+    ['Brayton physics at 600 °C', { author: false }, 'The same plant, but the efficiency comes from the temperatures: a lithium loop at 1,500 °C feeding a Brayton cycle that rejects heat at about 605 °C. Conversion falls to about 12%, the waste heat nearly doubles to about 17 GW, and the sail overloads: the reactors have to throttle back to about 86%.'],
     ['Physics, zinc ribbons at 420 °C', { author: false, alloy: 'zn', Aribbon: 0.8 }, 'Reject heat lower and the turbines recover some ground, but the sail must roughly triple, and dense zinc carries little latent heat, so the ribbon flow is huge.'],
     ['Physics, lithium ribbons at 180 °C', { author: false, alloy: 'lim', Aribbon: 3 }, 'Lithium freezes at 181 °C and carries lots of latent heat per kilogram. The cycle reaches about 45%, close to the book, but the sail grows to almost 3 km²: back toward the 9 km² problem the authors set out to avoid.'],
   ];
-  let presetIdx = 0, R = null, MIS = null;
+  let presetIdx = 0, R = null, R2 = null, MIS = null;
   const C = (id, lab0, mn, mx, st, f, scale = 1) => ({ id, lab0, mn, mx, st, f, scale });
   const GROUPS = {
     cycCtl: [C('Tout', 'Reactor coolant outlet', 700, 1600, 10, v => `${fmt(v, 0)} °C`), C('etaT', 'Turbine efficiency', 0.8, 0.97, 0.01, v => `${fmt(v * 100, 0)}%`), C('etaC', 'Compressor efficiency', 0.75, 0.95, 0.01, v => `${fmt(v * 100, 0)}%`), C('eps', 'Recuperator effectiveness', 0.8, 0.99, 0.01, v => `${fmt(v * 100, 0)}%`), C('etaAlt', 'Alternator and power conditioning', 0.85, 0.99, 0.01, v => `${fmt(v * 100, 0)}%`)],
@@ -454,7 +469,8 @@ table.tubes td.l { min-width: 220px; }
     $('modeNote').textContent = S.author ? 'Efficiency fixed at the book\'s 55%. The cycle settings below only show what the temperatures would really give.' : 'Efficiency computed from the temperatures with a recuperated helium–xenon Brayton cycle.';
   }
   // the reactors throttle back if the sail cannot reject the heat
-  function solve() {
+  function solve() { return solveWith(S); }
+  function solveWith(S) {
     let r = plant(S);
     if (r.overload) {
       let lo = 0, hi = 1; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2, o = plant({ ...S, r1: S.r1 * m, r2: S.r2 * m }); o.overload ? hi = m : lo = m; }
@@ -464,9 +480,8 @@ table.tubes td.l { min-width: 220px; }
   }
   function recalc() {
     R = solve();
-    const both = plant({ ...S, r1: S.r1, r2: S.shutdownDay >= 0 ? Math.max(S.r2, 1) : S.r2 });
-    const Pm = S.shutdownDay >= 0 ? { Pe: R.limited ? R.Pe : both.Pe } : R;
-    MIS = bestMission({ ...S, shutdownFrac: S.shutdownDay >= 0 ? (S.r1 * S.Pcore) / Math.max(1, (S.r1 + Math.max(S.r2, 1)) * S.Pcore) : 1 }, Pm);
+    R2 = S.shutdownDay >= 0 ? solveWith({ ...S, r2: 0 }) : null;     // the plant after Reactor 2 trips
+    MIS = bestMission(S, { Pe: R.Pe, Pe2: R2 ? R2.Pe : undefined });
     sync(); render(); drawCharts();
   }
   const GW = w => `${fmt(w / 1e9, 2)} <small>GW</small>`;
@@ -488,7 +503,7 @@ table.tubes td.l { min-width: 220px; }
     if (!S.author) fl.push(['alm', `Brayton physics: ${fmt(r.eta * 100, 1)}% conversion at a ${fmt(r.cyc.r, 2)} pressure ratio. Waste heat ${fmt(r.Qrej / 1e9, 1)} GW, not 9.`]);
     if (r.pSat > 1) fl.push(['alm', `${r.cool.name} at ${fmt(r.Tout, 0)} °C must be held above ${fmt(r.pSat, 1)} atm to stay liquid`]);
     if (S.Tout > r.cool.tmax) fl.push(['alm', `${r.cool.name} loop limited to ${r.cool.tmax} °C`]);
-    if (S.shutdownDay >= 0) fl.push(['alm', `Reactor 2 down from day ${S.shutdownDay}: half power for the rest of the run`]);
+    if (R2) fl.push(['alm', `Reactor 2 down from day ${S.shutdownDay}: electric power falls from ${fmt(R.Pe / 1e9, 1)} to ${fmt(R2.Pe / 1e9, 1)} GW for the rest of the run`]);
     if (m.arrived) fl.push(['ok', `Arrives in ${fmt(m.tTransit, 0)} days at a mass ratio of ${fmt(m.MRused, 1)}, accelerating at ${fmt(m.aT * 1000, 1)} mm/s² (${fmt(m.aT / 9.81 * 1000, 1)} milli-g)`]);
     $('flags').innerHTML = fl.map(([c, t]) => `<span class="chip ${c}">${t}</span>`).join('');
   }
@@ -575,18 +590,19 @@ table.tubes td.l { min-width: 220px; }
     txt(ctx, 'crew', 1000, cy + 34, 'center', '#c9d2de');
     // twin reactors with shadow shields
     const glow = f => `rgba(255,${Math.round(120 + 80 * f)},${Math.round(40 + 40 * f)},${0.25 + 0.65 * f})`;
+    const dayNow = MIS ? (phase * 6) % Math.max(1, MIS.tTransit) : 0, tripped = R2 && dayNow >= S.shutdownDay, P = tripped ? R2 : r;
     for (const [k, y] of [[0, cy - 48], [1, cy + 48]]) {
-      const f = r.Pr[k] / S.Pcore, on = f > 0.01;
+      const f = P.Pr[k] / S.Pcore, on = f > 0.01;
       ctx.fillStyle = '#5f6b7c'; ctx.beginPath(); ctx.moveTo(862, y - 22); ctx.lineTo(890, y - 30); ctx.lineTo(890, y + 30); ctx.lineTo(862, y + 22); ctx.closePath(); ctx.fill();
       ctx.fillStyle = on ? glow(Math.min(1, f)) : '#333b47'; ctx.fillRect(800, y - 20, 60, 40);
       if (on) { ctx.shadowColor = 'rgba(255,140,60,.8)'; ctx.shadowBlur = 18 * f; ctx.strokeStyle = 'rgba(255,170,90,.9)'; ctx.lineWidth = 2; ctx.strokeRect(800, y - 20, 60, 40); ctx.shadowBlur = 0; }
       else { ctx.strokeStyle = '#6b7686'; ctx.lineWidth = 1.5; ctx.strokeRect(800, y - 20, 60, 40); }
-      txt(ctx, `R${k + 1} ${on ? fmt(r.Pr[k] / 1e9, 1) + ' GW' : 'OFF'}`, 830, y + (k ? 32 : -32), 'center', on ? '#ffcf9a' : '#8b97a8');
+      txt(ctx, `R${k + 1} ${on ? fmt(P.Pr[k] / 1e9, 1) + ' GW' : tripped && k === 1 ? 'TRIPPED' : 'OFF'}`, 830, y + (k ? 32 : -32), 'center', on ? '#ffcf9a' : '#8b97a8');
     }
     txt(ctx, 'shadow shields', 876, cy, 'center', '#8b97a8', 10);
     // Brayton turbomachinery
     ctx.fillStyle = '#7d8aa0'; for (const y of [cy - 42, cy + 42]) { ctx.beginPath(); ctx.moveTo(735, y - 14); ctx.lineTo(780, y - 8); ctx.lineTo(780, y + 8); ctx.lineTo(735, y + 14); ctx.closePath(); ctx.fill(); }
-    txt(ctx, 'Brayton', 757, cy - 70, 'center', '#c9d2de', 10); txt(ctx, `${fmt(r.Pe / 1e9, 1)} GWe`, 757, cy + 70, 'center', '#ffe27a', 11, 700);
+    txt(ctx, 'Brayton', 757, cy - 70, 'center', '#c9d2de', 10); txt(ctx, `${fmt(P.Pe / 1e9, 1)} GWe`, 757, cy + 70, 'center', '#ffe27a', 11, 700);
     // water tanks (reaction mass)
     for (const [x, y, rr] of [[650, cy - 40, 30], [650, cy + 40, 30], [600, cy, 34], [700, cy, 24]]) { ctx.fillStyle = '#4f7bb0'; ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#9cc0e8'; ctx.lineWidth = 1.5; ctx.stroke(); }
     txt(ctx, 'water', 650, cy + 86, 'center', '#9cc0e8');
@@ -610,7 +626,7 @@ table.tubes td.l { min-width: 220px; }
     // electric bus to the engines
     ctx.strokeStyle = '#ffe27a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(735, cy + 10); ctx.lineTo(160, cy + 10); ctx.stroke();
     // VASIMR engines and plume
-    const day = R && MIS ? Math.min(MIS.t.length - 1, Math.floor(((phase * 6) % Math.max(1, MIS.tTransit)) / MIS.tTransit * (MIS.t.length - 1))) : 0;
+    const day = R && MIS ? Math.min(MIS.t.length - 1, Math.floor(dayNow / MIS.tTransit * (MIS.t.length - 1))) : 0;
     const ve = MIS.ve[day] || 35, F = MIS.F[day] || 0, Fmax = Math.max(...MIS.F, 1), pl = 30 + 110 * F / Fmax;
     ctx.fillStyle = '#9aa6b6'; for (const y of [cy - 30, cy, cy + 30]) { ctx.fillRect(132, y - 9, 30, 18); }
     const hue = 210 + 80 * (ve - S.veMin) / Math.max(1, S.veMax - S.veMin);
