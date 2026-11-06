@@ -672,6 +672,39 @@ documentation PASS_WITH_MINOR_ISSUES. No gatekeepers. Fixed inline: SL-1,
 Windscale and TMI-2 wording on the to-do cards, ISSUE-018 nesting count.
 See `ISSUES.md` § Milestone council reviews. Merged to `main`.
 
+## Milestone 18 — Fictional plants: the Nixon from Saturn Run
+
+Goal (user request, 2026-11-06): model the fictional US spaceship *Nixon* from *Saturn Run*
+(Sandford & Ctein, 2015) from the authors' note and reactor excerpts. Decisions (user):
+the novel's full-text scale (about 10 GWt per core, about 9 GW of waste heat); plant plus
+mission budget; closed Brayton conversion with a Carnot check; Reactor 2 shutdown and
+ribbon-damage scenarios.
+
+| Req | Requirement | Source | Status | Evidence |
+|---|---|---|---|---|
+| M18-1 | Book-scale plant | User decision | Met | Author mode: 2 × 10 GWt, 55 % → 11 GWe, 9 GW waste heat (VASIMR losses on their own radiators) |
+| M18-2 | Ribbon radiator | Authors' note | Met | Both-face flux 2εσT⁴ at the alloy freezing point (about 61 kW/m² at 605 °C vs the note's 65); alloy flow = Q/L; freezing time and sail geometry from ribbon thickness and speed; damage throttles the reactors |
+| M18-3 | Mission budget like the authors' spreadsheet | User decision | Met (ad hoc) | Variable-exhaust constant-acceleration programme, braking only as hard as needed (coasting when even the weakest thrust is too much), arrival checked against distance, capture burn includes the arrival speed; scanned for the fastest arrival: 1,500 t dry, mass ratio ≈10 → 158 days, exhaust 45–300 km/s (book: 4–5 months, mass ratio 10, 35–300 km/s); straight-line, no solar gravity, stated on the page (ISSUE-018) |
+| M18-4 | Closed Brayton with Carnot check | User decision | Met | Recuperated He–Xe Brayton, pressure ratio optimized; page shows that 55 % at a 600 °C radiator exceeds Carnot for any reachable hot-end temperature (rejection at about 910 K needs about 1,750 °C even ideal, about 4,250 °C for this Brayton; at 1,300–1,500 °C the cycle gives about 3–12 %) |
+| M18-5 | Scenarios: Reactor 2 shutdown, ribbon damage | User decision | Met | Presets; shutdown from day 30 → about 195 days, R2 goes dark in the animation; 45 % sail loss → reactors throttled to about 93 % |
+| M18-6 | Placed under Power generation › Fictional plants | User request | Met | `power-generation/fictional-plants/saturn-run-nixon/`; card on the shelf and on Power generation |
+
+### Milestone 18 council review
+
+Reviewed 2026-11-06 by an independent council reviewer covering all three
+lenses: content integrity PASS_WITH_MINOR_ISSUES, static-site constraints PASS,
+process & documentation PASS_WITH_MINOR_ISSUES. No gatekeepers. Fixed inline:
+the voyage stopped about 0.2 AU short of Saturn (deceleration now targets the
+remaining distance, coasts when even minimum thrust is too much, and capture
+removes the arrival speed; the programme search scans instead of bisecting);
+the Reactor 2 shutdown now runs the plant through two phases instead of
+scaling a possibly throttled power twice; prose efficiency range (3–12 %) and
+Carnot figure (about 1,750 °C) made consistent; the Brayton preset mentions the
+sail overload; the radiator alloy is labelled as assumed. The book facts the
+reviewer could not confirm from the summary (oxygen–hydrogen exhaust tuning,
+1970s coffee-can reactor, Orbiter) are in the authors' note supplied by the
+user. See `ISSUES.md` § Milestone council reviews. Merged to `main`.
+
 ## v0.1 definition of done (forward-looking; not yet in scope)
 
 Tracked here so later milestones can check items off against `AGENTS.md`'s
